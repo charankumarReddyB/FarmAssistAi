@@ -1,0 +1,82 @@
+[
+  {
+    "id": "kb_soil_acidic",
+    "category": "soil_health",
+    "condition": "Acidic Soil (pH < 6.0)",
+    "description": "Soil pH is acidic. Acidic soils lead to reduced availability of phosphorus, calcium, and magnesium, and potential aluminum toxicity.",
+    "fertilizer_recommendation": "Apply agricultural lime (calcium carbonate) or dolomite @ 2-4 tonnes/ha to raise pH. Use rock phosphate for phosphorus.",
+    "suitable_crops": ["Rice", "Tea", "Potato", "Sweet Potato", "Cassava"],
+    "irrigation_tip": "Maintain adequate soil moisture to prevent rapid pH fluctuations and leaching.",
+    "risk_factors": ["High aluminum toxicity risk", "Phosphorus fixation", "Reduced microbial activity"]
+  },
+  {
+    "id": "kb_soil_neutral",
+    "category": "soil_health",
+    "condition": "Optimal Neutral Soil (pH 6.0 - 7.5)",
+    "description": "Soil pH is in the optimal range for maximum nutrient availability, robust root development, and high microbial activity.",
+    "fertilizer_recommendation": "Apply balanced NPK fertilizers (e.g. 19:19:19 or 20:20:20) along with 5-10 tonnes/ha of well-rotted Farm Yard Manure (FYM).",
+    "suitable_crops": ["Wheat", "Maize", "Cotton", "Sugarcane", "Tomato", "Onion", "Chilli", "Pulses", "Soybean", "Groundnut"],
+    "irrigation_tip": "Follow recommended crop watering schedules; drip irrigation recommended for water conservation.",
+    "risk_factors": ["Low risk; maintain organic carbon levels"]
+  },
+  {
+    "id": "kb_soil_alkaline",
+    "category": "soil_health",
+    "condition": "Alkaline / Saline Soil (pH > 7.8)",
+    "description": "Soil pH is high (alkaline). Causes deficiency of micronutrients like Zinc, Iron, Manganese, and reduced Phosphorus uptake.",
+    "fertilizer_recommendation": "Apply Gypsum @ 1-2 tonnes/ha or Elemental Sulfur @ 200-500 kg/ha. Use Zinc Sulfate (ZnSO4) @ 25 kg/ha and Ferrous Sulfate (FeSO4).",
+    "suitable_crops": ["Cotton", "Barley", "Mustard", "Sugarcane", "Sugarbeet"],
+    "irrigation_tip": "Provide leaching irrigations to drain excess salts below the root zone.",
+    "risk_factors": ["Salinity stress", "Micronutrient lockout", "Poor drainage and soil compaction"]
+  },
+  {
+    "id": "kb_n_deficiency",
+    "category": "nutrient_management",
+    "condition": "Nitrogen Deficiency (Low N < 140 kg/ha)",
+    "description": "Low nitrogen levels reduce leaf chlorosis, stunted growth, and low tillering or branching in crops.",
+    "fertilizer_recommendation": "Apply split doses of Urea (46% N) @ 50-100 kg/ha or Neem-coated Urea. Integrate biofertilizers like Azotobacter or Rhizobium.",
+    "suitable_crops": ["Maize", "Rice", "Wheat", "Sugarcane"],
+    "irrigation_tip": "Irrigate immediately after top-dressing Urea to facilitate root uptake.",
+    "risk_factors": ["Severe yield drop", "Premature senescence", "Weak leaf canopy"]
+  },
+  {
+    "id": "kb_p_deficiency",
+    "category": "nutrient_management",
+    "condition": "Phosphorus Deficiency (Low P < 15 kg/ha)",
+    "description": "Phosphorus deficiency leads to reddish-purple leaf pigmentation, poor root establishment, and delayed flowering.",
+    "fertilizer_recommendation": "Apply Single Super Phosphate (SSP) @ 150-250 kg/ha or Di-Ammonium Phosphate (DAP) @ 100 kg/ha during basal soil preparation.",
+    "suitable_crops": ["Pulses", "Chickpea", "Groundnut", "Wheat", "Potato"],
+    "irrigation_tip": "Keep soil moist at root depth; dry soil restricts phosphorus diffusion to roots.",
+    "risk_factors": ["Weak root establishment", "Delayed grain setting"]
+  },
+  {
+    "id": "kb_k_deficiency",
+    "category": "nutrient_management",
+    "condition": "Potassium Deficiency (Low K < 120 kg/ha)",
+    "description": "Potassium deficiency affects plant strength, disease resistance, and grain fill, causing marginal leaf scorching.",
+    "fertilizer_recommendation": "Apply Muriate of Potash (MOP / 60% K2O) @ 50-80 kg/ha or Sulfate of Potash (SOP) for sensitive crops.",
+    "suitable_crops": ["Banana", "Sugarcane", "Potato", "Cotton", "Tomato"],
+    "irrigation_tip": "Avoid waterlogging; potassium uptake requires adequate soil aeration.",
+    "risk_factors": ["Stem lodging", "High disease vulnerability", "Poor fruit quality"]
+  },
+  {
+    "id": "kb_oc_low",
+    "category": "soil_health",
+    "condition": "Low Organic Carbon (OC < 0.50%)",
+    "description": "Low organic carbon indicates depleted soil organic matter, reduced water retention, and poor microbial biodiversity.",
+    "fertilizer_recommendation": "Incorporate Farm Yard Manure (FYM) @ 10 tonnes/ha, compost, or green manure crops like Sunnhemp / Dhaincha.",
+    "suitable_crops": ["Pulses", "Legumes", "Cover Crops"],
+    "irrigation_tip": "Mulch soil surface with crop residues to conserve soil moisture.",
+    "risk_factors": ["Soil erosion", "Rapid moisture loss", "Low fertilizer efficiency"]
+  },
+  {
+    "id": "kb_disease_blast_blight",
+    "category": "pest_disease",
+    "condition": "Fungal Blast / Blight Alert",
+    "description": "Spindle-shaped lesions or rapid foliage browning observed. Common in high humidity and excess nitrogen conditions.",
+    "fertilizer_recommendation": "Avoid excess application of nitrogenous fertilizers. Spray Tricyclazole 75% WP @ 0.6 g/L or Mancozeb 75% WP @ 2 g/L.",
+    "suitable_crops": ["Rice", "Potato", "Tomato", "Wheat"],
+    "irrigation_tip": "Avoid overhead sprinkler irrigation; switch to drip or flood to keep leaf foliage dry.",
+    "risk_factors": ["Rapid crop loss within 7-10 days under moist weather"]
+  }
+]

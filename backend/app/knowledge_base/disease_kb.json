@@ -1,0 +1,106 @@
+{
+  "bacterial_leaf_blight": {
+    "disease_name": "Bacterial Leaf Blight (Xanthomonas oryzae)",
+    "crop_type": "Paddy / Rice",
+    "category": "Bacterial Infection",
+    "default_confidence": 0.92,
+    "risk_level": "HIGH",
+    "symptoms": [
+      "Water-soaked lesions on leaf margins extending into long yellow-white streaks.",
+      "Oozing yellow bacterial droplets on leaf surfaces during humid mornings.",
+      "Wilting and yellowing of entire tillers (kresek stage)."
+    ],
+    "management_recommendations": [
+      "Spray Copper Oxychloride 50% WP @ 2.5 g/L combined with Streptocycline @ 0.5 g/L.",
+      "Avoid excessive nitrogenous fertilizer application during active infection.",
+      "Maintain proper field drainage to prevent bacterial spread across standing water."
+    ],
+    "prevention_measures": [
+      "Use certified disease-resistant seeds (e.g., Swarna-Sub1, MTU 1010).",
+      "Treat seeds with Streptocycline @ 0.1 g/kg before sowing."
+    ]
+  },
+  "brown_spot_blast": {
+    "disease_name": "Paddy Blast & Brown Spot (Magnaporthe oryzae)",
+    "crop_type": "Paddy / Rice",
+    "category": "Fungal Infection",
+    "default_confidence": 0.89,
+    "risk_level": "CRITICAL",
+    "symptoms": [
+      "Spindle-shaped diamond lesions with brown margins and greyish centers on leaves.",
+      "Neck rot / browning at the panicle node causing chaffy unfilled grains.",
+      "Oval brown spots on leaf blades reducing photosynthetic foliage."
+    ],
+    "management_recommendations": [
+      "Foliar spray of Tricyclazole 75% WP @ 0.6 g/L of water.",
+      "Apply Isoprothiolane 40% EC @ 1.5 mL/L or Kasugamycin 3% SL @ 2 mL/L.",
+      "Apply recommended Potassium (MOP) to improve stem wall strength and fungal resistance."
+    ],
+    "prevention_measures": [
+      "Avoid high plant density; ensure proper sunlight penetration.",
+      "Refrain from top-dressing Nitrogen when ambient humidity exceeds 80%."
+    ]
+  },
+  "leaf_smut_rust": {
+    "disease_name": "Leaf Rust & Smut (Puccinia / Entyloma oryzae)",
+    "crop_type": "Wheat / Rice / Maize",
+    "category": "Fungal Infection",
+    "default_confidence": 0.94,
+    "risk_level": "MODERATE",
+    "symptoms": [
+      "Small raised pustules containing reddish-brown or black powdery spores.",
+      "Premature leaf drying and leaf necrosis along upper canopy.",
+      "Reduced grain weight and impaired photosynthesis."
+    ],
+    "management_recommendations": [
+      "Spray Propiconazole 25% EC @ 1.0 mL/L or Tebuconazole 25.9% EC @ 1.5 mL/L.",
+      "Apply Mancozeb 75% WP @ 2.0 g/L as preventive cover spray.",
+      "Destroy and burn infected crop residue immediately post-harvest."
+    ],
+    "prevention_measures": [
+      "Adopt crop rotation with non-host legume crops.",
+      "Maintain recommended spacing between rows for foliage aeration."
+    ]
+  },
+  "powdery_mildew": {
+    "disease_name": "Powdery Mildew (Erysiphe spp.)",
+    "crop_type": "Vegetables / Pulses / Cereals",
+    "category": "Fungal Infection",
+    "default_confidence": 0.88,
+    "risk_level": "MODERATE",
+    "symptoms": [
+      "White to greyish powdery flour-like fungal patches on leaves and stems.",
+      "Curled, distorted leaves dropping prematurely.",
+      "Stunted pod development and reduced marketable yield."
+    ],
+    "management_recommendations": [
+      "Spray Wettable Sulfur 80% WP @ 3.0 g/L or Hexaconazole 5% EC @ 1.5 mL/L.",
+      "Spray Neem Seed Kernel Extract (NSKE 5%) @ 50 mL/L for organic suppression.",
+      "Prune dense lower foliage to enhance air movement."
+    ],
+    "prevention_measures": [
+      "Plant in locations receiving direct sunlight.",
+      "Avoid overhead sprinkler irrigation late in the evening."
+    ]
+  },
+  "healthy_crop": {
+    "disease_name": "Healthy Crop (No Disease Detected)",
+    "crop_type": "All Crop Types",
+    "category": "Healthy Foliage",
+    "default_confidence": 0.96,
+    "risk_level": "NONE",
+    "symptoms": [
+      "Vibrant green leaf blades free from fungal pustules, bacterial streaks, or spots.",
+      "Normal cell turgidity and uniform vegetative expansion.",
+      "Healthy root system and optimal tillering."
+    ],
+    "management_recommendations": [
+      "Continue standard balanced NPK fertigation schedule.",
+      "Maintain routine monitoring for early pest or disease signs.",
+      "Ensure timely weed control and optimum irrigation depth."
+    ],
+    "prevention_measures": [
+      "Follow standard crop protection and soil health maintenance practices."
+    ]
+  }
+}

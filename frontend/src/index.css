@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+@import 'tailwindcss';
+
+@theme {
+  --color-forest: #1f4d2f;
+  --color-leaf: #3a7d4e;
+  --color-harvest: #c97a18;
+  --color-cream: #f7f3ed;
+  --color-charcoal: #1a2e1e;
+  --color-mist: #ede8e0;
+  --color-sage: #5c6b5f;
+  --color-pebble: #d4cec5;
+  --color-risk: #a33320;
+  --color-rain: #1e5a8a;
+  --color-meadow: #2d6a4f;
+  --color-ember: #7c3d0e;
+
+  --font-display: 'Inter', 'Noto Sans Telugu', 'Noto Sans Tamil', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', 'Noto Sans Telugu', 'Noto Sans Tamil', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f7f3ed;
+  color: #1a2e1e;
+  -webkit-font-smoothing: antialiased;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #d4cec5;
+  border-radius: 2px;
+}
+
+@keyframes wave-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.wave-bar {
+  animation: wave-bar 0.8s ease-in-out infinite;
+}
+.pulse-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+.step-in {
+  animation: step-in 0.4s ease forwards;
+}
+.spin-slow {
+  animation: spin-slow 2s linear infinite;
+}

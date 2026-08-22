@@ -1,0 +1,112 @@
+import { useState } from 'react'
+import { useApp, type View } from '../App'
+import { Logo } from './Logo'
+import { LANG_LABELS } from '../translations'
+
+interface NavItem {
+  id: View
+  icon: string
+  labelKey: string
+}
+
+const PRIMARY_NAV: NavItem[] = [
+  { id: 'dashboard', icon: '⬡', labelKey: 'nav_dashboard' },
+  { id: 'soil', icon: '◎', labelKey: 'nav_soil' },
+  { id: 'crop', icon: '⬢', labelKey: 'nav_crop' },
+  { id: 'farm', icon: '◈', labelKey: 'nav_farm' },
+  { id: 'advisory', icon: '◐', labelKey: 'nav_advisory' },
+  { id: 'reports', icon: '≡', labelKey: 'nav_reports' },
+  { id: 'alerts', icon: '◉', labelKey: 'nav_alerts' },
+  { id: 'voice', icon: '◯', labelKey: 'nav_voice' },
+]
+
+export function Sidebar() {
+  const { view, setView, lang, setLang, t } = useApp()
+  const [langOpen, setLangOpen] = useState(false)
+
+  return (
+    <aside className="w-56 flex-shrink-0 bg-forest flex flex-col h-full">
+      {/* Logo area */}
+      <div className="px-5 py-5 border-b border-white/10">
+        <Logo variant="light" size={32} />
+      </div>
+
+      {/* Primary navigation */}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5">
+        {PRIMARY_NAV.map((item) => {
+          const isActive = view === item.id
+          return (
+            <button
+              key={item.id}
+              onClick={() => setView(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-left transition-all duration-150 ${
+                isActive
+                  ? 'bg-leaf text-cream font-medium'
+                  : 'text-cream/70 hover:bg-white/8 hover:text-cream'
+              }`}
+            >
+              <span className="text-base w-5 flex-shrink-0 text-center leading-none opacity-80">
+                {item.icon}
+              </span>
+              <span className="truncate">{t(item.labelKey)}</span>
+              {item.id === 'alerts' && (
+                <span className="ml-auto bg-harvest text-cream text-xs font-mono rounded px-1.5 py-0.5 leading-none">
+                  3
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* Bottom section */}
+      <div className="px-3 pb-4 space-y-0.5 border-t border-white/10 pt-3">
+        {/* Language selector */}
+        <div className="relative">
+          <button
+            onClick={() => setLangOpen(!langOpen)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-cream/70 hover:bg-white/8 hover:text-cream transition-all"
+          >
+            <span className="text-base w-5 flex-shrink-0 text-center">🌐</span>
+            <span className="flex-1 text-left truncate">{LANG_LABELS[lang]}</span>
+            <span className="text-cream/40 text-xs">{langOpen ? '▲' : '▼'}</span>
+          </button>
+          {langOpen && (
+            <div className="absolute bottom-full left-0 right-0 mb-1 bg-charcoal rounded-md overflow-hidden shadow-xl border border-white/10 z-50">
+              {(Object.entries(LANG_LABELS) as [typeof lang, string][]).map(([code, label]) => (
+                <button
+                  key={code}
+                  onClick={() => { setLang(code); setLangOpen(false) }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                    lang === code ? 'bg-leaf text-cream' : 'text-cream/70 hover:bg-white/10 hover:text-cream'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Profile */}
+        <button onClick={() => setView('settings')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-cream/70 hover:bg-white/8 hover:text-cream transition-all">
+          <span className="w-5 h-5 rounded-full bg-harvest/60 flex items-center justify-center text-xs text-cream font-medium flex-shrink-0">
+            R
+          </span>
+          <div className="flex-1 text-left min-w-0">
+            <div className="text-cream/90 text-sm truncate">Raju Reddy</div>
+            <div className="text-cream/40 text-xs truncate">Kakinada, AP</div>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setView('landing')}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-cream/40 hover:text-cream/70 hover:bg-white/5 transition-all"
+        >
+          <span className="text-base w-5 text-center opacity-70">⎋</span>
+          <span>{t('nav_logout')}</span>
+        </button>
+      </div>
+    </aside>
+  )
+}

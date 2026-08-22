@@ -1,0 +1,65 @@
+import os
+from typing import List, Union, Any
+from pydantic import field_validator
+
+try:
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+except ImportError:
+    from pydantic import BaseModel as BaseSettings
+    SettingsConfigDict = None
+
+
+# Base Directory (backend/)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "FarmAssist AI"
+    API_V1_STR: str = "/api"
+    SECRET_KEY: str = "farmassist_secret_key_change_in_production"
+    
+    # Database Settings
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "farmassist_db"
+    POSTGRES_PORT: str = "5432"
+    DATABASE_URL: Union[str, None] = f"sqlite:///{os.path.join(BASE_DIR, 'farmassist.db')}"
+
+    # Uploads
+    UPLOAD_DIR: str = os.path.join(BASE_DIR, "uploads")
+    MAX_UPLOAD_SIZE_MB: int = 10
+
+    # CORS
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ]
+
+    @field_validator("DATABASE_URL", mode="before")
+    def assemble_db_connection(cls, v: Union[str, None], info) -> str:
+        if isinstance(v, str) and v.strip():
+            return v
+        values = info.data if hasattr(info, 'data') else {}
+        user = values.get("POSTGRES_USER", "postgres")
+        password = values.get("POSTGRES_PASSWORD", "postgres")
+        server = values.get("POSTGRES_SERVER", "localhost")
+        port = values.get("POSTGRES_PORT", "5432")
+        db = values.get("POSTGRES_DB", "farmassist_db")
+        return f"postgresql://{user}:{password}@{server}:{port}/{db}"
+
+    if SettingsConfigDict is not None:
+        model_config = SettingsConfigDict(
+            env_file=".env",
+            env_file_encoding="utf-8",
+            extra="ignore",
+            case_sensitive=True
+        )
+
+
+settings = Settings()
+
+# Ensure uploads directory exists
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+
