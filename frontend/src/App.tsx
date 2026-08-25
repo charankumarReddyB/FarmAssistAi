@@ -11,6 +11,7 @@ import { MyFarm } from './views/MyFarm'
 import { Reports } from './views/Reports'
 import { Alerts } from './views/Alerts'
 import { ExpertPortal } from './views/ExpertPortal'
+import { AdminDashboard } from './views/AdminDashboard'
 import { Settings } from './views/Settings'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
@@ -29,6 +30,19 @@ export type View =
   | 'alerts'
   | 'settings'
   | 'expert'
+  | 'admin'
+  | 'unauthorized'
+
+export interface UserProfile {
+  id: string
+  email: string
+  full_name: string
+  role: 'farmer' | 'expert' | 'admin'
+  preferred_language: Lang
+  state?: string
+  district?: string
+  village?: string
+}
 
 interface AppCtx {
   view: View
@@ -36,6 +50,10 @@ interface AppCtx {
   lang: Lang
   setLang: (l: Lang) => void
   t: (key: string) => string
+  user: UserProfile | null
+  role: 'farmer' | 'expert' | 'admin'
+  login: (userObj: any, token: string) => void
+  logout: () => void
 }
 
 export const AppContext = createContext<AppCtx>({
@@ -44,6 +62,10 @@ export const AppContext = createContext<AppCtx>({
   lang: 'en',
   setLang: () => {},
   t: (k) => k,
+  user: null,
+  role: 'farmer',
+  login: () => {},
+  logout: () => {},
 })
 
 export const useApp = () => useContext(AppContext)
@@ -86,66 +108,142 @@ function AppShell({ view }: { view: View }) {
 }
 
 export default function App() {
-  const [view, setView] = useState<View>('landing')
+  const [view, setViewState] = useState<View>('landing')
+
+  // Read authenticated user state from localStorage
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    const raw = localStorage.getItem('farmassist_user')
+    if (raw) {
+      try {
+        return JSON.parse(raw)
+      } catch (e) {}
+    }
+    return null
+  })
+
+  const role = user?.role || (localStorage.getItem('farmassist_role') as any) || 'farmer'
+
   const [lang, setLangState] = useState<Lang>(() => {
     const saved = localStorage.getItem('farmassist_language') as Lang
     if (saved && ['en', 'te', 'ta', 'hi'].includes(saved)) {
       return saved
     }
-    const userJson = localStorage.getItem('farmassist_user')
-    if (userJson) {
-      try {
-        const userObj = JSON.parse(userJson)
-        if (userObj.preferred_language && ['en', 'te', 'ta', 'hi'].includes(userObj.preferred_language)) {
-          return userObj.preferred_language as Lang
-        }
-      } catch (e) {}
+    if (user && user.preferred_language && ['en', 'te', 'ta', 'hi'].includes(user.preferred_language)) {
+      return user.preferred_language as Lang
     }
     return 'en'
   })
 
-  // Synchronize document language and global font attributes immediately on mount and change
+  // Role-Based Authorization Guard for Views
+  const setView = (requestedView: View) => {
+    if (requestedView === 'landing' || requestedView === 'login' || requestedView === 'expert-login') {
+      setViewState(requestedView)
+      return
+    }
+
+    const currentRole = user?.role || (localStorage.getItem('farmassist_role') as any) || 'farmer'
+
+    if (currentRole === 'farmer') {
+      if (requestedView === 'expert' || requestedView === 'admin') {
+        setViewState('dashboard')
+        return
+      }
+      setViewState(requestedView)
+    } else if (currentRole === 'expert') {
+      if (requestedView === 'admin' || ['dashboard', 'soil', 'crop', 'farm', 'advisory', 'reports', 'alerts', 'voice'].includes(requestedView)) {
+        setViewState('expert')
+        return
+      }
+      setViewState(requestedView)
+    } else if (currentRole === 'admin') {
+      if (['dashboard', 'soil', 'crop', 'farm', 'advisory', 'reports', 'alerts', 'voice', 'expert'].includes(requestedView)) {
+        setViewState('admin')
+        return
+      }
+      setViewState(requestedView)
+    } else {
+      setViewState(requestedView)
+    }
+  }
+
   useEffect(() => {
     updateGlobalFontAndLang(lang)
-    
-    // Fetch stored user profile from backend on app load
-    fetch('http://127.0.0.1:8000/api/user/profile')
-      .then((res) => res.json())
-      .then((user) => {
-        if (user && user.preferred_language && ['en', 'te', 'ta', 'hi'].includes(user.preferred_language)) {
-          const backendLang = user.preferred_language as Lang
-          if (backendLang !== lang) {
-            setLangState(backendLang)
-            localStorage.setItem('farmassist_language', backendLang)
-            updateGlobalFontAndLang(backendLang)
-          }
-        }
+
+    // Sync profile from backend if token present
+    const token = localStorage.getItem('farmassist_token')
+    if (token) {
+      fetch('http://127.0.0.1:8000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
       })
-      .catch(() => {})
+        .then((res) => res.ok ? res.json() : null)
+        .then((userData) => {
+          if (userData) {
+            setUser(userData)
+            localStorage.setItem('farmassist_user', JSON.stringify(userData))
+            localStorage.setItem('farmassist_role', userData.role)
+            if (userData.preferred_language && ['en', 'te', 'ta', 'hi'].includes(userData.preferred_language)) {
+              setLangState(userData.preferred_language)
+              updateGlobalFontAndLang(userData.preferred_language)
+            }
+          }
+        })
+        .catch(() => {})
+    }
   }, [lang])
 
   const setLang = (newLang: Lang) => {
     setLangState(newLang)
     localStorage.setItem('farmassist_language', newLang)
     updateGlobalFontAndLang(newLang)
-    
-    // Save to user profile in localStorage
-    const userJson = localStorage.getItem('farmassist_user')
-    const userObj = userJson ? JSON.parse(userJson) : { name: 'Raju Reddy', location: 'Kakinada, Andhra Pradesh' }
-    userObj.preferred_language = newLang
-    localStorage.setItem('farmassist_user', JSON.stringify(userObj))
 
-    // Save to backend user profile API
+    if (user) {
+      const updated = { ...user, preferred_language: newLang }
+      setUser(updated)
+      localStorage.setItem('farmassist_user', JSON.stringify(updated))
+    }
+
+    const token = localStorage.getItem('farmassist_token')
     fetch('http://127.0.0.1:8000/api/user/profile', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ preferred_language: newLang })
     }).catch(() => {})
   }
 
+  const login = (userObj: any, token: string) => {
+    setUser(userObj)
+    localStorage.setItem('farmassist_user', JSON.stringify(userObj))
+    localStorage.setItem('farmassist_token', token)
+    localStorage.setItem('farmassist_role', userObj.role)
+
+    if (userObj.preferred_language && ['en', 'te', 'ta', 'hi'].includes(userObj.preferred_language)) {
+      setLangState(userObj.preferred_language)
+      updateGlobalFontAndLang(userObj.preferred_language)
+    }
+
+    if (userObj.role === 'admin') {
+      setViewState('admin')
+    } else if (userObj.role === 'expert') {
+      setViewState('expert')
+    } else {
+      setViewState('dashboard')
+    }
+  }
+
+  const logout = () => {
+    setUser(null)
+    localStorage.removeItem('farmassist_user')
+    localStorage.removeItem('farmassist_token')
+    localStorage.removeItem('farmassist_role')
+    setViewState('landing')
+  }
+
   const t = (key: string) => translate(lang, key)
 
-  const ctx: AppCtx = { view, setView, lang, setLang, t }
+  const ctx: AppCtx = { view, setView, lang, setLang, t, user, role, login, logout }
 
   if (view === 'landing') {
     return (
@@ -158,7 +256,7 @@ export default function App() {
   if (view === 'login' || view === 'expert-login') {
     return (
       <AppContext.Provider value={ctx}>
-        <Login isExpert={view === 'expert-login'} />
+        <Login isExpert={view === 'expert-login'} initialRole={view === 'expert-login' ? 'expert' : undefined} />
       </AppContext.Provider>
     )
   }
@@ -167,6 +265,14 @@ export default function App() {
     return (
       <AppContext.Provider value={ctx}>
         <ExpertPortal />
+      </AppContext.Provider>
+    )
+  }
+
+  if (view === 'admin') {
+    return (
+      <AppContext.Provider value={ctx}>
+        <AdminDashboard />
       </AppContext.Provider>
     )
   }

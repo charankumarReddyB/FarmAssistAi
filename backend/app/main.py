@@ -41,10 +41,76 @@ def migrate_sqlite_columns():
                 pass
 
 
+def seed_default_users():
+    """Seeds initial Admin, Expert, and Farmer accounts if not present."""
+    import os
+    from app.core.database import SessionLocal
+    from app.models.user import User
+    from app.core.security import hash_password, verify_password
+
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@farmassist.ai")
+    admin_password = os.getenv("ADMIN_PASSWORD", "Admin@123456")
+
+    db = SessionLocal()
+    try:
+        # 1. Admin Account
+        admin = db.query(User).filter(User.email == admin_email).first()
+        if not admin:
+            admin = User(
+                email=admin_email,
+                hashed_password=hash_password(admin_password),
+                full_name="System Administrator",
+                role="admin",
+                preferred_language="en",
+                is_active=True
+            )
+            db.add(admin)
+            logger.info(f"Seeded default admin account: {admin_email}")
+
+        # 2. Expert Account
+        expert = db.query(User).filter(User.email == "expert@farmassist.ai").first()
+        if not expert:
+            expert = User(
+                email="expert@farmassist.ai",
+                hashed_password=hash_password("Expert@123456"),
+                full_name="Dr. Anand Sharma",
+                role="expert",
+                preferred_language="en",
+                is_active=True
+            )
+            db.add(expert)
+            logger.info("Seeded default expert account: expert@farmassist.ai")
+
+        # 3. Farmer Account
+        farmer = db.query(User).filter(User.email == "farmer@farmassist.ai").first()
+        if not farmer:
+            farmer = User(
+                email="farmer@farmassist.ai",
+                hashed_password=hash_password("Farmer@123456"),
+                full_name="Raju Reddy",
+                role="farmer",
+                preferred_language="en",
+                is_active=True
+            )
+            db.add(farmer)
+            logger.info("Seeded default farmer account: farmer@farmassist.ai")
+        elif farmer.hashed_password == "default_hash" or not verify_password("Farmer@123456", farmer.hashed_password):
+            farmer.hashed_password = hash_password("Farmer@123456")
+            db.add(farmer)
+
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to seed default accounts: {e}")
+    finally:
+        db.close()
+
+
 # Create database tables automatically on startup
 try:
     Base.metadata.create_all(bind=engine)
     migrate_sqlite_columns()
+    seed_default_users()
     logger.info("Database schema initialized successfully.")
 except Exception as e:
     logger.error(f"Failed to initialize database tables: {e}")
