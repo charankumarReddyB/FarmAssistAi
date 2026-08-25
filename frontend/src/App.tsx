@@ -112,7 +112,18 @@ function AppShell({ view }: { view: View }) {
 import { supabase, isSupabaseConfigured } from './lib/supabase'
 
 export default function App() {
-  const [view, setViewState] = useState<View>('landing')
+  // Read initial view state based on stored user session
+  const [view, setViewState] = useState<View>(() => {
+    const rawUser = localStorage.getItem('farmassist_user')
+    const token = localStorage.getItem('farmassist_token')
+    if (rawUser && token) {
+      try {
+        const u = JSON.parse(rawUser)
+        return u.role === 'admin' ? 'admin' : u.role === 'expert' ? 'expert' : 'dashboard'
+      } catch (e) {}
+    }
+    return 'landing'
+  })
 
   // Read authenticated user state from localStorage
   const [user, setUser] = useState<UserProfile | null>(() => {
@@ -170,49 +181,84 @@ export default function App() {
     }
   }
 
-  // Supabase Auth State Change Listener
+  // Supabase Auth State Change Listener & Instant Backend Profile Synchronization
   useEffect(() => {
     if (!isSupabaseConfigured()) return
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const token = session.access_token
-        localStorage.setItem('farmassist_token', token)
+    const handleSession = async (session: any) => {
+      if (!session?.user) return
+      const token = session.access_token
+      localStorage.setItem('farmassist_token', token)
 
-        // Fetch or create profile record in Supabase
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-
-        const userObj: UserProfile = {
-          id: session.user.id,
-          email: session.user.email || 'farmer@farmassist.ai',
-          full_name: profile?.full_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Farmer User',
-          role: profile?.role || session.user.user_metadata?.role || 'farmer',
-          preferred_language: profile?.preferred_language || session.user.user_metadata?.preferred_language || 'en',
-          state: profile?.state || 'Andhra Pradesh',
-          district: profile?.district || 'Kakinada',
-          village: profile?.village || 'Samalkota',
-        }
-
-        setUser(userObj)
-        localStorage.setItem('farmassist_user', JSON.stringify(userObj))
-        localStorage.setItem('farmassist_role', userObj.role)
-
-        if (userObj.preferred_language && ['en', 'te', 'ta', 'hi'].includes(userObj.preferred_language)) {
-          setLangState(userObj.preferred_language)
-          updateGlobalFontAndLang(userObj.preferred_language)
-        }
-
-        // Automatically redirect signed-in user from landing/login to role dashboard
-        setViewState((currentView) => {
-          if (currentView === 'landing' || currentView === 'login' || currentView === 'expert-login') {
-            return userObj.role === 'admin' ? 'admin' : userObj.role === 'expert' ? 'expert' : 'dashboard'
-          }
-          return currentView
+      // 1. Sync directly with FastAPI Backend for complete profile details
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
         })
+        if (res.ok) {
+          const userData = await res.json()
+          setUser(userData)
+          localStorage.setItem('farmassist_user', JSON.stringify(userData))
+          localStorage.setItem('farmassist_role', userData.role)
+          if (userData.preferred_language && ['en', 'te', 'ta', 'hi'].includes(userData.preferred_language)) {
+            setLangState(userData.preferred_language as Lang)
+            updateGlobalFontAndLang(userData.preferred_language)
+          }
+          const targetView = userData.role === 'admin' ? 'admin' : userData.role === 'expert' ? 'expert' : 'dashboard'
+          setViewState(targetView)
+          return
+        }
+      } catch (e) {
+        console.error('Backend sync error:', e)
+      }
+
+      // 2. Fallback to Supabase profiles or Google OAuth user metadata
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+
+      const userObj: UserProfile = {
+        id: session.user.id,
+        email: session.user.email || 'farmer@farmassist.ai',
+        full_name: profile?.full_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Farmer User',
+        role: profile?.role || session.user.user_metadata?.role || 'farmer',
+        preferred_language: profile?.preferred_language || session.user.user_metadata?.preferred_language || 'en',
+        state: profile?.state || 'Andhra Pradesh',
+        district: profile?.district || 'Kakinada',
+        village: profile?.village || 'Samalkota',
+      }
+
+      setUser(userObj)
+      localStorage.setItem('farmassist_user', JSON.stringify(userObj))
+      localStorage.setItem('farmassist_role', userObj.role)
+
+      if (userObj.preferred_language && ['en', 'te', 'ta', 'hi'].includes(userObj.preferred_language)) {
+        setLangState(userObj.preferred_language as Lang)
+        updateGlobalFontAndLang(userObj.preferred_language)
+      }
+
+      const targetView = userObj.role === 'admin' ? 'admin' : userObj.role === 'expert' ? 'expert' : 'dashboard'
+      setViewState(targetView)
+    }
+
+    // Process initial session on mount (handles Google OAuth callback)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        handleSession(session)
+      }
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        handleSession(session)
+      } else if (_event === 'SIGNED_OUT') {
+        setUser(null)
+        localStorage.removeItem('farmassist_user')
+        localStorage.removeItem('farmassist_token')
+        localStorage.removeItem('farmassist_role')
+        setViewState('landing')
       }
     })
 
