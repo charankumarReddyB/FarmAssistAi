@@ -5,49 +5,29 @@ from app.core.database import get_db
 from app.models.user import User
 from app.schemas.user import UserResponse, UserProfileUpdate
 
+from app.core.security import get_current_user
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/user", tags=["User Profile & Location"])
 
 
 @router.get("/profile", response_model=UserResponse, summary="Get current farmer profile and location")
-def get_user_profile(db: Session = Depends(get_db)):
+def get_user_profile(
+    current_user: User = Depends(get_current_user)
+):
     """Retrieves current farmer profile including location and language settings."""
-    user = db.query(User).first()
-    if not user:
-        # Create default user profile
-        user = User(
-            email="farmer@farmassist.ai",
-            hashed_password="default_hash",
-            full_name="Raju Reddy",
-            role="farmer",
-            country="India",
-            state="Andhra Pradesh",
-            district="Kakinada",
-            city_town="Kakinada",
-            village="Samalkota",
-            latitude=16.98,
-            longitude=82.24,
-            preferred_language="en"
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-    return user
+    return current_user
 
 
 @router.post("/profile", response_model=UserResponse, summary="Update farmer location and preferred language")
-def update_user_profile(payload: UserProfileUpdate, db: Session = Depends(get_db)):
+def update_user_profile(
+    payload: UserProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """Updates farmer profile details including location (State, District, Village) and preferred language."""
-    user = db.query(User).first()
-    if not user:
-        user = User(
-            email="farmer@farmassist.ai",
-            hashed_password="default_hash",
-            full_name="Raju Reddy"
-        )
-        db.add(user)
+    user = current_user
 
     if payload.full_name is not None:
         user.full_name = payload.full_name

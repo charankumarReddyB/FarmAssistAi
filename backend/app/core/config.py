@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     SECRET_KEY: str = "farmassist_secret_key_change_in_production"
     
+    # Supabase Settings
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
+    SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "")
+
     # Database Settings
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"

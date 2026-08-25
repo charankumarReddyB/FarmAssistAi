@@ -51,6 +51,7 @@ interface AppCtx {
   setLang: (l: Lang) => void
   t: (key: string) => string
   user: UserProfile | null
+  updateUser: (userObj: Partial<UserProfile>) => void
   role: 'farmer' | 'expert' | 'admin'
   login: (userObj: any, token: string) => void
   logout: () => void
@@ -63,6 +64,7 @@ export const AppContext = createContext<AppCtx>({
   setLang: () => {},
   t: (k) => k,
   user: null,
+  updateUser: () => {},
   role: 'farmer',
   login: () => {},
   logout: () => {},
@@ -106,6 +108,8 @@ function AppShell({ view }: { view: View }) {
     </div>
   )
 }
+
+import { supabase, isSupabaseConfigured } from './lib/supabase'
 
 export default function App() {
   const [view, setViewState] = useState<View>('landing')
@@ -166,6 +170,47 @@ export default function App() {
     }
   }
 
+  // Supabase Auth State Change Listener
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const token = session.access_token
+        localStorage.setItem('farmassist_token', token)
+        
+        // Fetch or create profile record in Supabase
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+
+        const userObj: UserProfile = {
+          id: session.user.id,
+          email: session.user.email || 'farmer@farmassist.ai',
+          full_name: profile?.full_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Farmer User',
+          role: profile?.role || session.user.user_metadata?.role || 'farmer',
+          preferred_language: profile?.preferred_language || session.user.user_metadata?.preferred_language || 'en',
+          state: profile?.state || 'Andhra Pradesh',
+          district: profile?.district || 'Kakinada',
+          village: profile?.village || 'Samalkota',
+        }
+
+        setUser(userObj)
+        localStorage.setItem('farmassist_user', JSON.stringify(userObj))
+        localStorage.setItem('farmassist_role', userObj.role)
+
+        if (userObj.preferred_language && ['en', 'te', 'ta', 'hi'].includes(userObj.preferred_language)) {
+          setLangState(userObj.preferred_language)
+          updateGlobalFontAndLang(userObj.preferred_language)
+        }
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
   useEffect(() => {
     updateGlobalFontAndLang(lang)
 
@@ -200,6 +245,14 @@ export default function App() {
       const updated = { ...user, preferred_language: newLang }
       setUser(updated)
       localStorage.setItem('farmassist_user', JSON.stringify(updated))
+
+      if (isSupabaseConfigured() && user.id) {
+        supabase
+          .from('profiles')
+          .update({ preferred_language: newLang })
+          .eq('id', user.id)
+          .then()
+      }
     }
 
     const token = localStorage.getItem('farmassist_token')
@@ -233,7 +286,26 @@ export default function App() {
     }
   }
 
-  const logout = () => {
+  const updateUser = (updatedFields: Partial<UserProfile>) => {
+    setUser((prev) => {
+      const next = { ...(prev || {}), ...updatedFields } as UserProfile
+      localStorage.setItem('farmassist_user', JSON.stringify(next))
+
+      if (isSupabaseConfigured() && next.id) {
+        supabase
+          .from('profiles')
+          .update(updatedFields)
+          .eq('id', next.id)
+          .then()
+      }
+      return next
+    })
+  }
+
+  const logout = async () => {
+    if (isSupabaseConfigured()) {
+      await supabase.auth.signOut().catch(() => {})
+    }
     setUser(null)
     localStorage.removeItem('farmassist_user')
     localStorage.removeItem('farmassist_token')
@@ -243,7 +315,7 @@ export default function App() {
 
   const t = (key: string) => translate(lang, key)
 
-  const ctx: AppCtx = { view, setView, lang, setLang, t, user, role, login, logout }
+  const ctx: AppCtx = { view, setView, lang, setLang, t, user, updateUser, role, login, logout }
 
   if (view === 'landing') {
     return (

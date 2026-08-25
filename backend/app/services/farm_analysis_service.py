@@ -122,7 +122,10 @@ class UnifiedFarmAnalysisService:
             irrigation_advice = "Apply light morning irrigation to protect crop root zone from heat stress."
 
         # 7. Disease Risk Context (Strictly separating Model Diagnosis vs. Environmental Risk)
-        model_diag_str = f"Image Model Diagnosis: {detected_disease}" if detected_disease else "No crop image analysis available."
+        has_soil_report = report_n is not None
+        has_crop_image = detected_disease is not None
+
+        model_diag_str = f"Image Model Diagnosis: {detected_disease}" if has_crop_image else "No crop image analysis available."
 
         env_disease_vulnerability = "Low"
         env_risk_note = "Current humidity and rainfall levels are within normal disease-resistant thresholds."
@@ -134,6 +137,7 @@ class UnifiedFarmAnalysisService:
             env_risk_note = "High temperature increases heat-stress vulnerability and sap-sucking pest activity."
 
         disease_risk = {
+            "has_crop_image": has_crop_image,
             "model_diagnosis": model_diag_str,
             "environmental_vulnerability": env_disease_vulnerability,
             "environmental_risk_analysis": env_risk_note,
@@ -143,25 +147,40 @@ class UnifiedFarmAnalysisService:
         farm_risk_level = "MODERATE"
         risk_reasons = []
 
-        if n_val < 140:
-            risk_reasons.append(f"Nitrogen level ({n_val} kg/ha) is below regional optimal baseline.")
-        if rain_prob > 50:
-            risk_reasons.append(f"High precipitation risk ({rain_prob}% probability).")
-        if env_disease_vulnerability == "HIGH":
-            risk_reasons.append("High humidity environmental fungal disease risk.")
+        if not has_soil_report and not has_crop_image and weather_source == "location_baseline":
+            farm_risk_level = "INSUFFICIENT_DATA"
+            risk_message = "Insufficient data for complete farm risk assessment."
+            risk_reasons = ["Insufficient data available (no soil report, crop image, or live weather)."]
+        else:
+            if n_val < 140 and has_soil_report:
+                risk_reasons.append(f"Nitrogen level ({n_val} kg/ha) is below regional optimal baseline.")
+            if rain_prob > 50:
+                risk_reasons.append(f"High precipitation risk ({rain_prob}% probability).")
+            if env_disease_vulnerability == "HIGH":
+                risk_reasons.append("High humidity environmental fungal disease risk.")
+            if has_crop_image and detected_disease and "Healthy" not in detected_disease:
+                risk_reasons.append(f"Crop image diagnosis indicates: {detected_disease}.")
 
-        if len(risk_reasons) >= 2:
-            farm_risk_level = "HIGH"
-        elif len(risk_reasons) == 0:
-            farm_risk_level = "LOW"
+            if len(risk_reasons) >= 2:
+                farm_risk_level = "HIGH"
+            elif len(risk_reasons) == 0:
+                farm_risk_level = "LOW"
+            risk_message = f"{farm_risk_level} RISK"
 
-        # 9. Recommended Next Action
-        recommended_action = (
-            f"Apply recommended fertilizer ({fert_rec.get('fertilizer', 'Urea & DAP')}). "
-            f"Ensure proper field drainage for {crop_suitability.get('recommended_crop', 'Paddy')}."
-        )
-        if lang in LOCATION_ANALYSIS_TRANSLATIONS:
-            recommended_action = LOCATION_ANALYSIS_TRANSLATIONS[lang]["next_action_default"]
+        # 9. Prioritized Recommended Actions
+        immediate_action = "Check field drainage because rainfall and humidity conditions may increase waterlogging risk." if rain_prob > 40 else ("Apply light morning irrigation to protect crop root zone from heat stress." if temp > 35 else "Inspect field crops for initial pest or disease symptoms.")
+        
+        next_action = f"Review nitrogen deficiency found in latest soil report and apply {fert_rec.get('fertilizer', 'Urea')}." if (has_soil_report and n_val < 140) else ("Upload a soil report to enable personalized soil analysis." if not has_soil_report else f"Apply recommended fertilizer ({fert_rec.get('fertilizer', 'Urea & DAP')}) for optimal crop yield.")
+        
+        monitor_action = "Monitor humidity levels because environmental conditions may increase fungal disease vulnerability." if humidity > 70 else "Monitor soil moisture levels across crop root zone."
+
+        prioritized_actions = [
+            {"priority": "IMMEDIATE ACTION", "action": immediate_action, "category": "weather_water"},
+            {"priority": "NEXT ACTION", "action": next_action, "category": "soil_fertilizer"},
+            {"priority": "MONITOR", "action": monitor_action, "category": "environment_crop"},
+        ]
+
+        recommended_action_summary = f"{immediate_action} {next_action}"
 
         return {
             "location": {
@@ -180,15 +199,17 @@ class UnifiedFarmAnalysisService:
                 "rain_probability": rain_prob,
                 "condition": weather.get("condition"),
                 "source": weather_source,
-                "status": "Live API Active" if weather_source == "live_open_meteo" else "Live API Unavailable. Using Location Baseline."
+                "status": "Live API Active" if weather_source == "live_open_meteo" else "Live weather currently unavailable"
             },
             "weather_impact": weather_impact_msg,
             "climate_context": climate,
             "soil_health_analysis": {
-                "ph": ph_val,
-                "nitrogen": n_val,
-                "phosphorus": p_val,
-                "potassium": k_val,
+                "has_soil_report": has_soil_report,
+                "status_message": None if has_soil_report else "Upload a soil report to enable personalized soil analysis.",
+                "ph": ph_val if has_soil_report else None,
+                "nitrogen": n_val if has_soil_report else None,
+                "phosphorus": p_val if has_soil_report else None,
+                "potassium": k_val if has_soil_report else None,
                 "soil_type": soil_analysis.get("regional_soil_type"),
             },
             "regional_soil_analysis": soil_analysis,
@@ -198,9 +219,11 @@ class UnifiedFarmAnalysisService:
             "irrigation_advice": irrigation_advice,
             "farm_risk": {
                 "level": farm_risk_level,
+                "message": risk_message,
                 "risk_factors": risk_reasons if risk_reasons else ["All parameters within normal range."],
             },
-            "recommended_action": recommended_action,
+            "recommended_action": recommended_action_summary,
+            "prioritized_actions": prioritized_actions,
         }
 
 

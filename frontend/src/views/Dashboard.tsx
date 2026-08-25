@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../App'
 import { AiBadge } from '../components/StatusBadge'
+import { FarmIntelligence, type FarmIntelligenceData } from '../components/FarmIntelligence'
 
 const FORECAST = [
   { day: 'Today', icon: '⛅', temp: '32°', rain: '12%', active: true },
@@ -85,7 +86,7 @@ function ScoreRing({ score, status }: { score: number; status: string }) {
 }
 
 export function Dashboard() {
-  const { t, setView } = useApp()
+  const { t, lang, user, setView } = useApp()
   const [weatherData, setWeatherData] = useState<{
     location: string
     temperature: number
@@ -94,6 +95,7 @@ export function Dashboard() {
     rain_probability: number
     condition: string
     farm_impact: string
+    source?: string
   }>({
     location: 'Kakinada, Andhra Pradesh',
     temperature: 32,
@@ -101,7 +103,8 @@ export function Dashboard() {
     wind_speed: 12,
     rain_probability: 12,
     condition: 'Partly Cloudy',
-    farm_impact: 'Rain expected tomorrow morning. Irrigation may not be necessary today.'
+    farm_impact: 'Rain expected tomorrow morning. Irrigation may not be necessary today.',
+    source: 'live_open_meteo'
   })
 
   const [userProfile, setUserProfile] = useState<{
@@ -116,27 +119,33 @@ export function Dashboard() {
     district: 'Kakinada'
   })
 
-  const [locAnalysis, setLocAnalysis] = useState<any>(null)
+  const [locAnalysis, setLocAnalysis] = useState<FarmIntelligenceData | null>(null)
+  const [locLoading, setLocLoading] = useState<boolean>(true)
 
   useEffect(() => {
-    // Read saved farmer profile from localStorage
+    // Determine location from context user or localStorage fallback
     const savedUser = localStorage.getItem('farmassist_user')
-    let st = 'Andhra Pradesh'
-    let dist = 'Kakinada'
+    let st = user?.state || 'Andhra Pradesh'
+    let dist = user?.district || 'Kakinada'
+    let nameStr = user?.full_name || 'Raju'
+
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser)
-        const nameStr = parsed.name || parsed.full_name || 'Raju'
-        dist = parsed.district || 'Kakinada'
-        st = parsed.state || 'Andhra Pradesh'
-        setUserProfile({
-          name: nameStr.split(' ')[0],
-          location: `${dist}, ${st}`,
-          state: st,
-          district: dist
-        })
+        nameStr = parsed.full_name || parsed.name || nameStr
+        dist = parsed.district || dist
+        st = parsed.state || st
       } catch (e) {}
     }
+
+    setUserProfile({
+      name: nameStr.split(' ')[0],
+      location: `${dist}, ${st}`,
+      state: st,
+      district: dist
+    })
+
+    setLocLoading(true)
 
     // Fetch dynamic weather from API
     fetch(`http://127.0.0.1:8000/api/weather?location=${encodeURIComponent(`${dist}, ${st}`)}`)
@@ -150,14 +159,15 @@ export function Dashboard() {
             wind_speed: data.wind_speed || 12,
             rain_probability: data.rain_probability || 12,
             condition: data.condition || 'Partly Cloudy',
-            farm_impact: data.farm_impact || 'Weather is favorable for standard farming activities.'
+            farm_impact: data.farm_impact || 'Weather is favorable for standard farming activities.',
+            source: data.source || 'location_baseline'
           })
         }
       })
       .catch(() => {})
 
     // Fetch Location-Based Farm Analysis API
-    fetch(`http://127.0.0.1:8000/api/farm/location-analysis?state=${encodeURIComponent(st)}&district=${encodeURIComponent(dist)}`)
+    fetch(`http://127.0.0.1:8000/api/farm/location-analysis?state=${encodeURIComponent(st)}&district=${encodeURIComponent(dist)}&language=${encodeURIComponent(lang)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data) {
@@ -165,7 +175,8 @@ export function Dashboard() {
         }
       })
       .catch(() => {})
-  }, [lang])
+      .finally(() => setLocLoading(false))
+  }, [lang, user?.district, user?.state])
 
   const overallScore = Math.round(
     HEALTH_ITEMS.reduce((sum, h) => sum + h.score, 0) / HEALTH_ITEMS.length
@@ -224,9 +235,18 @@ export function Dashboard() {
             {/* Top row */}
             <div className="px-6 pt-5 pb-4 flex items-start justify-between">
               <div>
-                <div className="text-cream/60 text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <div className="text-cream/60 text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-2">
                   <span>📍</span>
                   <span>{weatherData.location}</span>
+                  {weatherData.source === 'live_open_meteo' ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/30 text-emerald-300 border border-emerald-400/40">
+                      {t('badge_live_weather')}
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/30 text-amber-300 border border-amber-400/40">
+                      {t('badge_estimated_baseline')}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-end gap-4">
                   <div>
@@ -235,7 +255,9 @@ export function Dashboard() {
                   </div>
                   <div className="pb-1.5">
                     <div className="text-cream font-medium text-lg leading-tight">{weatherData.condition}</div>
-                    <div className="text-cream/50 text-sm">{t('weather_feels_like')} {Math.round(weatherData.temperature + 2)}° · {t('weather_live_forecast')}</div>
+                    <div className="text-cream/50 text-sm">
+                      {t('weather_feels_like')} {Math.round(weatherData.temperature + 2)}° · {weatherData.source === 'live_open_meteo' ? t('weather_live_forecast') : t('status_live_weather_unavailable')}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -356,99 +378,7 @@ export function Dashboard() {
           </div>
 
           {/* Location-Based Farm Intelligence Section */}
-          {locAnalysis && (
-            <div className="bg-white border border-pebble rounded-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-pebble/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">📍</span>
-                  <div>
-                    <h2 className="font-display text-lg font-bold text-charcoal">
-                      {t('loc_analysis_title')}
-                    </h2>
-                    <p className="text-xs text-sage font-mono">
-                      Location Context: {locAnalysis.location?.full_location}
-                    </p>
-                  </div>
-                </div>
-                <AiBadge label="Location Sync" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                {/* 1. Regional Climate Context */}
-                <div className="p-3.5 bg-mist/60 border border-pebble/60 rounded-xl space-y-1.5">
-                  <div className="font-bold text-charcoal text-sm flex items-center gap-1.5">
-                    <span>🌦️</span> {t('loc_climate_context')}
-                  </div>
-                  <div className="text-sage font-medium">
-                    Zone: <span className="text-charcoal font-semibold">{locAnalysis.climate_context?.zone_name || 'Agro-Climatic Zone'}</span>
-                  </div>
-                  <div className="text-sage">
-                    Season: <span className="text-leaf font-semibold">{locAnalysis.climate_context?.current_season}</span>
-                  </div>
-                  <p className="text-charcoal/90 leading-snug mt-1">
-                    {locAnalysis.climate_context?.seasonal_agricultural_context}
-                  </p>
-                  {locAnalysis.climate_context?.climate_risks?.length > 0 && (
-                    <div className="mt-1 text-risk font-medium text-[11px]">
-                      ⚠️ Risks: {locAnalysis.climate_context.climate_risks.join(', ')}
-                    </div>
-                  )}
-                </div>
-
-                {/* 2. Regional Soil Baseline Comparison */}
-                <div className="p-3.5 bg-mist/60 border border-pebble/60 rounded-xl space-y-1.5">
-                  <div className="font-bold text-charcoal text-sm flex items-center gap-1.5">
-                    <span>🌱</span> {t('loc_regional_soil')}
-                  </div>
-                  <div className="text-sage font-medium">
-                    Regional Soil Type: <span className="text-charcoal font-semibold">{locAnalysis.regional_soil_analysis?.regional_soil_type}</span>
-                  </div>
-                  <div className="text-charcoal/90 leading-snug space-y-1 mt-1">
-                    {locAnalysis.regional_soil_analysis?.regional_comparison_notes?.map((note: string, idx: number) => (
-                      <div key={idx} className="flex items-start gap-1">
-                        <span className="text-leaf">▪</span>
-                        <span>{note}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 3. Location Crop Suitability */}
-                <div className="p-3.5 bg-mist/60 border border-pebble/60 rounded-xl space-y-1.5">
-                  <div className="font-bold text-charcoal text-sm flex items-center gap-1.5">
-                    <span>🌾</span> {t('loc_crop_suitability')}
-                  </div>
-                  <div className="text-forest font-bold text-sm">
-                    Recommended: {locAnalysis.crop_suitability?.recommended_crop}
-                  </div>
-                  <p className="text-charcoal/90 leading-snug">
-                    {locAnalysis.crop_suitability?.suitability_explanation}
-                  </p>
-                </div>
-
-                {/* 4. Disease Risk & Next Action */}
-                <div className="p-3.5 bg-mist/60 border border-pebble/60 rounded-xl space-y-1.5">
-                  <div className="font-bold text-charcoal text-sm flex items-center gap-1.5">
-                    <span>🛡️</span> {t('loc_disease_risk')} & Risk Level
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-sage">Overall Farm Risk:</span>
-                    <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${
-                      locAnalysis.farm_risk?.level === 'HIGH' ? 'bg-risk/15 text-risk' : 'bg-meadow/15 text-meadow'
-                    }`}>
-                      {locAnalysis.farm_risk?.level} RISK
-                    </span>
-                  </div>
-                  <div className="text-charcoal/90 text-xs mt-1">
-                    <span className="font-semibold text-charcoal">Recommended Next Action:</span>
-                    <p className="text-forest font-medium mt-0.5 leading-snug">
-                      {locAnalysis.recommended_action}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <FarmIntelligence data={locAnalysis} loading={locLoading} />
         </div>
 
         {/* Right column */}

@@ -73,9 +73,13 @@ async def upload_crop_image(
             os.remove(file_path)
         raise HTTPException(status_code=400, detail=f"Corrupted or unreadable crop image: {str(e)}")
 
+    # Upload to Supabase Storage bucket 'crop-images'
+    from app.core.supabase_client import upload_file_to_supabase_storage
+    storage_path = upload_file_to_supabase_storage("crop-images", file_path, unique_filename)
+
     new_record = CropImageAnalysis(
         filename=file.filename,
-        file_path=file_path,
+        file_path=storage_path or file_path,
         upload_status="success",
         status="uploaded"
     )

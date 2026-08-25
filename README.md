@@ -1,196 +1,156 @@
-# FarmAssist AI – NLP-Based Agricultural Report Interpretation and Farmer Advisory System
+# FarmAssist AI – NLP-Based Agricultural Report Interpretation and Cloud Farm Intelligence System
 
-FarmAssist AI is a web-based artificial intelligence system designed to interpret complex agricultural and soil lab reports using Natural Language Processing (NLP), Optical Character Recognition (OCR), and Sentence-BERT semantic similarity analysis. The platform translates unstructured soil test reports into actionable, structured farmer advisories—including crop suitability recommendations, fertilizer schedules, irrigation guidance, pest/disease alerts, and risk assessments.
-
----
-
-## 🌾 Features
-
-1. **Agricultural Report Upload**
-   - Supports multi-page PDF soil test reports.
-   - Supports scanned images (`.png`, `.jpg`, `.jpeg`, `.tiff`, `.webp`).
-2. **Text Extraction & OCR**
-   - Direct digital text extraction from PDFs via PyMuPDF (`fitz`).
-   - OCR fallback for scanned reports using Tesseract OCR & EasyOCR.
-3. **NLP Preprocessing Pipeline**
-   - Lowercasing, noise reduction, and regex sanitization.
-   - Word tokenization via spaCy and NLTK.
-   - Stop-word filtering and agronomic lemmatization.
-4. **Agronomic Information Extraction**
-   - Rule-based & heuristic regex extraction of Soil pH, Nitrogen (N), Phosphorus (P), and Potassium (K) levels.
-   - Automated detection of crop references, plant disease symptoms, and nutrient deficiencies.
-5. **Sentence-BERT Semantic Analysis**
-   - Generates dense sentence embeddings (`all-MiniLM-L6-v2`).
-   - Computes Cosine Similarity against a curated Agronomic Knowledge Base.
-   - Matches report context to semantically similar soil health and deficiency conditions.
-6. **Structured Advisory Engine**
-   - Generates standardized JSON advisories featuring:
-     - Soil Health Analysis
-     - Extracted NPK & pH parameters
-     - Recommended Crops
-     - Fertilizer Applications
-     - Irrigation Schedules
-     - Pest & Disease Alerts
-     - Risk Factors & Final Summary
-7. **Expert Review & Human-in-the-Loop**
-   - Staging area for agricultural extension officers and experts to review AI-generated advisories.
-   - Expert approval, rejection, or custom recommendation modification workflow.
+FarmAssist AI is an intelligent agricultural decision-support web application that interprets complex soil lab reports, crop leaf disease images, and location-based climate context using Natural Language Processing (NLP), Deep Learning (PyTorch MobileNetV2), Sentence-BERT semantic similarity, and Supabase Cloud Infrastructure (PostgreSQL, Supabase Auth, Row Level Security, and File Storage).
 
 ---
 
-## 🛠 Technology Stack
+## 🌾 Features & Architecture
 
-### Frontend
-- **Framework**: React with TypeScript, Vite
-- **UI & Styling**: Tailwind CSS, Lucide Icons
-- **State & Router**: Modern React Hooks & Component View Architecture
-
-### Backend
-- **Framework**: Python 3.10+, FastAPI
-- **Database & ORM**: PostgreSQL (with SQLite local fallback), SQLAlchemy 2.0, Pydantic v2
-- **NLP & AI/ML**: spaCy, NLTK, Sentence-Transformers (`all-MiniLM-L6-v2`), scikit-learn
-- **Document Processing & OCR**: PyMuPDF (`fitz`), pytesseract, EasyOCR, Pillow
+1. **Supabase Cloud Backend Integration**
+   - **PostgreSQL Database**: Relational storage for user profiles, farms, soil test reports, crop analyses, structured advisories, and expert audit trails.
+   - **Supabase Auth**: Unified authentication provider supporting Google OAuth 2.0, Email & Password Registration, JWT Session management, and password hashing.
+   - **Row Level Security (RLS)**: Database-enforced isolation ensuring farmers can only read/update their own private farm data while experts and admins have authorized cross-tenant review capabilities.
+   - **Supabase Cloud Storage**: Public and private cloud buckets for uploading soil test reports (`soil-reports`) and crop leaf images (`crop-images`).
+2. **FastAPI AI/ML Backend**
+   - **NLP Soil Extraction**: PyMuPDF text extraction, Tesseract/EasyOCR fallback, and spaCy/NLTK regex parameter extraction for N, P, K, pH, EC, and Organic Carbon.
+   - **Deep Learning Crop Disease Classifier**: PyTorch MobileNetV2 model trained on crop disease datasets for multi-class leaf disease diagnosis.
+   - **Sentence-BERT Semantic Matching**: Generates dense sentence embeddings (`all-MiniLM-L6-v2`) and computes Cosine Similarity against an Agronomic Knowledge Base.
+   - **Location-Based Farm Intelligence**: Integration with Open-Meteo live weather API, Agro-Climatic zone matrices, regional soil datasets, and disease risk assessment.
+3. **Role-Based Access Control (RBAC)**
+   - **Farmer Portal**: Soil report upload, crop disease photo diagnosis, weather impact tracking, Farm Intelligence dashboard, and structured advisories.
+   - **Expert Review Portal**: Human-in-the-loop validation staging area where agricultural extension officers approve, modify, or reject AI-generated advisories.
+   - **Admin Governance Dashboard**: System metrics, user account management, expert provisioning, and platform monitoring.
 
 ---
 
-## 📁 Folder Structure
+## 🏗 System Architecture Diagram
 
 ```
-FarmAssist-AI/
-├── frontend/                 # Existing React + Vite TypeScript Web Interface
+Frontend React + Vite
+        │
+        ├──► Supabase Auth (Google OAuth, Email/Password, JWT Session)
+        │
+        ├──► Supabase PostgreSQL (Profiles, RLS, Advisories, Soil Reports)
+        │
+        └──► FastAPI AI/ML Backend (Port 8000)
+                 ├── PyMuPDF & Tesseract OCR
+                 ├── PyTorch MobileNetV2 Crop Model
+                 ├── Sentence-BERT Semantic Matcher
+                 ├── Open-Meteo Weather API & Agro-Climatic KB
+                 └── Supabase Storage Upload (soil-reports, crop-images)
+```
+
+---
+
+## 📁 Repository Structure
+
+```
+FarmAssistAi/
+├── frontend/                 # React + Vite + TypeScript Frontend Application
+│   ├── src/
+│   │   ├── lib/
+│   │   │   └── supabase.ts   # Supabase Client Instance
+│   │   ├── components/       # UI Components & Navigation
+│   │   ├── views/            # Dashboard, Login, Soil, Crop, Expert & Admin Views
+│   │   └── App.tsx           # App Shell, Auth State Listener & Role Guard
+│   └── .env.example          # Frontend Environment Template
 ├── backend/                  # Python FastAPI Backend Service
 │   ├── app/
-│   │   ├── main.py           # FastAPI Application Entrypoint & CORS setup
-│   │   ├── api/              # REST API Router & Endpoint Handlers
-│   │   │   ├── routes/
-│   │   │   │   ├── health.py   # System Health Check Endpoint
-│   │   │   │   ├── reports.py  # Report Upload & Retrieval API
-│   │   │   │   ├── analysis.py # NLP & Sentence-BERT Trigger API
-│   │   │   │   ├── advisory.py # Structured Advisory Retrieval API
-│   │   │   │   └── expert.py   # Expert Review & Approval API
-│   │   │   └── router.py
-│   │   ├── core/             # Configuration & Database Connection
-│   │   │   ├── config.py
-│   │   │   └── database.py
-│   │   ├── models/           # SQLAlchemy ORM Database Models
-│   │   │   ├── report.py
-│   │   │   ├── advisory.py
-│   │   │   └── user.py
-│   │   ├── schemas/          # Pydantic Request/Response Validation Schemas
-│   │   │   ├── report.py
-│   │   │   ├── advisory.py
-│   │   │   └── user.py
-│   │   ├── services/         # Core NLP, Extraction & Advisory Services
-│   │   │   ├── pdf_service.py
-│   │   │   ├── ocr_service.py
-│   │   │   ├── preprocessing_service.py
-│   │   │   ├── extraction_service.py
-│   │   │   ├── semantic_service.py
-│   │   │   └── advisory_service.py
-│   │   └── knowledge_base/   # Agronomic Knowledge Base & Reference Matrices
-│   │       └── agricultural_kb.py
-│   ├── uploads/              # Local Storage for Uploaded Soil Reports
+│   │   ├── main.py           # FastAPI Entrypoint & Middleware
+│   │   ├── api/routes/       # REST Routes (auth, user, reports, crop_analysis, expert, admin)
+│   │   ├── core/             # Database, Security & Supabase Storage Client
+│   │   ├── models/           # SQLAlchemy ORM Models
+│   │   └── services/         # AI, ML, NLP & Weather Services
+│   ├── scripts/
+│   │   └── migrate_sqlite_to_supabase.py # SQLite to Supabase Migration Utility
+│   ├── supabase_schema.sql   # PostgreSQL DDL, RLS Policies & Storage SQL
 │   ├── requirements.txt      # Python Package Dependencies
-│   └── .env.example          # Environment Variables Template
-├── .gitignore                # Root Git Ignore Configuration
+│   └── .env.example          # Backend Environment Template
+├── .gitignore                # Git Exclusions
 └── README.md                 # Project Overview & Setup Instructions
 ```
 
 ---
 
-## 🚀 Backend Setup Instructions
+## ⚡ Manual Supabase Setup Required
 
-### Prerequisites
-- Python 3.10+ installed
-- PostgreSQL installed (optional; SQLite fallback enabled by default)
+To connect FarmAssist AI to your production Supabase Cloud project, complete the following steps in the Supabase Dashboard:
 
-### Setup Steps
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Create and activate a virtual environment:
-   ```bash
-   # Windows (PowerShell)
-   python -m venv venv
-   .\venv\Scripts\Activate.ps1
+1. **Create Supabase Project**
+   - Sign in to [Supabase Console](https://database.new) and create a new project.
+   - Note down your **Project URL**, **Anon API Key**, **Service Role Key**, and **JWT Secret**.
 
-   # Linux/macOS
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Download spaCy English model:
-   ```bash
-   python -m spacy download en_core_web_sm
-   ```
-5. Configure Environment Variables:
-   ```bash
-   cp .env.example .env
-   ```
-6. Start the FastAPI development server:
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
+2. **Apply Database Schema & Security**
+   - Open the **SQL Editor** in your Supabase Dashboard.
+   - Copy and paste the contents of `backend/supabase_schema.sql`.
+   - Click **Run** to create the tables (`profiles`, `farms`, `soil_reports`, `crop_analyses`, `advisories`, `expert_reviews`), database triggers, RLS policies, and storage buckets (`soil-reports`, `crop-images`).
+
+3. **Configure Google OAuth Provider**
+   - Go to Google Cloud Console -> **APIs & Services** -> **Credentials**.
+   - Create an **OAuth 2.0 Client ID** (Web application).
+   - Add Authorized Redirect URI: `https://<YOUR-PROJECT-REF>.supabase.co/auth/v1/callback`.
+   - Copy your **Client ID** and **Client Secret**.
+   - In Supabase Dashboard, go to **Authentication** -> **Providers** -> **Google**.
+   - Enable Google provider, paste **Client ID** and **Client Secret**, and save.
+
+4. **Set Environment Variables**
+   - Copy `frontend/.env.example` to `frontend/.env`:
+     ```env
+     VITE_SUPABASE_URL=https://your-project.supabase.co
+     VITE_SUPABASE_ANON_KEY=your-anon-key-here
+     ```
+   - Copy `backend/.env.example` to `backend/.env`:
+     ```env
+     SUPABASE_URL=https://your-project.supabase.co
+     SUPABASE_ANON_KEY=your-anon-key-here
+     SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+     SUPABASE_JWT_SECRET=your-jwt-secret-here
+     DATABASE_URL=postgresql://postgres.your-ref:password@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
+     ```
 
 ---
 
-## 💻 Frontend Setup Instructions
+## 📦 SQLite to Supabase Data Migration
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install Node.js dependencies:
-   ```bash
-   npm install
-   ```
-3. Launch Vite development server:
-   ```bash
-   npm run dev
-   ```
-4. Access the web dashboard at `http://localhost:5173`.
+To migrate existing local data from `farmassist.db` into Supabase PostgreSQL:
+
+```bash
+cd backend
+python scripts/migrate_sqlite_to_supabase.py
+```
 
 ---
 
-## 🔑 Environment Variables
+## 🚀 Local Development Startup
 
-The backend configuration is managed via `.env` in `backend/`:
+### 1. Backend Startup
+```bash
+cd backend
+python -m venv venv
+# On Windows:
+.\venv\Scripts\Activate.ps1
+# On Linux/macOS:
+source venv/bin/activate
 
-| Variable | Default Value | Description |
-| :--- | :--- | :--- |
-| `PROJECT_NAME` | `FarmAssist AI` | Application Name |
-| `API_V1_STR` | `/api` | Base API Route Prefix |
-| `DATABASE_URL` | `sqlite:///./farmassist.db` | Database connection string (PostgreSQL or SQLite) |
-| `UPLOAD_DIR` | `./uploads` | Directory for uploaded PDF/Image reports |
-| `BACKEND_CORS_ORIGINS` | `["http://localhost:5173","http://localhost:3000"]` | Allowed CORS origins for Frontend integration |
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+FastAPI Swagger Documentation will be live at `http://localhost:8000/docs`.
 
----
-
-## 📚 API Documentation
-
-Once the FastAPI backend is running, live interactive OpenAPI Swagger documentation is available at:
-
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
-
-### Core API Endpoints:
-- `GET /api/health` — Backend and database connectivity check.
-- `POST /api/reports/upload` — Upload PDF or Image reports.
-- `GET /api/reports/{report_id}` — View uploaded report & raw extracted text.
-- `POST /api/analysis/{report_id}` — Execute NLP & Sentence-BERT semantic pipeline.
-- `GET /api/advisories/{report_id}` — Retrieve structured farmer advisory JSON.
-- `POST /api/expert/review` — Expert review (Approve / Modify / Reject) workflow.
+### 2. Frontend Startup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Access the FarmAssist AI Web Interface at `http://localhost:5173`.
 
 ---
 
-## 📌 Current Development Status
+## 🔒 Security & Role Authorization Summary
 
-- **Frontend UI/UX**: Completed in Figma and existing frontend project.
-- **Backend**: Under development (Foundation & REST APIs functional).
-- **NLP Semantic Analysis**: Under development (Sentence-BERT & Cosine Similarity pipeline integrated).
-- **OCR**: Under development (PyMuPDF & Tesseract/EasyOCR fallback service active).
-- **Dataset Integration**: In progress.
+- **Farmer Role**: Access `/dashboard`, `/soil-analysis`, `/crop-analysis`, `/advisory`, `/reports`, `/settings`. Cannot access Expert or Admin routes.
+- **Expert Role**: Access `/expert` review dashboard to inspect and validate advisories. Cannot access Admin routes.
+- **Admin Role**: Access `/admin` dashboard for user role management, system metrics, and governance.
+- **Backend Enforcer**: `get_current_user` decodes Supabase JWT tokens. Endpoints decorated with `@require_roles(['admin'])` return `403 Forbidden` for unauthorized roles and `401 Unauthorized` for missing/invalid tokens.

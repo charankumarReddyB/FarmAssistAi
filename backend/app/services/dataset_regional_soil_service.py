@@ -49,6 +49,8 @@ class DatasetRegionalSoilService:
         district_clean = district.lower().strip()
 
         is_district_level = False
+        dataset_covered = True
+
         if state_clean in SOUTHERN_STATES_SOIL_DATA:
             state_data = SOUTHERN_STATES_SOIL_DATA[state_clean]
             if district_clean in state_data:
@@ -57,7 +59,17 @@ class DatasetRegionalSoilService:
             else:
                 regional_info = state_data.get("default")
         else:
-            regional_info = SOUTHERN_STATES_SOIL_DATA["andhra pradesh"]["default"]
+            dataset_covered = False
+            return {
+                "state": state,
+                "district": district,
+                "dataset_covered": False,
+                "baseline_precision": "Unavailable",
+                "regional_soil_type": "Coverage Unavailable",
+                "regional_baseline_npk": None,
+                "regional_comparison_notes": ["Detailed regional soil baseline is currently unavailable for this location."],
+                "message": "Detailed regional soil baseline is currently unavailable for this location."
+            }
 
         baseline_type = "District-level regional baseline" if is_district_level else "State-level regional baseline"
         region_label = district.title() if is_district_level else state.title()
@@ -82,6 +94,7 @@ class DatasetRegionalSoilService:
         return {
             "state": state,
             "district": district,
+            "dataset_covered": True,
             "baseline_precision": baseline_type,
             "regional_soil_type": regional_info["soil_type"],
             "regional_baseline_npk": {

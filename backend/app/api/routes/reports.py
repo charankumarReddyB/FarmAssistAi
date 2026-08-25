@@ -65,6 +65,10 @@ async def upload_report(
         logger.error(f"Failed to write file to disk {file.filename}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
 
+    # Upload to Supabase Storage bucket 'soil-reports'
+    from app.core.supabase_client import upload_file_to_supabase_storage
+    storage_path = upload_file_to_supabase_storage("soil-reports", file_path, unique_filename)
+
     file_type = file.content_type or file_ext[1:]
     raw_text = ""
 
@@ -85,7 +89,7 @@ async def upload_report(
     new_report = Report(
         filename=file.filename,
         file_type=file_type,
-        file_path=file_path,
+        file_path=storage_path or file_path,
         status="processed" if raw_text.strip() else "uploaded",
         raw_text=raw_text,
         extracted_data=extracted_data

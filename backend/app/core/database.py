@@ -2,6 +2,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
+SQLITE_DB_PATH = "farmassist.db"
+
 # Determine engine parameters (support sqlite fallback seamlessly)
 db_url = settings.DATABASE_URL or "sqlite:///./farmassist.db"
 

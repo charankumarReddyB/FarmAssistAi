@@ -3,6 +3,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.models.report import Report
+from app.models.crop_image import CropImageAnalysis
 from app.models.user import User
 from app.services.farm_analysis_service import farm_analysis_service
 
@@ -40,6 +42,20 @@ def get_farm_location_analysis(
 
     target_location = location or f"{target_district}, {target_state}"
 
+    # Fetch latest soil report if available
+    latest_report = db.query(Report).order_by(Report.created_at.desc()).first()
+    report_n, report_p, report_k, report_ph = None, None, None, None
+    if latest_report and latest_report.extracted_data:
+        ext = latest_report.extracted_data
+        report_n = ext.get("nitrogen")
+        report_p = ext.get("phosphorus")
+        report_k = ext.get("potassium")
+        report_ph = ext.get("ph")
+
+    # Fetch latest crop image analysis if available
+    latest_crop = db.query(CropImageAnalysis).filter(CropImageAnalysis.status == "analyzed").order_by(CropImageAnalysis.created_at.desc()).first()
+    detected_disease = latest_crop.disease_name if latest_crop else None
+
     return farm_analysis_service.analyze_farm(
         location=target_location,
         state=target_state,
@@ -48,5 +64,10 @@ def get_farm_location_analysis(
         village=target_village,
         latitude=target_lat,
         longitude=target_lon,
+        report_n=report_n,
+        report_p=report_p,
+        report_k=report_k,
+        report_ph=report_ph,
+        detected_disease=detected_disease,
         language=target_lang
     )

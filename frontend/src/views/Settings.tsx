@@ -66,7 +66,7 @@ function Toggle({ label, description, defaultOn = false }: { label: string; desc
 }
 
 export function Settings() {
-  const { t, lang, setLang, setView } = useApp()
+  const { t, lang, setLang, setView, updateUser } = useApp()
   const [activeSection, setActiveSection] = useState<Section>('profile')
   const [textSize, setTextSize] = useState<'normal' | 'large' | 'xl'>('normal')
   const [notifMethod, setNotifMethod] = useState<'sms' | 'app' | 'both'>('both')
@@ -100,16 +100,13 @@ export function Settings() {
   const [profileVillage, setProfileVillage] = useState('Samalkota')
 
   const handleSaveLocation = () => {
-    const raw = localStorage.getItem('farmassist_user')
-    const existing = raw ? JSON.parse(raw) : {}
     const updated = {
-      ...existing,
       state: profileState,
       district: profileDistrict,
       village: profileVillage,
       location: `${profileDistrict}, ${profileState}`
     }
-    localStorage.setItem('farmassist_user', JSON.stringify(updated))
+    updateUser(updated)
 
     fetch('http://127.0.0.1:8000/api/user/profile', {
       method: 'POST',
