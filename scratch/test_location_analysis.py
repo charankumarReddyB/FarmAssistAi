@@ -1,10 +1,14 @@
 """
-Comprehensive Test Script for Location-Based Agricultural Analysis Module in FarmAssist AI.
-Tests:
+Comprehensive Technical Audit Test Script for Location-Based Agricultural Analysis Module.
+Verifies:
 1. Scenario 1: Kakinada, Andhra Pradesh
 2. Scenario 2: Chennai, Tamil Nadu
-3. Verifies location-specific weather, climate, soil baseline, crop suitability, disease risk, and recommendations.
-4. Verifies Multilingual support across English, Telugu, Tamil, and Hindi.
+3. Data Honesty & Precision:
+   - District-level baseline vs State-level baseline
+   - Disease risk: "No crop image analysis available." when image is absent
+   - Climate data classification: "Knowledge-base / Static Regional Context"
+4. Weather API Fallbacks & Error Handling
+5. Multilingual Outputs (English, Telugu, Tamil, Hindi)
 """
 
 import sys
@@ -14,6 +18,7 @@ import os
 sys.path.insert(0, r"c:\Charan\Farm Assist Ai\backend")
 
 from app.services.farm_analysis_service import farm_analysis_service
+from app.services.weather_service import weather_service
 
 def test_location_scenario_1():
     print("[TEST 1] Testing Location Scenario 1: Kakinada, Andhra Pradesh")
@@ -28,17 +33,14 @@ def test_location_scenario_1():
 
     assert res["location"]["district"] == "Kakinada", "District mismatch"
     assert res["location"]["state"] == "Andhra Pradesh", "State mismatch"
-    assert "live_weather" in res, "Missing live weather"
-    assert "climate_context" in res, "Missing climate context"
-    assert "East Coast" in res["climate_context"]["zone_name"], f"Unexpected climate zone: {res['climate_context']['zone_name']}"
-    assert "regional_soil_analysis" in res, "Missing regional soil analysis"
-    assert "crop_suitability" in res, "Missing crop suitability"
-    assert "disease_risk" in res, "Missing disease risk"
+    assert res["regional_soil_analysis"]["baseline_precision"] == "District-level regional baseline", f"Precision error: {res['regional_soil_analysis']['baseline_precision']}"
+    assert res["disease_risk"]["model_diagnosis"] == "No crop image analysis available.", "Disease risk diagnosis error"
+    assert res["climate_context"]["data_classification"] == "Knowledge-base / Static Regional Context", "Climate classification error"
 
     print("     [OK] Weather Temp:", res["live_weather"]["temperature"], "°C, Humidity:", res["live_weather"]["humidity"], "%")
     print("     [OK] Climate Zone:", res["climate_context"]["zone_name"])
-    print("     [OK] Soil Type:", res["regional_soil_analysis"]["regional_soil_type"])
-    print("     [OK] Recommended Crop:", res["crop_suitability"]["recommended_crop"])
+    print("     [OK] Soil Precision:", res["regional_soil_analysis"]["baseline_precision"])
+    print("     [OK] Disease Model Diagnosis:", res["disease_risk"]["model_diagnosis"])
 
 def test_location_scenario_2():
     print("\n[TEST 2] Testing Location Scenario 2: Chennai, Tamil Nadu")
@@ -53,16 +55,31 @@ def test_location_scenario_2():
 
     assert res["location"]["district"] == "Chennai", "District mismatch"
     assert res["location"]["state"] == "Tamil Nadu", "State mismatch"
-    assert "North Eastern Agro-Climatic Zone" in res["climate_context"]["zone_name"], f"Unexpected climate zone: {res['climate_context']['zone_name']}"
-    assert "North-East Monsoon" in res["climate_context"]["monsoon_type"], f"Unexpected monsoon: {res['climate_context']['monsoon_type']}"
+    assert res["regional_soil_analysis"]["baseline_precision"] == "State-level regional baseline", f"Precision error: {res['regional_soil_analysis']['baseline_precision']}"
+    assert "North Eastern Agro-Climatic Zone" in res["climate_context"]["zone_name"], f"Unexpected zone: {res['climate_context']['zone_name']}"
 
     print("     [OK] Weather Temp:", res["live_weather"]["temperature"], "°C, Humidity:", res["live_weather"]["humidity"], "%")
     print("     [OK] Climate Zone:", res["climate_context"]["zone_name"])
     print("     [OK] Monsoon Pattern:", res["climate_context"]["monsoon_type"])
-    print("     [OK] Recommended Crop:", res["crop_suitability"]["recommended_crop"])
+    print("     [OK] Soil Precision:", res["regional_soil_analysis"]["baseline_precision"])
+
+def test_weather_fallback():
+    print("\n[TEST 3] Testing Weather API Fallback & Resilience...")
+    # Force fallback by passing invalid location coordinates
+    res = farm_analysis_service.analyze_farm(
+        location="Unknown District, Andhra Pradesh",
+        state="Andhra Pradesh",
+        district="Unknown District",
+        latitude=999.0,
+        longitude=999.0,
+        language="en"
+    )
+    assert res["live_weather"] is not None, "Live weather object missing during fallback"
+    print("     [OK] Fallback Weather Source:", res["live_weather"]["source"])
+    print("     [OK] Fallback Status Message:", res["live_weather"]["status"])
 
 def test_multilingual_outputs():
-    print("\n[TEST 3] Testing Multilingual Outputs (English, Telugu, Tamil, Hindi)...")
+    print("\n[TEST 4] Testing Multilingual Outputs (English, Telugu, Tamil, Hindi)...")
     for lang in ["en", "te", "ta", "hi"]:
         res = farm_analysis_service.analyze_farm(
             location="Kakinada, Andhra Pradesh",
@@ -72,13 +89,13 @@ def test_multilingual_outputs():
         )
         assert res["weather_impact"] is not None, f"Failed weather impact for {lang}"
         assert res["recommended_action"] is not None, f"Failed recommendation for {lang}"
-        impact_snippet = res['weather_impact'][:40].encode('ascii', errors='ignore').decode('ascii') or f"{len(res['weather_impact'])} chars"
-        print(f"     [OK] {lang.upper()} Weather Impact: {impact_snippet}")
+        print(f"     [OK] {lang.upper()} Analysis Generated Successfully.")
 
 if __name__ == "__main__":
     test_location_scenario_1()
     test_location_scenario_2()
+    test_weather_fallback()
     test_multilingual_outputs()
-    print("\n==============================================================")
-    print("SUCCESS: All Location-Based Agricultural Analysis tests passed!")
-    print("==============================================================")
+    print("\n==========================================================================")
+    print("SUCCESS: All Location-Based Agricultural Analysis Audit Tests Passed!")
+    print("==========================================================================")

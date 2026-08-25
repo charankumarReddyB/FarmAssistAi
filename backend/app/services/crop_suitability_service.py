@@ -20,10 +20,10 @@ class CropSuitabilityService:
         current_season: str = "Kharif Season"
     ) -> Dict[str, Any]:
         """
-        Combines Soil Report NPK/pH + Live Weather + Location + Kaggle Dataset 1 Model
-        to produce contextualized crop suitability recommendations.
+        Combines Kaggle Dataset 1 Model Prediction (N, P, K, pH, Temp, Humidity, Rainfall)
+        with Location & Season Context Enrichment Layer.
         """
-        # Call Dataset 1 Recommendation Service
+        # 1. Kaggle Dataset 1 ML Model Prediction
         top_crops = dataset_crop_service.recommend_crops(
             n=n, p=p, k=k, ph=ph, temp=temperature, humidity=humidity, rainfall=rainfall
         )
@@ -31,11 +31,11 @@ class CropSuitabilityService:
         recommended_crop = top_crops[0]["crop"] if top_crops else "Paddy (Rice)"
         confidence = 0.92
 
-        # Contextual explanation integrating location & weather
+        # 2. Location & Climate Context Enrichment Layer
         explanation = (
-            f"{recommended_crop} is highly suitable based on your soil parameters (pH {ph}, N:{n}, P:{p}, K:{k}) "
-            f"and live weather ({temperature}°C, {humidity}% humidity). Your region's ({district.title()}, {state.title()}) "
-            f"{current_season} environmental conditions strongly support optimal yield."
+            f"Dataset 1 Model recommended {recommended_crop} based on N:{n}, P:{p}, K:{k}, pH:{ph}, "
+            f"temp:{temperature}°C, and humidity:{humidity}%. "
+            f"Enriched with regional context: {district.title()}, {state.title()} ({current_season})."
         )
 
         alternative_crops = ["Maize", "Sugarcane", "Blackgram", "Groundnut"]
@@ -47,6 +47,15 @@ class CropSuitabilityService:
             alternative_crops = ["Paddy", "Groundnut", "Sunflower", "Soybean"]
 
         return {
+            "dataset_model_inputs": {
+                "n": n, "p": p, "k": k, "ph": ph,
+                "temperature": temperature, "humidity": humidity, "rainfall": rainfall
+            },
+            "location_enrichment_context": {
+                "state": state,
+                "district": district,
+                "current_season": current_season
+            },
             "recommended_crop": recommended_crop,
             "confidence_score": confidence,
             "suitability_explanation": explanation,

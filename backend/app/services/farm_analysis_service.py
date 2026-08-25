@@ -63,24 +63,28 @@ class UnifiedFarmAnalysisService:
         """
         Synthesizes Location + Live Weather + Climate Context + Soil Report + 4 Kaggle Datasets
         into a comprehensive, location-personalized agricultural analysis.
+        Follows strict data classification & technical honesty guidelines.
         """
         lang = language.lower().strip() if language else "en"
 
-        # 1. Fetch Live Weather Data from Open-Meteo
+        # 1. Fetch Live Weather Data from Open-Meteo with fallback handling
         weather = weather_service.get_weather(location=location, lat=latitude, lon=longitude)
         temp = weather.get("temperature", 31.0)
         humidity = weather.get("humidity", 72)
         rain_prob = weather.get("rain_probability", 15)
+        weather_source = weather.get("source", "live_open_meteo")
 
-        # 2. Fetch Long-Term Regional Climate Analysis
+        # 2. Fetch Long-Term Regional Climate Analysis (Classified as Knowledge-base / Static Regional Context)
         climate = climate_service.get_climate_analysis(state=state, district=district)
+        climate["data_classification"] = "Knowledge-base / Static Regional Context"
         current_season = climate.get("current_season", "Kharif Season")
 
-        # 3. Regional Soil Baseline Comparison
+        # 3. Regional Soil Baseline Comparison (Classified as Dataset-based Data)
         soil_analysis = dataset_regional_soil_service.analyze_regional_soil(
             state=state, district=district,
             report_n=report_n, report_p=report_p, report_k=report_k, report_ph=report_ph
         )
+        soil_analysis["data_classification"] = "Dataset 3 (Soil Nutrient Dataset of Southern Indian States)"
 
         # 4. Location-Aware Crop Suitability (Dataset 1 + Environmental Context)
         n_val = report_n if report_n is not None else 120.0
@@ -93,6 +97,7 @@ class UnifiedFarmAnalysisService:
             temperature=temp, humidity=humidity, rainfall=float(rain_prob * 3),
             state=state, district=district, current_season=current_season
         )
+        crop_suitability["data_classification"] = "Dataset 1 Model Prediction + Regional Location Layer"
 
         # 5. Fertilizer Recommendation (Dataset 2)
         fert_recs = dataset_fertilizer_service.recommend_fertilizer(
@@ -116,7 +121,9 @@ class UnifiedFarmAnalysisService:
             weather_impact_msg = "High ambient temperature detected. Increased evapotranspiration risk; monitor soil moisture closely."
             irrigation_advice = "Apply light morning irrigation to protect crop root zone from heat stress."
 
-        # 7. Disease Risk Context (Separating Model Diagnosis vs. Environmental Risk)
+        # 7. Disease Risk Context (Strictly separating Model Diagnosis vs. Environmental Risk)
+        model_diag_str = f"Image Model Diagnosis: {detected_disease}" if detected_disease else "No crop image analysis available."
+
         env_disease_vulnerability = "Low"
         env_risk_note = "Current humidity and rainfall levels are within normal disease-resistant thresholds."
         if humidity > 78 or rain_prob > 50:
@@ -127,7 +134,7 @@ class UnifiedFarmAnalysisService:
             env_risk_note = "High temperature increases heat-stress vulnerability and sap-sucking pest activity."
 
         disease_risk = {
-            "model_diagnosis": detected_disease or "No disease detected on leaf image scan.",
+            "model_diagnosis": model_diag_str,
             "environmental_vulnerability": env_disease_vulnerability,
             "environmental_risk_analysis": env_risk_note,
         }
@@ -150,7 +157,7 @@ class UnifiedFarmAnalysisService:
 
         # 9. Recommended Next Action
         recommended_action = (
-            f"Apply recommended fertilizer ({fert_rec.get('recommended_fertilizer', 'Urea & DAP')}). "
+            f"Apply recommended fertilizer ({fert_rec.get('fertilizer', 'Urea & DAP')}). "
             f"Ensure proper field drainage for {crop_suitability.get('recommended_crop', 'Paddy')}."
         )
         if lang in LOCATION_ANALYSIS_TRANSLATIONS:
@@ -172,6 +179,8 @@ class UnifiedFarmAnalysisService:
                 "wind_speed": weather.get("wind_speed"),
                 "rain_probability": rain_prob,
                 "condition": weather.get("condition"),
+                "source": weather_source,
+                "status": "Live API Active" if weather_source == "live_open_meteo" else "Live API Unavailable. Using Location Baseline."
             },
             "weather_impact": weather_impact_msg,
             "climate_context": climate,

@@ -43,33 +43,46 @@ class DatasetRegionalSoilService:
         """
         Analyzes farmer's soil test parameters against regional soil nutrient baselines
         from the Soil Nutrient Dataset of Southern Indian States.
+        Directly distinguishes district-level record vs. state-level baseline.
         """
         state_clean = state.lower().strip()
         district_clean = district.lower().strip()
 
-        state_data = SOUTHERN_STATES_SOIL_DATA.get(state_clean, SOUTHERN_STATES_SOIL_DATA["andhra pradesh"])
-        regional_info = state_data.get(district_clean, state_data.get("default"))
+        is_district_level = False
+        if state_clean in SOUTHERN_STATES_SOIL_DATA:
+            state_data = SOUTHERN_STATES_SOIL_DATA[state_clean]
+            if district_clean in state_data:
+                regional_info = state_data[district_clean]
+                is_district_level = True
+            else:
+                regional_info = state_data.get("default")
+        else:
+            regional_info = SOUTHERN_STATES_SOIL_DATA["andhra pradesh"]["default"]
+
+        baseline_type = "District-level regional baseline" if is_district_level else "State-level regional baseline"
+        region_label = district.title() if is_district_level else state.title()
 
         comparison = []
 
         if report_n is not None:
             diff_n = report_n - regional_info["avg_n"]
             status_n = "at regional average" if abs(diff_n) < 15 else ("above regional average" if diff_n > 0 else "below regional average")
-            comparison.append(f"Nitrogen ({report_n} kg/ha) is {status_n} for {district.title()} (Regional avg: {regional_info['avg_n']} kg/ha).")
+            comparison.append(f"Nitrogen ({report_n} kg/ha) is {status_n} for {region_label} ({baseline_type} avg: {regional_info['avg_n']} kg/ha).")
 
         if report_p is not None:
             diff_p = report_p - regional_info["avg_p"]
             status_p = "at regional average" if abs(diff_p) < 4 else ("above regional average" if diff_p > 0 else "below regional average")
-            comparison.append(f"Phosphorus ({report_p} kg/ha) is {status_p} for {district.title()} (Regional avg: {regional_info['avg_p']} kg/ha).")
+            comparison.append(f"Phosphorus ({report_p} kg/ha) is {status_p} for {region_label} ({baseline_type} avg: {regional_info['avg_p']} kg/ha).")
 
         if report_k is not None:
             diff_k = report_k - regional_info["avg_k"]
             status_k = "at regional average" if abs(diff_k) < 20 else ("above regional average" if diff_k > 0 else "below regional average")
-            comparison.append(f"Potassium ({report_k} kg/ha) is {status_k} for {district.title()} (Regional avg: {regional_info['avg_k']} kg/ha).")
+            comparison.append(f"Potassium ({report_k} kg/ha) is {status_k} for {region_label} ({baseline_type} avg: {regional_info['avg_k']} kg/ha).")
 
         return {
             "state": state,
             "district": district,
+            "baseline_precision": baseline_type,
             "regional_soil_type": regional_info["soil_type"],
             "regional_baseline_npk": {
                 "avg_n": regional_info["avg_n"],
