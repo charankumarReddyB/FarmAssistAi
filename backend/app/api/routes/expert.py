@@ -15,6 +15,7 @@ from app.schemas.advisory import (
     ExpertRejectRequest,
     ExpertReviewRequest,
 )
+from app.core.security import require_roles, get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,7 @@ def build_advisory_response(adv: Advisory, db: Session) -> StructuredAdvisoryRes
 def list_expert_advisories(
     status_filter: Optional[str] = Query(None, alias="status"),
     source_type: Optional[str] = Query(None),
+    current_user: Any = Depends(require_roles(["expert", "admin"])),
     db: Session = Depends(get_db)
 ):
     """
@@ -112,7 +114,11 @@ def list_expert_advisories(
 
 
 @router.get("/advisories/{advisory_id}", response_model=StructuredAdvisoryResponse, summary="Get complete advisory details for expert review")
-def get_expert_advisory_by_id(advisory_id: str, db: Session = Depends(get_db)):
+def get_expert_advisory_by_id(
+    advisory_id: str, 
+    current_user: Any = Depends(require_roles(["expert", "admin"])),
+    db: Session = Depends(get_db)
+):
     """Retrieves full details of a specific advisory by ID for expert inspection."""
     adv = db.query(Advisory).filter(Advisory.id == advisory_id).first()
     if not adv:
@@ -132,6 +138,7 @@ def get_expert_advisory_by_id(advisory_id: str, db: Session = Depends(get_db)):
 def approve_advisory(
     advisory_id: str,
     payload: ExpertApproveRequest = ExpertApproveRequest(),
+    current_user: Any = Depends(require_roles(["expert", "admin"])),
     db: Session = Depends(get_db)
 ):
     """Approves the AI-generated advisory and marks status as 'approved'."""
@@ -142,8 +149,8 @@ def approve_advisory(
         raise HTTPException(status_code=404, detail=f"Advisory with ID '{advisory_id}' not found.")
 
     adv.status = "approved"
-    adv.reviewed_by = payload.expert_name
-    adv.expert_id = payload.expert_id
+    adv.reviewed_by = payload.expert_name or current_user.full_name
+    adv.expert_id = payload.expert_id or current_user.id
     adv.expert_notes = payload.notes
     adv.reviewed_at = datetime.datetime.utcnow()
 
@@ -156,6 +163,7 @@ def approve_advisory(
 def modify_advisory(
     advisory_id: str,
     payload: ExpertModifyRequest,
+    current_user: Any = Depends(require_roles(["expert", "admin"])),
     db: Session = Depends(get_db)
 ):
     """Allows expert to submit a modified final advisory and expert notes, setting status to 'modified'."""
@@ -167,8 +175,8 @@ def modify_advisory(
 
     adv.status = "modified"
     adv.final_advisory = payload.modified_advisory
-    adv.reviewed_by = payload.expert_name
-    adv.expert_id = payload.expert_id
+    adv.reviewed_by = payload.expert_name or current_user.full_name
+    adv.expert_id = payload.expert_id or current_user.id
     adv.expert_notes = payload.expert_notes
     adv.reviewed_at = datetime.datetime.utcnow()
 
@@ -181,6 +189,7 @@ def modify_advisory(
 def reject_advisory(
     advisory_id: str,
     payload: ExpertRejectRequest,
+    current_user: Any = Depends(require_roles(["expert", "admin"])),
     db: Session = Depends(get_db)
 ):
     """Rejects an invalid or inaccurate advisory with a specified reason, setting status to 'rejected'."""

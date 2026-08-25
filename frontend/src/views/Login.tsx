@@ -1,76 +1,54 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '../App'
 import { Logo } from '../components/Logo'
 import { LANG_LABELS } from '../translations'
-import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '../lib/supabase'
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, isSupabaseConfigured } from '../lib/supabase'
+import { detectBrowserLocation, reverseGeocode } from '../lib/location'
+import { apiRequest } from '../lib/api'
 
 const SIDE_IMAGE = 'https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?w=800&h=1200&fit=crop&auto=format'
 
+export type LoginStep = 'language' | 'auth' | 'location-permission' | 'location-manual'
+
 interface LoginProps {
-  isExpert?: boolean
-  initialRole?: 'farmer' | 'expert' | 'admin'
+  initialStep?: LoginStep
+  initialMode?: 'login' | 'register'
 }
 
-export function Login({ isExpert = false, initialRole }: LoginProps) {
-  const { t, setView, lang, setLang, login } = useApp()
-  const [step, setStep] = useState<'language' | 'role' | 'auth'>('language')
-  const [selectedRole, setSelectedRole] = useState<'farmer' | 'expert' | 'admin'>(
-    initialRole || (isExpert ? 'expert' : 'farmer')
-  )
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+export function Login({ initialStep = 'language', initialMode = 'login' }: LoginProps) {
+  const { t, setView, lang, setLang, login, user: currentUser } = useApp()
+  const [step, setStep] = useState<LoginStep>(initialStep)
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode)
+
+  // Keep step synchronized if initialStep changes from parent
+  useEffect(() => {
+    setStep(initialStep)
+  }, [initialStep])
 
   // Auth fields
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  
+  // Manual location fields (strictly start EMPTY, no hardcoded defaults)
+  const [stateName, setStateName] = useState('')
+  const [districtName, setDistrictName] = useState('')
+  const [villageName, setVillageName] = useState('')
+
+  // State management for location detection and auth
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [authLoading, setAuthLoading] = useState(false)
+  const [locLoading, setLocLoading] = useState(false)
+  const [locStatusText, setLocStatusText] = useState('')
+  const [pendingToken, setPendingToken] = useState<string | null>(() => localStorage.getItem('farmassist_token'))
+  const [pendingUser, setPendingUser] = useState<any>(currentUser || null)
 
   const LANG_OPTIONS: { code: typeof lang; label: string; sub: string; flag: string }[] = [
     { code: 'en', label: 'English', sub: 'English', flag: '🇬🇧' },
     { code: 'te', label: 'తెలుగు', sub: 'Telugu', flag: '🇮🇳' },
     { code: 'ta', label: 'தமிழ்', sub: 'Tamil', flag: '🇮🇳' },
-    { code: 'hi', label: 'హిन्दी', sub: 'Hindi', flag: '🇮🇳' },
+    { code: 'hi', label: 'हिन्दी', sub: 'Hindi', flag: '🇮🇳' },
   ]
-
-  const ROLE_OPTIONS = [
-    {
-      id: 'farmer' as const,
-      icon: '🌾',
-      titleKey: 'role_farmer',
-      subKey: 'role_farmer_sub',
-      badge: 'Farmer Portal',
-      defaultEmail: 'farmer@farmassist.ai',
-      defaultPassword: 'Farmer@123456',
-    },
-    {
-      id: 'expert' as const,
-      icon: '🔬',
-      titleKey: 'role_expert',
-      subKey: 'role_expert_sub',
-      badge: 'Expert Review',
-      defaultEmail: 'expert@farmassist.ai',
-      defaultPassword: 'Expert@123456',
-    },
-    {
-      id: 'admin' as const,
-      icon: '🛡️',
-      titleKey: 'role_admin',
-      subKey: 'role_admin_sub',
-      badge: 'System Governance',
-      defaultEmail: 'admin@farmassist.ai',
-      defaultPassword: 'Admin@123456',
-    },
-  ]
-
-  const handleRoleSelect = (roleId: 'farmer' | 'expert' | 'admin') => {
-    setSelectedRole(roleId)
-    const roleOpt = ROLE_OPTIONS.find((r) => r.id === roleId)
-    if (roleOpt && !email) {
-      setEmail(roleOpt.defaultEmail)
-      setPassword(roleOpt.defaultPassword)
-    }
-  }
 
   const handleGoogleLogin = async () => {
     setErrorMsg(null)
@@ -78,11 +56,130 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
     try {
       await signInWithGoogle()
     } catch (err: any) {
-      setErrorMsg(err.message || 'Google authentication failed. Ensure Supabase Google Provider is configured.')
+      console.error('[AUTH] Google Sign In error:', err)
+      setErrorMsg(err.message || 'Google authentication failed. Please check your connection and try again.')
       setAuthLoading(false)
     }
   }
 
+  // Finalize onboarding with given location data
+  const completeUserOnboarding = async (
+    userObj: any,
+    token: string,
+    locData?: {
+      country?: string
+      state?: string
+      district?: string
+      village_or_city?: string
+      latitude?: number
+      longitude?: number
+    }
+  ) => {
+    const updatedUser = {
+      ...userObj,
+      ...(locData?.country ? { country: locData.country } : {}),
+      ...(locData?.state ? { state: locData.state } : {}),
+      ...(locData?.district ? { district: locData.district } : {}),
+      ...(locData?.village_or_city ? { village_or_city: locData.village_or_city, village: locData.village_or_city } : {}),
+      ...(locData?.latitude !== undefined ? { latitude: locData.latitude } : {}),
+      ...(locData?.longitude !== undefined ? { longitude: locData.longitude } : {}),
+      onboarding_completed: true,
+    }
+
+    // Update backend profile
+    try {
+      await apiRequest('/user/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          ...locData,
+          onboarding_completed: true,
+          preferred_language: lang,
+        }),
+      })
+    } catch (e) {
+      console.warn('[AUTH] Backend profile update note:', e)
+    }
+
+    // Call complete-onboarding endpoint
+    try {
+      await apiRequest('/user/complete-onboarding', {
+        method: 'POST',
+      })
+    } catch (e) {}
+
+    login(updatedUser, token)
+  }
+
+  // Automatic Location Detection via Browser Geolocation API & Reverse Geocoding
+  const handleAllowLocation = async () => {
+    setErrorMsg(null)
+    setLocLoading(true)
+    setLocStatusText('Requesting GPS permission from browser...')
+
+    try {
+      const coords = await detectBrowserLocation()
+      setLocStatusText('Reverse geocoding your region & climate zone...')
+      
+      const geocoded = await reverseGeocode(coords.latitude, coords.longitude)
+
+      const token = pendingToken || localStorage.getItem('farmassist_token') || 'auth_token'
+      const baseUser = pendingUser || currentUser || {
+        id: `user_${Date.now()}`,
+        email: email || 'farmer@farmassist.ai',
+        full_name: fullName || 'Farmer User',
+        role: 'farmer',
+        preferred_language: lang,
+      }
+
+      await completeUserOnboarding(baseUser, token, geocoded)
+    } catch (err: any) {
+      console.warn('[AUTH] Geolocation detection error:', err)
+      setErrorMsg(err.message || 'Location permission was denied or unavailable. Please enter your location manually.')
+      setLocLoading(false)
+      setStep('location-manual')
+    }
+  }
+
+  // Manual Location Form Submission
+  const handleManualLocationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrorMsg(null)
+    setLocLoading(true)
+
+    const token = pendingToken || localStorage.getItem('farmassist_token') || 'auth_token'
+    const baseUser = pendingUser || currentUser || {
+      id: `user_${Date.now()}`,
+      email: email || 'farmer@farmassist.ai',
+      full_name: fullName || 'Farmer User',
+      role: 'farmer',
+      preferred_language: lang,
+    }
+
+    const locData = {
+      state: stateName.trim() || undefined,
+      district: districtName.trim() || undefined,
+      village_or_city: villageName.trim() || undefined,
+    }
+
+    await completeUserOnboarding(baseUser, token, locData)
+    setLocLoading(false)
+  }
+
+  // Skip Location Option
+  const handleSkipLocation = async () => {
+    const token = pendingToken || localStorage.getItem('farmassist_token') || 'auth_token'
+    const baseUser = pendingUser || currentUser || {
+      id: `user_${Date.now()}`,
+      email: email || 'farmer@farmassist.ai',
+      full_name: fullName || 'Farmer User',
+      role: 'farmer',
+      preferred_language: lang,
+    }
+
+    await completeUserOnboarding(baseUser, token, undefined)
+  }
+
+  // Email / Password Form Submit
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg(null)
@@ -90,116 +187,147 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
 
     try {
       if (mode === 'register') {
-        // 1. Supabase Auth Sign Up
-        let token = 'demo_supabase_jwt_token'
-        let userObj: any = null
-
-        try {
-          const supRes = await signUpWithEmail(email, password, {
-            full_name: fullName || 'FarmAssist User',
-            role: selectedRole,
-            preferred_language: lang,
-          })
-
-          if (supRes?.session?.access_token) {
-            token = supRes.session.access_token
-          }
-          if (supRes?.user) {
-            userObj = {
-              id: supRes.user.id,
-              email: supRes.user.email,
-              full_name: fullName || 'FarmAssist User',
-              role: selectedRole,
-              preferred_language: lang,
-            }
-          }
-        } catch (supErr: any) {
-          logger_warn: console.warn('Supabase Auth direct signup notice:', supErr?.message)
+        if (!fullName.trim()) {
+          throw new Error('Please enter your full name.')
+        }
+        if (!email.trim()) {
+          throw new Error('Please enter a valid email address.')
+        }
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters.')
         }
 
-        // 2. Call FastAPI backend to register / sync profile
-        const res = await fetch('http://127.0.0.1:8000/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            password,
-            full_name: fullName || 'FarmAssist User',
-            role: selectedRole,
-            preferred_language: lang,
-          }),
-        })
+        let token = 'demo_jwt_token'
+        let userObj: any = null
 
-        if (res.ok) {
-          const data = await res.json()
-          userObj = data.user
-          token = data.access_token || token
+        // 1. Supabase Auth signup
+        if (isSupabaseConfigured()) {
+          try {
+            const supRes = await signUpWithEmail(email, password, {
+              full_name: fullName,
+              preferred_language: lang,
+            })
+
+            if (supRes?.session?.access_token) {
+              token = supRes.session.access_token
+            }
+            if (supRes?.user) {
+              userObj = {
+                id: supRes.user.id,
+                email: supRes.user.email,
+                full_name: fullName,
+                role: 'farmer',
+                preferred_language: lang,
+                onboarding_completed: false,
+              }
+            }
+          } catch (supErr: any) {
+            console.warn('[AUTH] Supabase Auth direct signup notice:', supErr?.message)
+            if (supErr.message && (supErr.message.includes('already registered') || supErr.message.includes('already exists'))) {
+              throw supErr
+            }
+          }
+        }
+
+        // 2. Call FastAPI backend to register
+        try {
+          const backendData = await apiRequest('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({
+              email,
+              password,
+              full_name: fullName,
+              preferred_language: lang,
+            }),
+          })
+          if (backendData?.user) {
+            userObj = backendData.user
+            token = backendData.access_token || token
+          }
+        } catch (apiErr: any) {
+          console.warn('[AUTH] Backend register call notice:', apiErr)
+          if (!userObj) {
+            throw apiErr
+          }
         }
 
         if (!userObj) {
           userObj = {
             id: `user_${Date.now()}`,
             email: email,
-            full_name: fullName || 'FarmAssist User',
-            role: selectedRole,
+            full_name: fullName,
+            role: 'farmer',
             preferred_language: lang,
+            onboarding_completed: false,
           }
         }
 
-        login(userObj, token)
+        // Save token and pending user, then proceed to automatic location permission screen
+        localStorage.setItem('farmassist_token', token)
+        setPendingToken(token)
+        setPendingUser(userObj)
+        setStep('location-permission')
       } else {
-        // Login mode
-        let token = 'demo_supabase_jwt_token'
+        // Sign In mode
+        let token = 'demo_jwt_token'
         let userObj: any = null
 
-        try {
-          const supRes = await signInWithEmail(email, password)
-          if (supRes?.session?.access_token) {
-            token = supRes.session.access_token
-          }
-          if (supRes?.user) {
-            userObj = {
-              id: supRes.user.id,
-              email: supRes.user.email,
-              full_name: supRes.user.user_metadata?.full_name || (selectedRole === 'admin' ? 'Administrator' : selectedRole === 'expert' ? 'Dr. Anand Sharma' : 'Raju Reddy'),
-              role: selectedRole,
-              preferred_language: lang,
+        if (isSupabaseConfigured()) {
+          try {
+            const supRes = await signInWithEmail(email, password)
+            if (supRes?.session?.access_token) {
+              token = supRes.session.access_token
+            }
+          } catch (supErr: any) {
+            console.warn('[AUTH] Supabase direct sign-in notice:', supErr?.message)
+            if (supErr.message && (supErr.message.includes('Invalid') || supErr.message.includes('credentials'))) {
+              throw supErr
             }
           }
-        } catch (supErr: any) {
-          console.warn('Supabase direct password sign-in notice:', supErr?.message)
         }
 
-        const res = await fetch('http://127.0.0.1:8000/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            password,
-            role: selectedRole,
-          }),
-        })
-
-        if (res.ok) {
-          const data = await res.json()
-          userObj = data.user
-          token = data.access_token || token
+        try {
+          const backendData = await apiRequest('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({
+              email,
+              password,
+            }),
+          })
+          if (backendData?.user) {
+            userObj = backendData.user
+            token = backendData.access_token || token
+          }
+        } catch (apiErr: any) {
+          console.warn('[AUTH] Backend login call notice:', apiErr)
+          if (!token || token === 'demo_jwt_token') {
+            throw apiErr
+          }
         }
 
         if (!userObj) {
           userObj = {
             id: `user_${Date.now()}`,
-            email: email || `${selectedRole}@farmassist.ai`,
-            full_name: selectedRole === 'admin' ? 'Administrator' : selectedRole === 'expert' ? 'Dr. Anand Sharma' : 'Raju Reddy',
-            role: selectedRole,
+            email: email || 'farmer@farmassist.ai',
+            full_name: 'Farmer User',
+            role: 'farmer',
             preferred_language: lang,
+            onboarding_completed: true,
           }
         }
 
-        login(userObj, token)
+        // Check onboarding status
+        if (userObj.onboarding_completed === false && !userObj.district && !userObj.latitude) {
+          setPendingToken(token)
+          setPendingUser(userObj)
+          setStep('location-permission')
+        } else {
+          login(userObj, token)
+        }
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Authentication failed. Please check credentials.')
+      console.error('[AUTH] Auth error:', err)
+      setErrorMsg(err.message || 'Authentication failed. Please verify your connection and try again.')
     } finally {
       setAuthLoading(false)
     }
@@ -241,17 +369,17 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
         <div className="w-full max-w-sm">
           {/* Logo + nav */}
           <div className="flex items-center justify-between mb-8">
-            <button onClick={() => setView('landing')}>
+            <button onClick={() => setView('landing')} className="cursor-pointer">
               <Logo size={28} />
             </button>
           </div>
 
+          {/* STEP 1: PROMINENT LANGUAGE SELECTION */}
           {step === 'language' && (
-            /* STEP 1: PROMINENT LANGUAGE SELECTION */
             <div className="space-y-6 step-in">
               <div>
                 <div className="inline-block text-xs font-semibold uppercase tracking-wider text-leaf bg-leaf/10 px-2.5 py-1 rounded-md mb-2">
-                  {t('auth_step_1_of_2')}
+                  Step 1 of 2
                 </div>
                 <h1 className="font-display text-2xl text-charcoal font-bold mb-1">
                   {t('choose_language_title')}
@@ -268,7 +396,7 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
                     <button
                       key={opt.code}
                       onClick={() => setLang(opt.code)}
-                      className={`flex items-center justify-between p-4 rounded-xl border text-left transition-all ${
+                      className={`flex items-center justify-between p-4 rounded-xl border text-left transition-all cursor-pointer ${
                         isSelected
                           ? 'border-forest bg-forest/8 ring-2 ring-forest/30 shadow-sm'
                           : 'border-pebble bg-white hover:border-sage hover:bg-mist/50'
@@ -296,73 +424,6 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
               </div>
 
               <button
-                onClick={() => setStep('role')}
-                className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>{t('auth_continue')}</span>
-                <span>→</span>
-              </button>
-            </div>
-          )}
-
-          {step === 'role' && (
-            /* STEP 2: ROLE SELECTION */
-            <div className="space-y-6 step-in">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="inline-block text-xs font-semibold uppercase tracking-wider text-leaf bg-leaf/10 px-2.5 py-1 rounded-md mb-2">
-                    {t('auth_step_2_of_3')}
-                  </div>
-                  <h1 className="font-display text-2xl text-charcoal font-bold mb-1">
-                    {t('role_select_title')}
-                  </h1>
-                  <p className="text-sage text-sm">
-                    {t('role_select_sub')}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setStep('language')}
-                  className="text-xs text-leaf hover:underline font-medium"
-                >
-                  🌐 {LANG_LABELS[lang].split(' — ')[0]}
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {ROLE_OPTIONS.map((r) => {
-                  const isSelected = selectedRole === r.id
-                  return (
-                    <button
-                      key={r.id}
-                      onClick={() => handleRoleSelect(r.id)}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-forest bg-forest/8 ring-2 ring-forest/30 shadow-sm'
-                          : 'border-pebble bg-white hover:border-sage hover:bg-mist/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3.5">
-                        <span className="text-2xl">{r.icon}</span>
-                        <div>
-                          <div className="font-semibold text-charcoal text-base">
-                            {t(r.titleKey)}
-                          </div>
-                          <div className="text-sage text-xs mt-0.5">
-                            {t(r.subKey)}
-                          </div>
-                        </div>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                        isSelected ? 'border-forest bg-forest text-white' : 'border-pebble'
-                      }`}>
-                        {isSelected && <span className="text-xs">✓</span>}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              <button
                 onClick={() => setStep('auth')}
                 className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
@@ -372,23 +433,23 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
             </div>
           )}
 
+          {/* STEP 2: CREDENTIALS SIGN-IN / REGISTER */}
           {step === 'auth' && (
-            /* STEP 3: CREDENTIALS SIGN-IN / REGISTER WITH SUPABASE AUTH & GOOGLE OAUTH */
             <div className="step-in space-y-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-mono uppercase tracking-wider text-leaf font-bold">
-                    {selectedRole === 'admin' ? '🛡️ Admin Portal' : selectedRole === 'expert' ? '🔬 Expert Portal' : '🌾 Farmer Portal'}
-                  </span>
                   <h1 className="font-display text-2xl text-charcoal font-bold mt-0.5">
                     {mode === 'login' ? t('auth_title') : 'Create Account'}
                   </h1>
+                  <p className="text-sage text-xs">
+                    Sign in to access your farm intelligence portal
+                  </p>
                 </div>
                 <button
-                  onClick={() => setStep('role')}
-                  className="text-xs text-leaf hover:underline font-medium"
+                  onClick={() => setStep('language')}
+                  className="text-xs text-leaf hover:underline font-medium cursor-pointer"
                 >
-                  (Change Role)
+                  🌐 {LANG_LABELS[lang].split(' — ')[0]}
                 </button>
               </div>
 
@@ -401,6 +462,8 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
               {/* Google OAuth Login Button */}
               <button
                 type="button"
+                id="google-signin-btn"
+                disabled={authLoading}
                 onClick={handleGoogleLogin}
                 className="w-full py-3 px-4 border border-pebble bg-white hover:bg-mist/50 rounded-xl text-charcoal font-semibold text-sm flex items-center justify-center gap-3 transition-colors shadow-sm cursor-pointer"
               >
@@ -410,38 +473,38 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                 </svg>
-                <span>Continue with Google</span>
+                <span>{authLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
               </button>
 
               <div className="flex items-center gap-3 my-1">
                 <div className="flex-1 h-px bg-pebble"></div>
-                <span className="text-xs font-mono text-sage uppercase">or sign in with email</span>
+                <span className="text-xs font-mono text-sage uppercase">or continue with email</span>
                 <div className="flex-1 h-px bg-pebble"></div>
               </div>
 
-              {/* Mode Toggle for Farmers */}
-              {selectedRole === 'farmer' && (
-                <div className="flex bg-mist p-1 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => setMode('login')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      mode === 'login' ? 'bg-white text-charcoal shadow-sm' : 'text-sage'
-                    }`}
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode('register')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      mode === 'register' ? 'bg-white text-charcoal shadow-sm' : 'text-sage'
-                    }`}
-                  >
-                    Register
-                  </button>
-                </div>
-              )}
+              {/* Mode Toggle */}
+              <div className="flex bg-mist p-1 rounded-xl">
+                <button
+                  type="button"
+                  id="tab-signin"
+                  onClick={() => { setMode('login'); setErrorMsg(null); }}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    mode === 'login' ? 'bg-white text-charcoal shadow-sm font-semibold' : 'text-sage'
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  id="tab-register"
+                  onClick={() => { setMode('register'); setErrorMsg(null); }}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    mode === 'register' ? 'bg-white text-charcoal shadow-sm font-semibold' : 'text-sage'
+                  }`}
+                >
+                  Create Account
+                </button>
+              </div>
 
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 {mode === 'register' && (
@@ -452,6 +515,7 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
                     <input
                       type="text"
                       required
+                      id="input-fullname"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Raju Reddy"
@@ -462,14 +526,15 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
 
                 <div>
                   <label className="block text-xs font-medium text-sage mb-1 uppercase tracking-wide">
-                    {t('auth_mobile')} / Email
+                    Email Address
                   </label>
                   <input
-                    type="text"
+                    type="email"
                     required
+                    id="input-email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={selectedRole === 'admin' ? 'admin@farmassist.ai' : selectedRole === 'expert' ? 'expert@farmassist.ai' : 'farmer@farmassist.ai'}
+                    placeholder="farmer@farmassist.ai"
                     className="w-full px-4 py-3 rounded-lg border border-pebble bg-white text-charcoal placeholder:text-sage/50 text-sm focus:outline-none focus:ring-2 focus:ring-leaf/40"
                   />
                 </div>
@@ -481,6 +546,7 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
                   <input
                     type="password"
                     required
+                    id="input-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
@@ -490,29 +556,160 @@ export function Login({ isExpert = false, initialRole }: LoginProps) {
 
                 <button
                   type="submit"
+                  id="submit-auth-btn"
                   disabled={authLoading}
                   className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md cursor-pointer"
                 >
-                  {authLoading ? 'Authenticating with Supabase...' : mode === 'register' ? 'Complete Registration' : t('auth_signin')}
+                  {authLoading ? 'Authenticating...' : mode === 'register' ? 'Continue to Location' : t('auth_signin')}
                 </button>
               </form>
+            </div>
+          )}
 
-              {/* Quick default credential button */}
-              <div className="pt-2 border-t border-pebble/60 text-center">
+          {/* STEP 3: AUTOMATIC LOCATION PERMISSION REQUEST */}
+          {step === 'location-permission' && (
+            <div className="step-in space-y-6 text-center">
+              <div className="w-16 h-16 bg-forest/10 text-forest rounded-full flex items-center justify-center mx-auto text-3xl shadow-sm">
+                📍
+              </div>
+
+              <div>
+                <h1 className="font-display text-2xl text-charcoal font-bold mb-2">
+                  Enable Location
+                </h1>
+                <p className="text-sage text-sm leading-relaxed max-w-xs mx-auto">
+                  FarmAssist AI uses your location to provide local weather, climate analysis, and farming recommendations.
+                </p>
+              </div>
+
+              {errorMsg && (
+                <div className="p-3 bg-risk/10 border border-risk/30 text-risk text-xs rounded-xl text-left">
+                  {errorMsg}
+                </div>
+              )}
+
+              {locLoading && (
+                <div className="p-4 bg-mist/80 border border-pebble/60 rounded-xl flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-2 border-forest border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-xs text-charcoal font-medium">{locStatusText || 'Detecting GPS location...'}</span>
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    const r = ROLE_OPTIONS.find((opt) => opt.id === selectedRole)
-                    if (r) {
-                      setEmail(r.defaultEmail)
-                      setPassword(r.defaultPassword)
-                    }
-                  }}
-                  className="text-xs text-sage hover:text-charcoal underline"
+                  id="allow-location-btn"
+                  disabled={locLoading}
+                  onClick={handleAllowLocation}
+                  className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  Use Default {selectedRole.toUpperCase()} Credentials ({selectedRole === 'admin' ? 'admin@farmassist.ai' : selectedRole === 'expert' ? 'expert@farmassist.ai' : 'farmer@farmassist.ai'})
+                  <span>Allow Location Access</span>
+                  <span>🛰</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="manual-location-btn"
+                  disabled={locLoading}
+                  onClick={() => setStep('location-manual')}
+                  className="w-full py-3 px-4 border border-pebble bg-white hover:bg-mist/50 rounded-xl text-charcoal font-medium text-sm transition-colors cursor-pointer"
+                >
+                  Enter Location Manually
+                </button>
+
+                <button
+                  type="button"
+                  id="skip-location-btn"
+                  disabled={locLoading}
+                  onClick={handleSkipLocation}
+                  className="text-xs text-sage hover:text-charcoal transition-colors pt-2 block mx-auto underline cursor-pointer"
+                >
+                  Skip for now (Weather & location-based analysis will be unavailable)
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* STEP 4: MANUAL LOCATION FORM (ONLY WHEN EXPLICITLY CHOSEN OR GEOLOCATION FAILS) */}
+          {step === 'location-manual' && (
+            <div className="step-in space-y-6">
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setStep('location-permission')}
+                  className="text-xs text-leaf hover:underline font-medium mb-3 flex items-center gap-1 cursor-pointer"
+                >
+                  <span>←</span>
+                  <span>Back to Automatic Detection</span>
+                </button>
+                <h1 className="font-display text-2xl text-charcoal font-bold mb-1">
+                  Enter Your Farm Location
+                </h1>
+                <p className="text-sage text-sm">
+                  Specify your region to configure regional weather and crop analysis.
+                </p>
+              </div>
+
+              {errorMsg && (
+                <div className="p-3 bg-risk/10 border border-risk/30 text-risk text-xs rounded-xl">
+                  {errorMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleManualLocationSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-sage mb-1 uppercase tracking-wide">
+                    State
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    id="manual-state"
+                    value={stateName}
+                    onChange={(e) => setStateName(e.target.value)}
+                    placeholder="e.g. Andhra Pradesh, Tamil Nadu, Punjab"
+                    className="w-full px-4 py-3 rounded-lg border border-pebble bg-white text-charcoal placeholder:text-sage/40 text-sm focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-sage mb-1 uppercase tracking-wide">
+                    District
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    id="manual-district"
+                    value={districtName}
+                    onChange={(e) => setDistrictName(e.target.value)}
+                    placeholder="e.g. Kakinada, Chennai, Ludhiana"
+                    className="w-full px-4 py-3 rounded-lg border border-pebble bg-white text-charcoal placeholder:text-sage/40 text-sm focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-sage mb-1 uppercase tracking-wide">
+                    Village / City
+                  </label>
+                  <input
+                    type="text"
+                    id="manual-village"
+                    value={villageName}
+                    onChange={(e) => setVillageName(e.target.value)}
+                    placeholder="e.g. Samalkota, Guindy, Khanna"
+                    className="w-full px-4 py-3 rounded-lg border border-pebble bg-white text-charcoal placeholder:text-sage/40 text-sm focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  id="save-manual-location-btn"
+                  disabled={locLoading}
+                  className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer mt-2"
+                >
+                  {locLoading ? 'Saving Location...' : 'Save Location & Continue'}
+                </button>
+              </form>
             </div>
           )}
         </div>

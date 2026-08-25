@@ -104,11 +104,11 @@ def create_user_by_admin(payload: UserCreate, db: Session = Depends(get_db)):
         hashed_password=hash_password(payload.password),
         full_name=payload.full_name,
         role=role,
-        country=payload.country or "India",
-        state=payload.state or "Andhra Pradesh",
-        district=payload.district or "Kakinada",
-        city_town=payload.city_town or "Kakinada",
-        village=payload.village or "Samalkota",
+        country=payload.country or None,
+        state=payload.state or None,
+        district=payload.district or None,
+        city_town=payload.city_town or None,
+        village=payload.village or None,
         preferred_language=payload.preferred_language or "en",
         is_active=True
     )

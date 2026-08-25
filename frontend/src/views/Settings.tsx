@@ -66,55 +66,91 @@ function Toggle({ label, description, defaultOn = false }: { label: string; desc
 }
 
 export function Settings() {
-  const { t, lang, setLang, setView, updateUser } = useApp()
+  const { t, lang, setLang, setView, updateUser, user } = useApp()
   const [activeSection, setActiveSection] = useState<Section>('profile')
   const [textSize, setTextSize] = useState<'normal' | 'large' | 'xl'>('normal')
   const [notifMethod, setNotifMethod] = useState<'sms' | 'app' | 'both'>('both')
+  const [locDetecting, setLocDetecting] = useState(false)
+  const [locMessage, setLocMessage] = useState<string | null>(null)
 
   const handleLanguageChange = (newLang: Lang) => {
     setLang(newLang)
   }
 
-  const [profileState, setProfileState] = useState(() => {
-    const raw = localStorage.getItem('farmassist_user')
-    if (raw) {
-      try {
-        const u = JSON.parse(raw)
-        return u.state || 'Andhra Pradesh'
-      } catch (e) {}
+  const [profileName, setProfileName] = useState(user?.display_name || user?.full_name || 'Farmer User')
+  const [profileState, setProfileState] = useState(user?.state || '')
+  const [profileDistrict, setProfileDistrict] = useState(user?.district || '')
+  const [profileVillage, setProfileVillage] = useState(user?.village_or_city || user?.village || '')
+
+  const handleDetectGPS = async () => {
+    setLocDetecting(true)
+    setLocMessage('Requesting GPS location from browser...')
+    try {
+      const coords = await detectBrowserLocation()
+      setLocMessage('Reverse geocoding coordinates...')
+      const geocoded = await reverseGeocode(coords.latitude, coords.longitude)
+
+      setProfileState(geocoded.state || '')
+      setProfileDistrict(geocoded.district || '')
+      setProfileVillage(geocoded.village_or_city || '')
+
+      const updated = {
+        state: geocoded.state,
+        district: geocoded.district,
+        village_or_city: geocoded.village_or_city,
+        village: geocoded.village_or_city,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        country: geocoded.country,
+        onboarding_completed: true,
+      }
+
+      updateUser(updated)
+
+      const token = localStorage.getItem('farmassist_token')
+      await fetch('http://127.0.0.1:8000/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(updated)
+      })
+
+      setLocMessage(`📍 GPS Location successfully updated: ${geocoded.district || ''}, ${geocoded.state || ''} (${coords.latitude.toFixed(2)}°, ${coords.longitude.toFixed(2)}°)`)
+    } catch (err: any) {
+      setLocMessage(`❌ ${err.message || 'GPS location detection failed.'}`)
+    } finally {
+      setLocDetecting(false)
     }
-    return 'Andhra Pradesh'
-  })
+  }
 
-  const [profileDistrict, setProfileDistrict] = useState(() => {
-    const raw = localStorage.getItem('farmassist_user')
-    if (raw) {
-      try {
-        const u = JSON.parse(raw)
-        return u.district || 'Kakinada'
-      } catch (e) {}
-    }
-    return 'Kakinada'
-  })
-
-  const [profileVillage, setProfileVillage] = useState('Samalkota')
-
-  const handleSaveLocation = () => {
+  const handleSaveLocation = async () => {
     const updated = {
-      state: profileState,
-      district: profileDistrict,
-      village: profileVillage,
-      location: `${profileDistrict}, ${profileState}`
+      state: profileState.trim() || undefined,
+      district: profileDistrict.trim() || undefined,
+      village_or_city: profileVillage.trim() || undefined,
+      village: profileVillage.trim() || undefined,
+      full_name: profileName.trim() || undefined,
+      display_name: profileName.trim() || undefined,
+      onboarding_completed: true,
     }
     updateUser(updated)
 
-    fetch('http://127.0.0.1:8000/api/user/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated)
-    }).catch(() => {})
-
-    alert(`Location saved: ${profileDistrict}, ${profileState}. Farm analysis updated!`)
+    const token = localStorage.getItem('farmassist_token')
+    try {
+      await fetch('http://127.0.0.1:8000/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(updated)
+      })
+      setLocMessage(`✅ Location saved: ${profileDistrict || 'Custom'}, ${profileState || ''}. Weather and farm analysis updated!`)
+    } catch (e) {
+      setLocMessage('Location saved locally.')
+    }
   }
 
   const renderSection = () => {
@@ -125,16 +161,19 @@ export function Settings() {
             {/* Avatar */}
             <div className="flex items-center gap-5">
               <div className="relative">
-                <div className="w-20 h-20 rounded-full bg-forest text-cream text-3xl font-medium flex items-center justify-center">
-                  R
+                <div className="w-20 h-20 rounded-full bg-forest text-cream text-3xl font-medium flex items-center justify-center overflow-hidden">
+                  {user?.avatar_url ? (
+                    <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    (profileName || user?.email || 'F')[0].toUpperCase()
+                  )}
                 </div>
-                <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-leaf text-cream rounded-full flex items-center justify-center text-xs shadow hover:bg-forest transition-colors cursor-pointer">
-                  ✎
-                </button>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-charcoal">Raju Reddy</h3>
-                <p className="text-xs text-sage font-mono">Farmer ID: farmer_001 · {profileDistrict}, {profileState}</p>
+                <h3 className="text-xl font-bold text-charcoal">{profileName}</h3>
+                <p className="text-xs text-sage font-mono">
+                  {user?.email || 'farmer@farmassist.ai'} · Role: <span className="capitalize font-semibold text-leaf">{user?.role || 'Farmer'}</span>
+                </p>
                 <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-leaf/10 text-leaf text-xs rounded-md font-semibold">
                   <span>🌐 App Language:</span>
                   <span>{LANG_LABELS[lang]}</span>
@@ -142,58 +181,83 @@ export function Settings() {
               </div>
             </div>
 
-            <div className="bg-white border border-pebble rounded-xl px-5 py-4 space-y-4">
-              <div className="text-xs font-mono uppercase tracking-widest text-sage border-b border-pebble/40 pb-2 font-semibold">
-                Farmer & Location Profile
-              </div>
-              <Field label="Full Name" value="Raju Reddy" />
-              <Field label="Mobile Number" value="+91 9876543210" />
-
-              <div className="py-2 border-b border-pebble/60">
-                <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">State</label>
-                <select
-                  value={profileState}
-                  onChange={(e) => setProfileState(e.target.value)}
-                  className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2 focus:outline-none"
+            {/* GPS Location & Live Status */}
+            <div className="bg-white border border-pebble rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-pebble/40 pb-3">
+                <div>
+                  <div className="text-xs font-mono uppercase tracking-widest text-sage font-semibold">
+                    Farm Location & Geolocation
+                  </div>
+                  <p className="text-xs text-charcoal/70 mt-0.5">
+                    Used for localized weather, climate zones, and soil intelligence.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  id="settings-detect-gps-btn"
+                  disabled={locDetecting}
+                  onClick={handleDetectGPS}
+                  className="px-3.5 py-2 bg-forest text-cream font-semibold rounded-lg hover:bg-leaf transition-colors text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
-                  <option value="Andhra Pradesh">Andhra Pradesh</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="Telangana">Telangana</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Kerala">Kerala</option>
-                </select>
+                  <span>{locDetecting ? 'Detecting...' : 'Detect GPS Location'}</span>
+                  <span>🛰</span>
+                </button>
               </div>
 
-              <div className="py-2 border-b border-pebble/60">
-                <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">District / City</label>
-                <input
-                  type="text"
-                  value={profileDistrict}
-                  onChange={(e) => setProfileDistrict(e.target.value)}
-                  placeholder="e.g. Kakinada or Chennai"
-                  className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2 focus:outline-none"
-                />
+              {locMessage && (
+                <div className="p-3 bg-mist border border-pebble text-xs rounded-lg font-medium text-charcoal">
+                  {locMessage}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">State</label>
+                  <input
+                    type="text"
+                    id="settings-state"
+                    value={profileState}
+                    onChange={(e) => setProfileState(e.target.value)}
+                    placeholder="e.g. Andhra Pradesh, Tamil Nadu"
+                    className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">District</label>
+                  <input
+                    type="text"
+                    id="settings-district"
+                    value={profileDistrict}
+                    onChange={(e) => setProfileDistrict(e.target.value)}
+                    placeholder="e.g. Kakinada, Chennai"
+                    className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">Village / City / Locality</label>
+                  <input
+                    type="text"
+                    id="settings-village"
+                    value={profileVillage}
+                    onChange={(e) => setProfileVillage(e.target.value)}
+                    placeholder="e.g. Samalkota, Guindy"
+                    className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  />
+                </div>
               </div>
 
-              <div className="py-2 border-b border-pebble/60">
-                <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">Village / Town</label>
-                <input
-                  type="text"
-                  value={profileVillage}
-                  onChange={(e) => setProfileVillage(e.target.value)}
-                  className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2 focus:outline-none"
-                />
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  id="settings-save-location-btn"
+                  onClick={handleSaveLocation}
+                  className="px-5 py-2.5 bg-forest text-cream font-semibold rounded-lg hover:bg-leaf transition-colors text-sm shadow cursor-pointer"
+                >
+                  Save Location & Update Weather
+                </button>
               </div>
-            </div>
-
-            <div className="bg-mist/60 border border-pebble rounded-xl p-4 flex items-center justify-between text-xs text-sage">
-              <span>📍 Changing location automatically updates live weather, climate context, soil baselines, and crop recommendations.</span>
-              <button
-                onClick={handleSaveLocation}
-                className="px-4 py-2 bg-forest text-cream font-semibold rounded-lg hover:bg-leaf transition-colors flex-shrink-0 ml-3 cursor-pointer"
-              >
-                Save Location
-              </button>
             </div>
           </div>
         )
@@ -201,22 +265,110 @@ export function Settings() {
       case 'farm':
         return (
           <div className="space-y-6">
-            <div className="bg-white border border-pebble rounded-xl px-5 py-1">
-              <Field label="Farm Name" value="Reddy Agri Farm" />
-              <Field label="Total Area" value="4.2 acres" />
-              <Field label="Survey Number" value="142/3B, 142/3C" />
-              <Field label="Current Crop" value="Paddy (Kharif 2026)" />
-              <Field label="Soil Type" value="Clay Loam" />
-              <Field label="Irrigation Method" value="Drip + Sprinkler" />
-              <Field label="Water Source" value="Canal + Borewell" />
-              <Field label="Sowing Date" value="15 June 2026" />
+            <div className="bg-white border border-pebble rounded-2xl p-6 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-pebble/60 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-charcoal">Farm Configuration & Agronomic Baseline</h3>
+                  <p className="text-sage text-xs">Used across My Farm, crop suitability, and advisory telemetry.</p>
+                </div>
+                <button
+                  onClick={() => setView('farm')}
+                  className="text-xs text-leaf font-semibold hover:underline cursor-pointer"
+                >
+                  Go to My Farm →
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="text-sage uppercase font-mono block mb-1">Farm Name</label>
+                  <input
+                    type="text"
+                    value={user?.farm_name || ''}
+                    onChange={(e) => updateUser({ farm_name: e.target.value })}
+                    placeholder="e.g. Green Valley Farm"
+                    className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/30 text-charcoal font-medium text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sage uppercase font-mono block mb-1">Total Farm Size</label>
+                  <input
+                    type="text"
+                    value={user?.farm_size || ''}
+                    onChange={(e) => updateUser({ farm_size: e.target.value })}
+                    placeholder="e.g. 4.5 acres"
+                    className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/30 text-charcoal font-medium text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sage uppercase font-mono block mb-1">Current Primary Crop</label>
+                  <input
+                    type="text"
+                    value={user?.current_crop || ''}
+                    onChange={(e) => updateUser({ current_crop: e.target.value })}
+                    placeholder="e.g. Paddy (Rice), Cotton, Wheat"
+                    className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/30 text-charcoal font-medium text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sage uppercase font-mono block mb-1">Soil Classification</label>
+                  <input
+                    type="text"
+                    value={user?.soil_type || ''}
+                    onChange={(e) => updateUser({ soil_type: e.target.value })}
+                    placeholder="e.g. Clay Loam, Black Soil, Red Sandy"
+                    className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/30 text-charcoal font-medium text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sage uppercase font-mono block mb-1">Irrigation Method</label>
+                  <input
+                    type="text"
+                    value={user?.irrigation_method || ''}
+                    onChange={(e) => updateUser({ irrigation_method: e.target.value })}
+                    placeholder="e.g. Drip + Sprinkler, Flood Irrigation"
+                    className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/30 text-charcoal font-medium text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sage uppercase font-mono block mb-1">Sowing Date</label>
+                  <input
+                    type="text"
+                    value={user?.sowing_date || ''}
+                    onChange={(e) => updateUser({ sowing_date: e.target.value })}
+                    placeholder="e.g. 15 June 2026"
+                    className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/30 text-charcoal font-medium text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sage uppercase font-mono block mb-1">Water Source</label>
+                  <input
+                    type="text"
+                    value={user?.water_source || ''}
+                    onChange={(e) => updateUser({ water_source: e.target.value })}
+                    placeholder="e.g. Canal + Borewell"
+                    className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/30 text-charcoal font-medium text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sage uppercase font-mono block mb-1">Survey / Plot Number</label>
+                  <input
+                    type="text"
+                    value={user?.survey_number || ''}
+                    onChange={(e) => updateUser({ survey_number: e.target.value })}
+                    placeholder="e.g. 142/3B"
+                    className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/30 text-charcoal font-medium text-xs focus:outline-none"
+                  />
+                </div>
+              </div>
             </div>
-            <button
-              onClick={() => setView('farm')}
-              className="text-sm text-leaf hover:text-forest transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              View full farm profile →
-            </button>
           </div>
         )
 

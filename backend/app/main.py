@@ -28,6 +28,17 @@ def migrate_sqlite_columns():
         ("advisories", "weather_impact", "TEXT"),
         ("advisories", "original_ai_advisory", "TEXT"),
         ("advisories", "expert_id", "VARCHAR(255)"),
+        ("users", "phone", "VARCHAR(50)"),
+        ("users", "farm_name", "VARCHAR(255)"),
+        ("users", "farm_size", "VARCHAR(100)"),
+        ("users", "current_crop", "VARCHAR(100)"),
+        ("users", "soil_type", "VARCHAR(100)"),
+        ("users", "irrigation_method", "VARCHAR(100)"),
+        ("users", "sowing_date", "VARCHAR(100)"),
+        ("users", "crop_stage", "VARCHAR(100)"),
+        ("users", "experience_years", "VARCHAR(50)"),
+        ("users", "water_source", "VARCHAR(100)"),
+        ("users", "survey_number", "VARCHAR(100)"),
     ]
 
     with engine.connect() as conn:
@@ -43,31 +54,51 @@ def migrate_sqlite_columns():
 
 def seed_default_users():
     """Seeds initial Admin, Expert, and Farmer accounts if not present."""
-    import os
     from app.core.database import SessionLocal
     from app.models.user import User
     from app.core.security import hash_password, verify_password
 
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@farmassist.ai")
-    admin_password = os.getenv("ADMIN_PASSWORD", "Admin@123456")
+    # Predefined Primary Administrator Account
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
+    primary_admin_pass = "Charan@123"
 
     db = SessionLocal()
     try:
-        # 1. Admin Account
-        admin = db.query(User).filter(User.email == admin_email).first()
+        # 1. Primary Admin Account
+        admin = db.query(User).filter(User.email == primary_admin_email).first()
         if not admin:
             admin = User(
-                email=admin_email,
-                hashed_password=hash_password(admin_password),
-                full_name="System Administrator",
+                email=primary_admin_email,
+                hashed_password=hash_password(primary_admin_pass),
+                full_name="Charan Kumar Reddy",
+                display_name="Charan Kumar Reddy",
                 role="admin",
                 preferred_language="en",
                 is_active=True
             )
             db.add(admin)
-            logger.info(f"Seeded default admin account: {admin_email}")
+            logger.info(f"Seeded primary admin account: {primary_admin_email}")
+        else:
+            # Ensure role and password are up to date
+            admin.role = "admin"
+            if not verify_password(primary_admin_pass, admin.hashed_password):
+                admin.hashed_password = hash_password(primary_admin_pass)
+            db.add(admin)
 
-        # 2. Expert Account
+        # 2. General Admin Account (fallback)
+        fallback_admin = db.query(User).filter(User.email == "admin@farmassist.ai").first()
+        if not fallback_admin:
+            fallback_admin = User(
+                email="admin@farmassist.ai",
+                hashed_password=hash_password("Admin@123456"),
+                full_name="System Administrator",
+                role="admin",
+                preferred_language="en",
+                is_active=True
+            )
+            db.add(fallback_admin)
+
+        # 3. Expert Account
         expert = db.query(User).filter(User.email == "expert@farmassist.ai").first()
         if not expert:
             expert = User(
@@ -79,9 +110,8 @@ def seed_default_users():
                 is_active=True
             )
             db.add(expert)
-            logger.info("Seeded default expert account: expert@farmassist.ai")
 
-        # 3. Farmer Account
+        # 4. Farmer Account
         farmer = db.query(User).filter(User.email == "farmer@farmassist.ai").first()
         if not farmer:
             farmer = User(
@@ -92,10 +122,6 @@ def seed_default_users():
                 preferred_language="en",
                 is_active=True
             )
-            db.add(farmer)
-            logger.info("Seeded default farmer account: farmer@farmassist.ai")
-        elif farmer.hashed_password == "default_hash" or not verify_password("Farmer@123456", farmer.hashed_password):
-            farmer.hashed_password = hash_password("Farmer@123456")
             db.add(farmer)
 
         db.commit()
@@ -129,14 +155,14 @@ app = FastAPI(
 )
 
 # Configure CORS Middleware for Frontend Integration
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include API Router
 app.include_router(api_router, prefix=settings.API_V1_STR)

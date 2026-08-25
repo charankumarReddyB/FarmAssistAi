@@ -2,32 +2,44 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../App'
 
 export function TopBar() {
-  const { t, setView } = useApp()
+  const { t, setView, user } = useApp()
   const [temp, setTemp] = useState<number | string>('32°C')
-  const [userLocation, setUserLocation] = useState<string>('Kakinada, Andhra Pradesh')
+
+  const hasLocation = Boolean(user?.district || user?.state || (user?.latitude !== undefined && user?.latitude !== null))
+  const userLocation = user?.district && user?.state
+    ? `${user.district}, ${user.state}`
+    : user?.district || user?.state || 'Location Not Set'
+
+  const userInitial = (user?.display_name || user?.full_name || user?.email || 'F')[0].toUpperCase()
 
   useEffect(() => {
-    // Read saved user location
-    const userJson = localStorage.getItem('farmassist_user')
-    if (userJson) {
-      try {
-        const userObj = JSON.parse(userJson)
-        if (userObj.district && userObj.state) {
-          setUserLocation(`${userObj.district}, ${userObj.state}`)
-        }
-      } catch (e) {}
+    if (!hasLocation && user?.latitude === undefined && user?.latitude === null) {
+      setTemp('--°C')
+      return
     }
 
-    // Fetch live location weather from backend
-    fetch('http://127.0.0.1:8000/api/weather')
+    const query = user?.latitude !== undefined && user?.latitude !== null && user?.longitude !== undefined && user?.longitude !== null
+      ? `latitude=${user.latitude}&longitude=${user.longitude}`
+      : user?.district
+      ? `location=${encodeURIComponent(user.district)}`
+      : ''
+
+    if (!query) {
+      setTemp('--°C')
+      return
+    }
+
+    fetch(`http://127.0.0.1:8000/api/weather?${query}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.temperature !== undefined) {
+        if (data && data.temperature !== undefined && data.temperature !== null) {
           setTemp(`${data.temperature}°C`)
+        } else {
+          setTemp('--°C')
         }
       })
-      .catch(() => {})
-  }, [])
+      .catch(() => setTemp('--°C'))
+  }, [user?.latitude, user?.longitude, user?.district, user?.state, hasLocation])
 
   return (
     <header className="flex-shrink-0 h-14 bg-cream border-b border-pebble flex items-center px-6 gap-4">
@@ -76,8 +88,16 @@ export function TopBar() {
       </button>
 
       {/* Profile avatar */}
-      <button onClick={() => setView('settings')} className="w-8 h-8 rounded-full bg-forest text-cream text-sm font-medium flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
-        R
+      <button
+        onClick={() => setView('settings')}
+        className="w-8 h-8 rounded-full bg-forest text-cream text-sm font-medium flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer uppercase overflow-hidden"
+        title={user?.full_name || 'Profile'}
+      >
+        {user?.avatar_url ? (
+          <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+        ) : (
+          userInitial
+        )}
       </button>
     </header>
   )

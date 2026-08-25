@@ -80,26 +80,18 @@ export function Landing() {
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <button
+              id="get-started-btn"
               onClick={() => setView(user ? (user.role === 'admin' ? 'admin' : user.role === 'expert' ? 'expert' : 'dashboard') : 'login')}
               className="w-full sm:w-auto px-8 py-3.5 bg-leaf text-cream font-medium text-base rounded-lg hover:bg-meadow transition-colors shadow-lg cursor-pointer"
             >
               {user ? 'Go to Dashboard' : t('landing_cta')}
             </button>
             <button
+              id="sign-in-btn"
               onClick={() => setView(user ? (user.role === 'admin' ? 'admin' : user.role === 'expert' ? 'expert' : 'dashboard') : 'login')}
               className="w-full sm:w-auto px-8 py-3.5 bg-cream/10 text-cream font-medium text-base rounded-lg border border-cream/25 hover:bg-cream/15 transition-colors backdrop-blur-sm cursor-pointer"
             >
               {user ? 'My Farm' : t('landing_signin')}
-            </button>
-          </div>
-
-          {/* Expert portal link */}
-          <div className="pt-2">
-            <button
-              onClick={() => setView(user && user.role === 'expert' ? 'expert' : 'expert-login')}
-              className="text-cream/45 hover:text-cream/70 text-sm transition-colors cursor-pointer"
-            >
-              {t('landing_expert')} →
             </button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../App'
 import { AiBadge } from '../components/StatusBadge'
 import { FarmIntelligence, type FarmIntelligenceData } from '../components/FarmIntelligence'
+import { detectBrowserLocation, reverseGeocode } from '../lib/location'
 
 const FORECAST = [
   { day: 'Today', icon: '⛅', temp: '32°', rain: '12%', active: true },
@@ -86,88 +87,145 @@ function ScoreRing({ score, status }: { score: number; status: string }) {
 }
 
 export function Dashboard() {
-  const { t, lang, user, setView } = useApp()
+  const { t, lang, user, setView, updateUser } = useApp()
   const [weatherData, setWeatherData] = useState<{
+    location_configured?: boolean
     location: string
-    temperature: number
-    humidity: number
-    wind_speed: number
-    rain_probability: number
+    temperature: number | null
+    humidity: number | null
+    wind_speed: number | null
+    rain_probability: number | null
     condition: string
     farm_impact: string
     source?: string
   }>({
-    location: 'Kakinada, Andhra Pradesh',
-    temperature: 32,
-    humidity: 74,
-    wind_speed: 12,
-    rain_probability: 12,
-    condition: 'Partly Cloudy',
-    farm_impact: 'Rain expected tomorrow morning. Irrigation may not be necessary today.',
-    source: 'live_open_meteo'
+    location_configured: false,
+    location: 'Location Not Set',
+    temperature: null,
+    humidity: null,
+    wind_speed: null,
+    rain_probability: null,
+    condition: 'Unknown',
+    farm_impact: 'Configure your location to receive localized weather and crop recommendations.',
+    source: 'unconfigured'
   })
 
   const [userProfile, setUserProfile] = useState<{
     name: string
     location: string
-    state: string
-    district: string
+    hasLocation: boolean
   }>({
-    name: 'Raju',
-    location: 'Kakinada, Andhra Pradesh',
-    state: 'Andhra Pradesh',
-    district: 'Kakinada'
+    name: user?.display_name || user?.full_name?.split(' ')[0] || 'Farmer',
+    location: 'Location Not Set',
+    hasLocation: false,
   })
 
   const [locAnalysis, setLocAnalysis] = useState<FarmIntelligenceData | null>(null)
   const [locLoading, setLocLoading] = useState<boolean>(true)
+  const [detectingLoc, setDetectingLoc] = useState(false)
+
+  const handleQuickEnableLocation = async () => {
+    setDetectingLoc(true)
+    try {
+      const coords = await detectBrowserLocation()
+      const geocoded = await reverseGeocode(coords.latitude, coords.longitude)
+
+      const updated = {
+        state: geocoded.state,
+        district: geocoded.district,
+        village_or_city: geocoded.village_or_city,
+        village: geocoded.village_or_city,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        country: geocoded.country,
+        onboarding_completed: true,
+      }
+
+      updateUser(updated)
+
+      const token = localStorage.getItem('farmassist_token')
+      await fetch('http://127.0.0.1:8000/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(updated)
+      })
+    } catch (err: any) {
+      alert(err.message || 'Could not detect location. Please set it in Settings.')
+      setView('settings')
+    } finally {
+      setDetectingLoc(false)
+    }
+  }
 
   useEffect(() => {
-    // Determine location from context user or localStorage fallback
-    const savedUser = localStorage.getItem('farmassist_user')
-    let st = user?.state || 'Andhra Pradesh'
-    let dist = user?.district || 'Kakinada'
-    let nameStr = user?.full_name || 'Raju'
+    const hasLoc = Boolean(user?.district || user?.state || (user?.latitude !== undefined && user?.latitude !== null))
+    const dist = user?.district || ''
+    const st = user?.state || ''
+    const nameStr = user?.display_name || user?.full_name || 'Farmer'
 
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser)
-        nameStr = parsed.full_name || parsed.name || nameStr
-        dist = parsed.district || dist
-        st = parsed.state || st
-      } catch (e) {}
-    }
+    const locString = dist && st ? `${dist}, ${st}` : dist || st || 'Location Not Set'
 
     setUserProfile({
       name: nameStr.split(' ')[0],
-      location: `${dist}, ${st}`,
-      state: st,
-      district: dist
+      location: locString,
+      hasLocation: hasLoc,
     })
+
+    if (!hasLoc && user?.latitude === undefined && user?.latitude === null) {
+      setWeatherData({
+        location_configured: false,
+        location: 'Location Not Set',
+        temperature: null,
+        humidity: null,
+        wind_speed: null,
+        rain_probability: null,
+        condition: 'Unknown',
+        farm_impact: 'Configure your location in Settings to enable live weather and regional crop recommendations.',
+        source: 'unconfigured'
+      })
+      setLocAnalysis(null)
+      setLocLoading(false)
+      return
+    }
 
     setLocLoading(true)
 
+    // Build query params
+    const weatherQuery = user?.latitude !== undefined && user?.latitude !== null && user?.longitude !== undefined && user?.longitude !== null
+      ? `latitude=${user.latitude}&longitude=${user.longitude}`
+      : dist
+      ? `location=${encodeURIComponent(locString)}`
+      : ''
+
     // Fetch dynamic weather from API
-    fetch(`http://127.0.0.1:8000/api/weather?location=${encodeURIComponent(`${dist}, ${st}`)}`)
+    fetch(`http://127.0.0.1:8000/api/weather?${weatherQuery}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.temperature !== undefined) {
+        if (data && data.temperature !== undefined && data.temperature !== null) {
           setWeatherData({
-            location: data.location || `${dist}, ${st}`,
+            location_configured: true,
+            location: data.location || locString,
             temperature: data.temperature,
             humidity: data.humidity || 74,
             wind_speed: data.wind_speed || 12,
             rain_probability: data.rain_probability || 12,
             condition: data.condition || 'Partly Cloudy',
             farm_impact: data.farm_impact || 'Weather is favorable for standard farming activities.',
-            source: data.source || 'location_baseline'
+            source: data.source || 'live_open_meteo'
           })
         }
       })
       .catch(() => {})
 
     // Fetch Location-Based Farm Analysis API
-    fetch(`http://127.0.0.1:8000/api/farm/location-analysis?state=${encodeURIComponent(st)}&district=${encodeURIComponent(dist)}&language=${encodeURIComponent(lang)}`)
+    const farmQuery = user?.latitude !== undefined && user?.latitude !== null
+      ? `lat=${user.latitude}&lon=${user.longitude}&state=${encodeURIComponent(st)}&district=${encodeURIComponent(dist)}&language=${encodeURIComponent(lang)}`
+      : `state=${encodeURIComponent(st)}&district=${encodeURIComponent(dist)}&language=${encodeURIComponent(lang)}`
+
+    fetch(`http://127.0.0.1:8000/api/farm/location-analysis?${farmQuery}`)
       .then((res) => res.json())
       .then((data) => {
         if (data) {
@@ -176,7 +234,7 @@ export function Dashboard() {
       })
       .catch(() => {})
       .finally(() => setLocLoading(false))
-  }, [lang, user?.district, user?.state])
+  }, [lang, user?.district, user?.state, user?.latitude, user?.longitude])
 
   const overallScore = Math.round(
     HEALTH_ITEMS.reduce((sum, h) => sum + h.score, 0) / HEALTH_ITEMS.length
@@ -231,85 +289,144 @@ export function Dashboard() {
         {/* Left column */}
         <div className="xl:col-span-2 space-y-6">
           {/* Weather module */}
-          <div className="bg-forest text-cream rounded-2xl overflow-hidden shadow-sm border border-forest/30">
-            {/* Top row */}
-            <div className="px-6 pt-5 pb-4 flex items-start justify-between">
-              <div>
-                <div className="text-cream/60 text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-2">
-                  <span>📍</span>
-                  <span>{weatherData.location}</span>
-                  {weatherData.source === 'live_open_meteo' ? (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/30 text-emerald-300 border border-emerald-400/40">
-                      {t('badge_live_weather')}
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/30 text-amber-300 border border-amber-400/40">
-                      {t('badge_estimated_baseline')}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-end gap-4">
-                  <div>
-                    <span className="font-display text-6xl text-cream leading-none">{Math.round(weatherData.temperature)}°</span>
-                    <span className="text-cream/60 text-lg ml-1">C</span>
+          {!weatherData.location_configured ? (
+            <div className="bg-forest text-cream rounded-2xl overflow-hidden shadow-sm border border-forest/30 p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-mono font-semibold mb-2">
+                    <span>📍</span>
+                    <span>Location Not Configured</span>
                   </div>
-                  <div className="pb-1.5">
-                    <div className="text-cream font-medium text-lg leading-tight">{weatherData.condition}</div>
-                    <div className="text-cream/50 text-sm">
-                      {t('weather_feels_like')} {Math.round(weatherData.temperature + 2)}° · {weatherData.source === 'live_open_meteo' ? t('weather_live_forecast') : t('status_live_weather_unavailable')}
+                  <h3 className="font-display text-xl text-cream font-bold">
+                    Local Weather & Climate Intel Inactive
+                  </h3>
+                  <p className="text-cream/70 text-sm max-w-lg mt-1 leading-relaxed">
+                    Live weather forecasting, rain alerts, and regional crop advisories require location access or your district selection.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <button
+                    type="button"
+                    id="dash-enable-location-btn"
+                    disabled={detectingLoc}
+                    onClick={handleQuickEnableLocation}
+                    className="px-4 py-2.5 bg-leaf hover:bg-emerald-600 text-white font-semibold rounded-xl text-sm transition-colors shadow flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>{detectingLoc ? 'Detecting...' : 'Enable Location'}</span>
+                    <span>🛰</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="dash-settings-loc-btn"
+                    onClick={() => setView('settings')}
+                    className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-cream font-semibold rounded-xl text-sm transition-colors border border-white/20 cursor-pointer"
+                  >
+                    Set in Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-forest text-cream rounded-2xl overflow-hidden shadow-sm border border-forest/30">
+              {/* Top row */}
+              <div className="px-6 pt-5 pb-4 flex items-start justify-between">
+                <div>
+                  <div className="text-cream/60 text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <span>📍</span>
+                    <span>{weatherData.location}</span>
+                    {weatherData.source === 'live_open_meteo' ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/30 text-emerald-300 border border-emerald-400/40">
+                        {t('badge_live_weather')}
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/30 text-amber-300 border border-amber-400/40">
+                        {t('badge_estimated_baseline')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-end gap-4">
+                    <div>
+                      <span className="font-display text-6xl text-cream leading-none">
+                        {weatherData.temperature !== null ? Math.round(weatherData.temperature) : '--'}°
+                      </span>
+                      <span className="text-cream/60 text-lg ml-1">C</span>
+                    </div>
+                    <div className="pb-1.5">
+                      <div className="text-cream font-medium text-lg leading-tight">{weatherData.condition}</div>
+                      <div className="text-cream/50 text-sm">
+                        {t('weather_feels_like')}{' '}
+                        {weatherData.temperature !== null ? Math.round(weatherData.temperature + 2) : '--'}° ·{' '}
+                        {weatherData.source === 'live_open_meteo' ? t('weather_live_forecast') : t('status_live_weather_unavailable')}
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div className="text-right space-y-2 mt-1">
+                  <div className="flex items-center gap-2 text-sm text-cream/70 justify-end">
+                    <span>💧</span>
+                    <span className="text-cream/50">{t('weather_humidity')}</span>
+                    <span className="text-cream font-mono font-semibold">{weatherData.humidity ?? '--'}%</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-cream/70 justify-end">
+                    <span>💨</span>
+                    <span className="text-cream/50">{t('weather_wind')}</span>
+                    <span className="text-cream font-mono font-semibold">{weatherData.wind_speed ?? '--'} km/h</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-cream/70 justify-end">
+                    <span>🌧</span>
+                    <span className="text-cream/50">{t('weather_rain')}</span>
+                    <span className="text-cream font-mono font-semibold">{weatherData.rain_probability ?? '--'}%</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-right space-y-2 mt-1">
-                <div className="flex items-center gap-2 text-sm text-cream/70 justify-end">
-                  <span>💧</span>
-                  <span className="text-cream/50">{t('weather_humidity')}</span>
-                  <span className="text-cream font-mono font-semibold">{weatherData.humidity}%</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-cream/70 justify-end">
-                  <span>💨</span>
-                  <span className="text-cream/50">{t('weather_wind')}</span>
-                  <span className="text-cream font-mono font-semibold">{weatherData.wind_speed} km/h</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-cream/70 justify-end">
-                  <span>🌧</span>
-                  <span className="text-cream/50">{t('weather_rain')}</span>
-                  <span className="text-cream font-mono font-semibold">{weatherData.rain_probability}%</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Forecast strip */}
-            <div className="px-4 pb-4 flex gap-2">
-              {FORECAST.map((f) => (
-                <div
-                  key={f.day}
-                  className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl text-center transition-colors ${
-                    f.active ? 'bg-white/15' : 'bg-white/6 hover:bg-white/10'
-                  }`}
-                >
-                  <span className="text-cream/55 text-xs font-mono">{f.day}</span>
-                  <span className="text-xl leading-none">{f.icon}</span>
-                  <span className="text-cream font-mono font-semibold text-sm">{f.day === 'Today' ? `${Math.round(weatherData.temperature)}°` : f.temp}</span>
-                  <span className={`text-xs font-mono ${f.day === 'Today' ? (weatherData.rain_probability > 50 ? 'text-sky-300' : 'text-cream/40') : (parseFloat(f.rain) > 50 ? 'text-sky-300' : 'text-cream/40')}`}>
-                    {f.day === 'Today' ? `${weatherData.rain_probability}%` : f.rain}
+              {/* Forecast strip */}
+              <div className="px-4 pb-4 flex gap-2">
+                {FORECAST.map((f) => (
+                  <div
+                    key={f.day}
+                    className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl text-center transition-colors ${
+                      f.active ? 'bg-white/15' : 'bg-white/6 hover:bg-white/10'
+                    }`}
+                  >
+                    <span className="text-cream/55 text-xs font-mono">{f.day}</span>
+                    <span className="text-xl leading-none">{f.icon}</span>
+                    <span className="text-cream font-mono font-semibold text-sm">
+                      {f.day === 'Today'
+                        ? weatherData.temperature !== null
+                          ? `${Math.round(weatherData.temperature)}°`
+                          : '--°'
+                        : f.temp}
+                    </span>
+                    <span
+                      className={`text-xs font-mono ${
+                        f.day === 'Today'
+                          ? (weatherData.rain_probability ?? 0) > 50
+                            ? 'text-sky-300'
+                            : 'text-cream/40'
+                          : parseFloat(f.rain) > 50
+                          ? 'text-sky-300'
+                          : 'text-cream/40'
+                      }`}
+                    >
+                      {f.day === 'Today' ? `${weatherData.rain_probability ?? 0}%` : f.rain}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Farm impact */}
+              <div className="bg-black/20 px-6 py-3 flex items-start gap-3">
+                <span className="text-harvest text-sm flex-shrink-0 mt-0.5">◉</span>
+                <div>
+                  <span className="text-cream/50 text-xs font-mono uppercase tracking-widest mr-2">
+                    {t('weather_impact')}:
                   </span>
+                  <span className="text-cream/90 text-sm">{weatherData.farm_impact}</span>
                 </div>
-              ))}
-            </div>
-
-            {/* Farm impact */}
-            <div className="bg-black/20 px-6 py-3 flex items-start gap-3">
-              <span className="text-harvest text-sm flex-shrink-0 mt-0.5">◉</span>
-              <div>
-                <span className="text-cream/50 text-xs font-mono uppercase tracking-widest mr-2">
-                  {t('weather_impact')}:
-                </span>
-                <span className="text-cream/90 text-sm">{weatherData.farm_impact}</span>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Today's advice */}
           <div>

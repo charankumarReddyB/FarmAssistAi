@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../App'
 import { Logo } from '../components/Logo'
+import { apiRequest } from '../lib/api'
 
 interface UserItem {
-  id: str
-  full_name: str
-  email: str
+  id: string
+  full_name: string
+  display_name?: string
+  email: string
   role: 'farmer' | 'expert' | 'admin'
-  is_active: bool
-  country: str
-  state: str
-  district: str
-  city_town: str
-  village: str
-  preferred_language: str
-  created_at: str
+  is_active: boolean
+  auth_provider?: string
+  country?: string
+  state?: string
+  district?: string
+  village_or_city?: string
+  preferred_language?: string
+  created_at: string
 }
 
 interface AdminStats {
@@ -38,7 +40,7 @@ interface AdminStats {
 }
 
 export function AdminDashboard() {
-  const { t, setView, logout, lang } = useApp()
+  const { t, setView, logout, user: currentUser } = useApp()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -46,45 +48,50 @@ export function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+
+  // Confirmation Modal state for sensitive operations
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  })
 
   // Create User Form state
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [newName, setNewName] = useState('')
-  const [newRole, setNewRole] = useState<'farmer' | 'expert' | 'admin'>('farmer')
-  const [newLang, setNewLang] = useState('en')
+  const [newRole, setNewRole] = useState<'expert' | 'admin'>('expert')
   const [createLoading, setCreateLoading] = useState(false)
-
-  const token = localStorage.getItem('farmassist_token')
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/admin/stats', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setStats(data)
-      }
-    } catch (e) {}
+      const data = await apiRequest('/admin/stats')
+      setStats(data)
+    } catch (e) {
+      console.warn('[ADMIN] Stats fetch notice:', e)
+    }
   }
 
   const fetchUsers = async () => {
     try {
-      let url = 'http://127.0.0.1:8000/api/admin/users'
+      let endpoint = '/admin/users'
       const params: string[] = []
       if (roleFilter !== 'all') params.push(`role=${roleFilter}`)
       if (searchQuery) params.push(`search=${encodeURIComponent(searchQuery)}`)
-      if (params.length > 0) url += `?${params.join('&')}`
+      if (params.length > 0) endpoint += `?${params.join('&')}`
 
-      const res = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setUsers(data)
-      }
+      const data = await apiRequest(endpoint)
+      setUsers(data)
     } catch (e) {
+      console.warn('[ADMIN] Users fetch notice:', e)
     } finally {
       setLoading(false)
     }
@@ -95,74 +102,101 @@ export function AdminDashboard() {
     fetchUsers()
   }, [roleFilter, searchQuery])
 
-  const toggleUserStatus = async (user: UserItem) => {
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/api/admin/users/${user.id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ is_active: !user.is_active }),
-      })
-      if (res.ok) {
-        fetchUsers()
-        fetchStats()
-      }
-    } catch (e) {}
+  const handleToggleUserStatus = (targetUser: UserItem) => {
+    const action = targetUser.is_active ? 'deactivate' : 'activate'
+    setConfirmModal({
+      isOpen: true,
+      title: `Confirm Account ${action.toUpperCase()}`,
+      message: `Are you sure you want to ${action} account for ${targetUser.full_name || targetUser.email}?`,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }))
+        try {
+          await apiRequest(`/admin/users/${targetUser.id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_active: !targetUser.is_active }),
+          })
+          setSuccessMsg(`User ${targetUser.email} status updated.`)
+          fetchUsers()
+          fetchStats()
+        } catch (err: any) {
+          setErrorMsg(err.message || 'Failed to update user status.')
+        }
+      },
+    })
   }
 
-  const changeUserRole = async (userId: string, newRoleVal: string) => {
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/api/admin/users/${userId}/role`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ role: newRoleVal }),
-      })
-      if (res.ok) {
-        fetchUsers()
-        fetchStats()
-      }
-    } catch (e) {}
+  const handleChangeUserRole = (targetUser: UserItem, newRoleVal: string) => {
+    if (targetUser.role === newRoleVal) return
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Confirm Role Change',
+      message: `Are you sure you want to change role of ${targetUser.full_name || targetUser.email} from ${targetUser.role.toUpperCase()} to ${newRoleVal.toUpperCase()}?`,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }))
+        try {
+          await apiRequest(`/admin/users/${targetUser.id}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role: newRoleVal }),
+          })
+          setSuccessMsg(`User role updated to ${newRoleVal}.`)
+          fetchUsers()
+          fetchStats()
+        } catch (err: any) {
+          setErrorMsg(err.message || 'Failed to update user role.')
+        }
+      },
+    })
   }
 
-  const handleCreateUser = async (e: React.FormEvent) => {
+  const handleCreateUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg(null)
+    setSuccessMsg(null)
+
+    if (!newName.trim()) {
+      setErrorMsg('Full Name is required.')
+      return
+    }
+    if (!newEmail.trim()) {
+      setErrorMsg('Email Address is required.')
+      return
+    }
+    if (newPassword.length < 6) {
+      setErrorMsg('Password must be at least 6 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMsg('Passwords do not match.')
+      return
+    }
+
     setCreateLoading(true)
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/admin/users', {
+      await apiRequest('/admin/users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({
-          email: newEmail,
+          email: newEmail.trim(),
           password: newPassword,
-          full_name: newName,
+          full_name: newName.trim(),
           role: newRole,
-          preferred_language: newLang,
+          preferred_language: 'en',
         }),
       })
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}))
-        throw new Error(errJson.detail || 'Failed to create user.')
-      }
-
+      setSuccessMsg(`Successfully created new ${newRole.toUpperCase()} account: ${newEmail}`)
       setShowCreateModal(false)
       setNewEmail('')
       setNewPassword('')
+      setConfirmPassword('')
       setNewName('')
+      setNewRole('expert')
       fetchUsers()
       fetchStats()
     } catch (err: any) {
-      setErrorMsg(err.message)
+      console.error('[ADMIN] Create user error:', err)
+      setErrorMsg(err.message || 'Failed to create user.')
     } finally {
       setCreateLoading(false)
     }
@@ -175,21 +209,22 @@ export function AdminDashboard() {
         <div className="flex items-center gap-4">
           <Logo variant="light" size={28} />
           <span className="text-cream/40">|</span>
-          <span className="font-display font-semibold text-lg text-cream">Admin Control Panel</span>
+          <span className="font-display font-semibold text-lg text-cream">Administrator Console</span>
           <span className="bg-rain/20 text-rain border border-rain/30 text-xs font-mono px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-            Role: Admin
+            Admin: {currentUser?.full_name || currentUser?.email || 'Charan'}
           </span>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setView('settings')}
-            className="text-xs text-cream/70 hover:text-cream border border-cream/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="text-xs text-cream/70 hover:text-cream border border-cream/20 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
           >
             ⚙️ {t('nav_settings')}
           </button>
           <button
+            id="admin-logout-btn"
             onClick={() => logout()}
-            className="text-xs bg-harvest/80 hover:bg-harvest text-cream font-medium px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+            className="text-xs bg-harvest/80 hover:bg-harvest text-cream font-medium px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <span>⎋</span>
             <span>{t('nav_logout')}</span>
@@ -199,48 +234,68 @@ export function AdminDashboard() {
 
       {/* Main Admin Body */}
       <main className="flex-1 p-6 space-y-6 max-w-screen-2xl mx-auto w-full">
+        {/* Alerts & Messages */}
+        {errorMsg && (
+          <div className="p-4 bg-risk/10 border border-risk/30 text-risk text-xs rounded-xl flex items-center justify-between">
+            <span>{errorMsg}</span>
+            <button onClick={() => setErrorMsg(null)} className="cursor-pointer font-bold">✕</button>
+          </div>
+        )}
+        {successMsg && (
+          <div className="p-4 bg-forest/10 border border-forest/30 text-forest text-xs rounded-xl flex items-center justify-between">
+            <span>{successMsg}</span>
+            <button onClick={() => setSuccessMsg(null)} className="cursor-pointer font-bold">✕</button>
+          </div>
+        )}
+
         {/* Metric Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors">
+          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors shadow-sm">
             <div className="text-sage text-xs font-mono uppercase tracking-wider">Total Farmers</div>
             <div className="font-display text-3xl text-forest font-bold">{stats?.users?.farmers ?? '—'}</div>
             <div className="text-sage text-xs">Registered agricultural users</div>
           </div>
-          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors">
+          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors shadow-sm">
             <div className="text-sage text-xs font-mono uppercase tracking-wider">Total Experts</div>
             <div className="font-display text-3xl text-rain font-bold">{stats?.users?.experts ?? '—'}</div>
             <div className="text-sage text-xs">Agricultural scientists & officers</div>
           </div>
-          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors">
+          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors shadow-sm">
             <div className="text-sage text-xs font-mono uppercase tracking-wider">Total Advisories</div>
             <div className="font-display text-3xl text-harvest font-bold">{stats?.advisories?.total ?? '—'}</div>
             <div className="text-sage text-xs">{stats?.advisories?.pending ?? 0} pending review</div>
           </div>
-          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors">
+          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors shadow-sm">
             <div className="text-sage text-xs font-mono uppercase tracking-wider">Soil Reports</div>
             <div className="font-display text-3xl text-meadow font-bold">{stats?.analyses?.soil_reports ?? '—'}</div>
-            <div className="text-sage text-xs">Processed NLP reports</div>
+            <div className="text-sage text-xs">NLP processed reports</div>
           </div>
-          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors">
+          <div className="bg-white border border-pebble rounded-xl p-4 space-y-1 hover:border-leaf/40 transition-colors shadow-sm">
             <div className="text-sage text-xs font-mono uppercase tracking-wider">Crop Analyses</div>
             <div className="font-display text-3xl text-charcoal font-bold">{stats?.analyses?.crop_analyses ?? '—'}</div>
             <div className="text-sage text-xs">PyTorch Deep Learning scans</div>
           </div>
         </div>
 
-        {/* User Management Section */}
+        {/* User & Role Management Section */}
         <div className="bg-white border border-pebble rounded-2xl p-6 space-y-5 shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-pebble/60 pb-4">
             <div>
-              <h2 className="font-display text-xl text-charcoal font-bold">User Account Governance</h2>
-              <p className="text-sage text-xs mt-0.5">Manage farmer, expert, and admin roles, activation status, and profiles.</p>
+              <h2 className="font-display text-xl text-charcoal font-bold">User & Role Management</h2>
+              <p className="text-sage text-xs mt-0.5">
+                Manage system users, assign privileged Expert & Administrator roles, and activate/deactivate accounts.
+              </p>
             </div>
             <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-forest text-cream font-medium text-xs rounded-xl hover:bg-leaf transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+              id="admin-create-user-btn"
+              onClick={() => {
+                setShowCreateModal(true)
+                setErrorMsg(null)
+              }}
+              className="px-4 py-2 bg-forest text-cream font-semibold text-xs rounded-xl hover:bg-leaf transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <span>+</span>
-              <span>Create New User</span>
+              <span>Create New User (Expert / Admin)</span>
             </button>
           </div>
 
@@ -251,105 +306,142 @@ export function AdminDashboard() {
                 <button
                   key={r}
                   onClick={() => setRoleFilter(r)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium uppercase tracking-wide transition-all cursor-pointer ${
-                    roleFilter === r ? 'bg-white text-charcoal shadow-sm font-semibold' : 'text-sage hover:text-charcoal'
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                    roleFilter === r
+                      ? 'bg-white text-charcoal shadow-sm'
+                      : 'text-sage hover:text-charcoal'
                   }`}
                 >
-                  {r === 'all' ? 'All Roles' : r}
+                  {r}
                 </button>
               ))}
             </div>
 
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name or email..."
-              className="px-4 py-2 border border-pebble rounded-xl bg-cream/40 text-charcoal text-xs placeholder:text-sage/60 focus:outline-none focus:ring-2 focus:ring-leaf/40 w-full sm:w-64"
-            />
+            <div className="relative w-full sm:w-72">
+              <input
+                type="text"
+                placeholder="Search user by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-pebble bg-cream/40 text-charcoal text-xs focus:outline-none focus:ring-1 focus:ring-leaf/40"
+              />
+              <span className="absolute left-2.5 top-2 text-sage text-xs">🔍</span>
+            </div>
           </div>
 
           {/* Users Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-charcoal border-collapse">
-              <thead>
-                <tr className="border-b border-pebble bg-mist/50 text-sage font-mono uppercase tracking-wider">
+          <div className="overflow-x-auto rounded-xl border border-pebble">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-mist text-sage font-mono uppercase tracking-wider border-b border-pebble">
+                <tr>
                   <th className="py-3 px-4">User</th>
-                  <th className="py-3 px-4">Email</th>
                   <th className="py-3 px-4">Role</th>
-                  <th className="py-3 px-4">Location</th>
+                  <th className="py-3 px-4">Auth Provider</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Language</th>
+                  <th className="py-3 px-4">Location</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-pebble/60">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-mist/30 transition-colors">
-                    <td className="py-3.5 px-4 font-semibold text-charcoal flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-cream ${
-                        u.role === 'admin' ? 'bg-risk' : u.role === 'expert' ? 'bg-rain' : 'bg-forest'
-                      }`}>
-                        {u.full_name ? u.full_name.charAt(0).toUpperCase() : 'U'}
-                      </div>
-                      <div>
-                        <div>{u.full_name || 'Unnamed User'}</div>
-                        <div className="text-sage text-[10px] font-mono">{u.id.substring(0, 8)}...</div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-sage">{u.email}</td>
-                    <td className="py-3.5 px-4">
-                      <select
-                        value={u.role}
-                        onChange={(e) => changeUserRole(u.id, e.target.value)}
-                        className={`text-xs font-mono font-medium px-2 py-1 rounded border bg-white cursor-pointer ${
-                          u.role === 'admin' ? 'text-risk border-risk/30' : u.role === 'expert' ? 'text-rain border-rain/30' : 'text-forest border-forest/30'
-                        }`}
-                      >
-                        <option value="farmer">Farmer</option>
-                        <option value="expert">Expert</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </td>
-                    <td className="py-3.5 px-4 text-sage">
-                      {u.district || u.city_town || 'Kakinada'}, {u.state || 'AP'}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono text-[11px] font-medium ${
-                        u.is_active ? 'bg-meadow/15 text-meadow border border-meadow/30' : 'bg-risk/15 text-risk border border-risk/30'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? 'bg-meadow' : 'bg-risk'}`} />
-                        {u.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono uppercase text-sage">{u.preferred_language || 'en'}</td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => toggleUserStatus(u)}
-                        className={`px-3 py-1 rounded-lg font-medium text-[11px] transition-colors cursor-pointer ${
-                          u.is_active
-                            ? 'border border-risk/30 text-risk hover:bg-risk/10'
-                            : 'border border-meadow/30 text-meadow hover:bg-meadow/10'
-                        }`}
-                      >
-                        {u.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
+              <tbody className="divide-y divide-pebble/60 bg-white">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-sage">
+                      Loading user accounts...
                     </td>
                   </tr>
-                ))}
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-sage">
+                      No users found matching query.
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((u) => {
+                    const roleBadgeClass =
+                      u.role === 'admin'
+                        ? 'bg-rain/15 text-rain border-rain/30'
+                        : u.role === 'expert'
+                        ? 'bg-harvest/15 text-harvest border-harvest/30'
+                        : 'bg-leaf/15 text-forest border-leaf/30'
+
+                    const statusBadgeClass = u.is_active
+                      ? 'bg-meadow/15 text-meadow border-meadow/30'
+                      : 'bg-risk/15 text-risk border-risk/30'
+
+                    const locStr = u.district && u.state
+                      ? `${u.district}, ${u.state}`
+                      : u.district || u.state || 'Not Set'
+
+                    return (
+                      <tr key={u.id} className="hover:bg-mist/30 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-charcoal">{u.full_name || u.display_name || 'Farmer'}</div>
+                          <div className="text-sage text-[11px] font-mono">{u.email}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full border text-[11px] font-mono uppercase tracking-wider font-semibold ${roleBadgeClass}`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-sage text-[11px]">
+                          {u.auth_provider || 'email'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-block px-2 py-0.5 rounded-full border text-[10px] font-mono uppercase font-semibold ${statusBadgeClass}`}>
+                            {u.is_active ? 'Active' : 'Disabled'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-charcoal">
+                          {locStr}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Role Dropdown */}
+                            <select
+                              value={u.role}
+                              onChange={(e) => handleChangeUserRole(u, e.target.value)}
+                              className="text-xs border border-pebble rounded-lg px-2 py-1 bg-white text-charcoal font-medium focus:outline-none cursor-pointer"
+                            >
+                              <option value="farmer">Farmer</option>
+                              <option value="expert">Expert</option>
+                              <option value="admin">Administrator</option>
+                            </select>
+
+                            {/* Status Toggle Button */}
+                            <button
+                              onClick={() => handleToggleUserStatus(u)}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
+                                u.is_active
+                                  ? 'border-risk/30 text-risk hover:bg-risk/10'
+                                  : 'border-forest/30 text-forest hover:bg-forest/10'
+                              }`}
+                            >
+                              {u.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </main>
 
-      {/* Modal for Creating User */}
+      {/* CREATE PRIVILEGED USER MODAL (EXPERT / ADMIN ONLY) */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-charcoal/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-pebble step-in">
-            <div className="flex items-center justify-between border-b border-pebble pb-3">
-              <h3 className="font-display font-bold text-lg text-charcoal">Create New User</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-sage hover:text-charcoal text-lg">✕</button>
+        <div className="fixed inset-0 bg-charcoal/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white border border-pebble rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-pebble/60 pb-3">
+              <h3 className="font-display text-lg text-charcoal font-bold">Create Privileged Account</h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-sage hover:text-charcoal text-sm cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
             {errorMsg && (
@@ -358,88 +450,127 @@ export function AdminDashboard() {
               </div>
             )}
 
-            <form onSubmit={handleCreateUser} className="space-y-4">
+            <form onSubmit={handleCreateUserSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-sage uppercase mb-1">Full Name</label>
+                <label className="block text-xs font-mono text-sage uppercase tracking-wider mb-1">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   required
+                  id="admin-new-fullname"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g. Dr. Ramesh Babu"
-                  className="w-full px-3.5 py-2.5 border border-pebble rounded-xl text-xs bg-cream/30 focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  placeholder="e.g. Dr. Priya Sharma"
+                  className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/40 text-charcoal text-xs focus:outline-none focus:ring-1 focus:ring-leaf/40"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-sage uppercase mb-1">Email Address</label>
+                <label className="block text-xs font-mono text-sage uppercase tracking-wider mb-1">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   required
+                  id="admin-new-email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="user@farmassist.ai"
-                  className="w-full px-3.5 py-2.5 border border-pebble rounded-xl text-xs bg-cream/30 focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  placeholder="expert@farmassist.ai"
+                  className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/40 text-charcoal text-xs focus:outline-none focus:ring-1 focus:ring-leaf/40"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-sage uppercase mb-1">Password</label>
+                <label className="block text-xs font-mono text-sage uppercase tracking-wider mb-1">
+                  Role Assignment
+                </label>
+                <select
+                  id="admin-new-role"
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-xl border border-pebble bg-white text-charcoal text-xs font-semibold focus:outline-none cursor-pointer"
+                >
+                  <option value="expert">Agricultural Expert (Review & approve advisories)</option>
+                  <option value="admin">Administrator (Full system & user governance)</option>
+                </select>
+                <p className="text-sage text-[11px] mt-1">
+                  Public registrations only receive Farmer role. Only Admins can create Expert/Admin accounts.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-sage uppercase tracking-wider mb-1">
+                  Password (min. 6 characters)
+                </label>
                 <input
                   type="password"
                   required
+                  id="admin-new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                  className="w-full px-3.5 py-2.5 border border-pebble rounded-xl text-xs bg-cream/30 focus:outline-none focus:ring-2 focus:ring-leaf/40"
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/40 text-charcoal text-xs focus:outline-none focus:ring-1 focus:ring-leaf/40"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-sage uppercase mb-1">User Role</label>
-                  <select
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 border border-pebble rounded-xl text-xs bg-cream/30 focus:outline-none focus:ring-2 focus:ring-leaf/40 cursor-pointer"
-                  >
-                    <option value="farmer">Farmer</option>
-                    <option value="expert">Agricultural Expert</option>
-                    <option value="admin">Administrator</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-sage uppercase mb-1">Language</label>
-                  <select
-                    value={newLang}
-                    onChange={(e) => setNewLang(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-pebble rounded-xl text-xs bg-cream/30 focus:outline-none focus:ring-2 focus:ring-leaf/40 cursor-pointer"
-                  >
-                    <option value="en">English</option>
-                    <option value="te">తెలుగు — Telugu</option>
-                    <option value="ta">தமிழ் — Tamil</option>
-                    <option value="hi">हिन्दी — Hindi</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-mono text-sage uppercase tracking-wider mb-1">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  id="admin-new-confirm-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2 rounded-xl border border-pebble bg-cream/40 text-charcoal text-xs focus:outline-none focus:ring-1 focus:ring-leaf/40"
+                />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 border border-pebble rounded-xl text-xs text-sage hover:text-charcoal"
+                  className="flex-1 py-2.5 border border-pebble text-charcoal rounded-xl text-xs font-medium hover:bg-mist transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  id="admin-create-submit-btn"
                   disabled={createLoading}
-                  className="px-4 py-2 bg-forest text-cream font-medium text-xs rounded-xl hover:bg-leaf transition-colors cursor-pointer"
+                  className="flex-1 py-2.5 bg-forest text-cream rounded-xl text-xs font-semibold hover:bg-leaf transition-colors shadow-sm cursor-pointer"
                 >
-                  {createLoading ? 'Creating...' : 'Create Account'}
+                  {createLoading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* SENSITIVE OPERATION CONFIRMATION MODAL */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-charcoal/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white border border-pebble rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+            <h3 className="font-display text-base text-charcoal font-bold">{confirmModal.title}</h3>
+            <p className="text-sage text-xs leading-relaxed">{confirmModal.message}</p>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+                className="flex-1 py-2 border border-pebble text-charcoal rounded-xl text-xs font-medium hover:bg-mist cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmModal.onConfirm}
+                className="flex-1 py-2 bg-risk text-cream rounded-xl text-xs font-semibold hover:bg-risk/90 cursor-pointer shadow-sm"
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}

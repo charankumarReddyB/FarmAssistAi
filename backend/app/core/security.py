@@ -117,9 +117,14 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
     user_id = payload["sub"]
     email = payload.get("email") or payload.get("user_metadata", {}).get("email") or f"{user_id}@supabase.user"
     user_metadata = payload.get("user_metadata", {})
-    token_role = payload.get("role") or user_metadata.get("role") or "farmer"
-    if token_role not in ["farmer", "expert", "admin"]:
-        token_role = "farmer"
+
+    # Determine default role: only seed emails get expert/admin by default
+    if email == "admin@farmassist.ai":
+        token_role = "admin"
+    elif email == "expert@farmassist.ai":
+        token_role = "expert"
+    else:
+        token_role = "farmer"  # SECURITY RULE: ALWAYS DEFAULT TO FARMER
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -128,18 +133,32 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
 
     if not user:
         # Auto-provision profile from Supabase token claims
-        full_name = user_metadata.get("full_name") or user_metadata.get("name") or "Farmer User"
+        full_name = user_metadata.get("full_name") or user_metadata.get("name") or email.split("@")[0]
+        display_name = user_metadata.get("name") or user_metadata.get("full_name") or email.split("@")[0]
+        avatar_url = user_metadata.get("avatar_url") or user_metadata.get("picture") or ""
+        provider = payload.get("app_metadata", {}).get("provider", "email")
+        if "google" in provider.lower() or "google" in payload.get("iss", "").lower():
+            provider = "google"
+
         user = User(
             id=user_id,
             email=email,
             hashed_password="supabase_auth_managed",
             full_name=full_name,
+            display_name=display_name,
+            avatar_url=avatar_url,
             role=token_role,
+            auth_provider=provider,
+            onboarding_completed=False,
             preferred_language=user_metadata.get("preferred_language", "en"),
-            state="Andhra Pradesh",
-            district="Kakinada",
-            city_town="Kakinada",
-            village="Samalkota",
+            country=None,
+            state=None,
+            district=None,
+            city_town=None,
+            village_or_city=None,
+            village=None,
+            latitude=None,
+            longitude=None,
             is_active=True
         )
         db.add(user)

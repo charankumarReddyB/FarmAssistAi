@@ -19,7 +19,13 @@ const PRIMARY_NAV: NavItem[] = [
 ]
 
 export function Sidebar() {
-  const { view, setView, t } = useApp()
+  const { view, setView, t, user, logout } = useApp()
+
+  const displayName = user?.full_name || user?.display_name || (user?.email ? user.email.split('@')[0] : 'Farmer')
+  const userInitial = displayName.charAt(0).toUpperCase()
+  const displayLocation = user?.district && user?.state
+    ? `${user.district}, ${user.state}`
+    : user?.district || user?.state || 'Location Not Set'
 
   return (
     <aside className="w-56 flex-shrink-0 bg-forest flex flex-col h-full">
@@ -59,18 +65,25 @@ export function Sidebar() {
       {/* Bottom section */}
       <div className="px-3 pb-4 space-y-0.5 border-t border-white/10 pt-3">
         {/* Profile / Settings link */}
-        <button onClick={() => setView('settings')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-cream/70 hover:bg-white/8 hover:text-cream transition-all cursor-pointer">
-          <span className="w-5 h-5 rounded-full bg-harvest/60 flex items-center justify-center text-xs text-cream font-medium flex-shrink-0">
-            R
+        <button
+          onClick={() => setView('settings')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-cream/70 hover:bg-white/8 hover:text-cream transition-all cursor-pointer"
+        >
+          <span className="w-6 h-6 rounded-full bg-harvest/80 flex items-center justify-center text-xs text-cream font-semibold flex-shrink-0 uppercase overflow-hidden">
+            {user?.avatar_url ? (
+              <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              userInitial
+            )}
           </span>
           <div className="flex-1 text-left min-w-0">
-            <div className="text-cream/90 text-sm truncate">Raju Reddy</div>
-            <div className="text-cream/40 text-xs truncate">Kakinada, AP</div>
+            <div className="text-cream/90 text-sm font-medium truncate">{displayName}</div>
+            <div className="text-cream/50 text-xs truncate">{displayLocation}</div>
           </div>
         </button>
 
         <button
-          onClick={() => setView('landing')}
+          onClick={logout}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-cream/40 hover:text-cream/70 hover:bg-white/5 transition-all cursor-pointer"
         >
           <span className="text-base w-5 text-center opacity-70">⎋</span>
