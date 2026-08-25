@@ -43,24 +43,60 @@ export function TopBar() {
 
   return (
     <header className="flex-shrink-0 h-14 bg-cream border-b border-pebble flex items-center px-6 gap-4">
-      {/* Farm location */}
+      {/* Location / Role Info */}
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-sage text-sm">📍</span>
-        <span className="text-charcoal text-sm font-semibold truncate">{userLocation}</span>
-        <span className="text-pebble text-xs mx-1">·</span>
-        <span className="text-sage text-xs truncate">{t('dash_current_crop')}</span>
+        {user?.role === 'admin' ? (
+          <button
+            onClick={() => setView('admin')}
+            className="flex items-center gap-2 px-2.5 py-1 bg-forest/10 hover:bg-forest/20 text-forest rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+          >
+            <span>👑</span>
+            <span>Administrator Console</span>
+          </button>
+        ) : user?.role === 'expert' ? (
+          <button
+            onClick={() => setView('expert')}
+            className="flex items-center gap-2 px-2.5 py-1 bg-rain/10 hover:bg-rain/20 text-rain rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+          >
+            <span>🔬</span>
+            <span>Expert Portal</span>
+          </button>
+        ) : (
+          <>
+            <span className="text-sage text-sm">📍</span>
+            <span className="text-charcoal text-sm font-semibold truncate">{userLocation}</span>
+            <span className="text-pebble text-xs mx-1">·</span>
+            <span className="text-sage text-xs truncate">{t('dash_current_crop')}</span>
+          </>
+        )}
       </div>
 
       <div className="flex-1" />
 
-      {/* Weather shortcut */}
-      <button
-        onClick={() => setView('dashboard')}
-        className="flex items-center gap-1.5 text-sm text-charcoal/80 hover:text-charcoal transition-colors px-2.5 py-1 rounded-md bg-mist/60 border border-pebble/40 cursor-pointer"
-      >
-        <span>⛅</span>
-        <span className="font-mono font-semibold text-xs">{temp}</span>
-      </button>
+      {/* Weather shortcut (for farmers) or Console return (for admin/expert) */}
+      {user?.role === 'admin' ? (
+        <button
+          onClick={() => setView('admin')}
+          className="text-xs bg-forest text-cream font-bold px-3 py-1.5 rounded-lg hover:bg-leaf transition-colors cursor-pointer shadow-sm"
+        >
+          ← Back to Admin Console
+        </button>
+      ) : user?.role === 'expert' ? (
+        <button
+          onClick={() => setView('expert')}
+          className="text-xs bg-forest text-cream font-bold px-3 py-1.5 rounded-lg hover:bg-leaf transition-colors cursor-pointer shadow-sm"
+        >
+          ← Back to Expert Portal
+        </button>
+      ) : (
+        <button
+          onClick={() => setView('dashboard')}
+          className="flex items-center gap-1.5 text-sm text-charcoal/80 hover:text-charcoal transition-colors px-2.5 py-1 rounded-md bg-mist/60 border border-pebble/40 cursor-pointer"
+        >
+          <span>⛅</span>
+          <span className="font-mono font-semibold text-xs">{temp}</span>
+        </button>
+      )}
 
       {/* Voice button */}
       <button

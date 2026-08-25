@@ -7,7 +7,7 @@ interface NavItem {
   labelKey: string
 }
 
-const PRIMARY_NAV: NavItem[] = [
+const FARMER_NAV: NavItem[] = [
   { id: 'dashboard', icon: '⬡', labelKey: 'nav_dashboard' },
   { id: 'soil', icon: '◎', labelKey: 'nav_soil' },
   { id: 'crop', icon: '⬢', labelKey: 'nav_crop' },
@@ -18,14 +18,26 @@ const PRIMARY_NAV: NavItem[] = [
   { id: 'voice', icon: '◯', labelKey: 'nav_voice' },
 ]
 
+const ADMIN_NAV: NavItem[] = [
+  { id: 'admin', icon: '👑', labelKey: 'Administrator Console' },
+  { id: 'settings', icon: '⚙️', labelKey: 'System Settings' },
+]
+
+const EXPERT_NAV: NavItem[] = [
+  { id: 'expert', icon: '🔬', labelKey: 'Expert Review Portal' },
+  { id: 'settings', icon: '⚙️', labelKey: 'Expert Settings' },
+]
+
 export function Sidebar() {
   const { view, setView, t, user, logout } = useApp()
 
-  const displayName = user?.full_name || user?.display_name || (user?.email ? user.email.split('@')[0] : 'Farmer')
+  const displayName = user?.full_name || user?.display_name || (user?.email ? user.email.split('@')[0] : 'User')
   const userInitial = displayName.charAt(0).toUpperCase()
   const displayLocation = user?.district && user?.state
     ? `${user.district}, ${user.state}`
-    : user?.district || user?.state || 'Location Not Set'
+    : user?.district || user?.state || (user?.role === 'admin' ? 'Administrator' : user?.role === 'expert' ? 'Agricultural Expert' : 'Location Not Set')
+
+  const navItems = user?.role === 'admin' ? ADMIN_NAV : user?.role === 'expert' ? EXPERT_NAV : FARMER_NAV
 
   return (
     <aside className="w-56 flex-shrink-0 bg-forest flex flex-col h-full">
@@ -36,8 +48,9 @@ export function Sidebar() {
 
       {/* Primary navigation */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5">
-        {PRIMARY_NAV.map((item) => {
+        {navItems.map((item) => {
           const isActive = view === item.id
+          const label = item.labelKey.startsWith('nav_') ? t(item.labelKey) : item.labelKey
           return (
             <button
               key={item.id}
@@ -51,7 +64,7 @@ export function Sidebar() {
               <span className="text-base w-5 flex-shrink-0 text-center leading-none opacity-80">
                 {item.icon}
               </span>
-              <span className="truncate">{t(item.labelKey)}</span>
+              <span className="truncate">{label}</span>
               {item.id === 'alerts' && (
                 <span className="ml-auto bg-harvest text-cream text-xs font-mono rounded px-1.5 py-0.5 leading-none">
                   3

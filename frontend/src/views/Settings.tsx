@@ -73,6 +73,11 @@ export function Settings() {
   const [locDetecting, setLocDetecting] = useState(false)
   const [locMessage, setLocMessage] = useState<string | null>(null)
 
+  const isFarmer = !user?.role || user?.role === 'farmer'
+  const visibleSections = isFarmer
+    ? SECTIONS
+    : SECTIONS.filter((s) => s.id !== 'farm')
+
   const handleLanguageChange = (newLang: Lang) => {
     setLang(newLang)
   }
@@ -551,8 +556,37 @@ export function Settings() {
   }
 
   return (
-    <div className="p-6 max-w-screen-lg mx-auto font-sans">
-      <div className="mb-6">
+    <div className="p-6 max-w-screen-lg mx-auto font-sans space-y-4">
+      {/* Return to Admin/Expert console banner */}
+      {user?.role === 'admin' ? (
+        <div className="flex items-center justify-between bg-forest text-cream px-5 py-3 rounded-2xl shadow-sm">
+          <div>
+            <div className="text-xs font-mono uppercase tracking-wider text-rain font-semibold">Administrator Account</div>
+            <div className="text-sm font-bold text-cream">System & Profile Preferences</div>
+          </div>
+          <button
+            onClick={() => setView('admin')}
+            className="text-xs bg-leaf hover:bg-forest text-cream font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer border border-white/20 shadow-sm"
+          >
+            ← Back to Admin Console
+          </button>
+        </div>
+      ) : user?.role === 'expert' ? (
+        <div className="flex items-center justify-between bg-forest text-cream px-5 py-3 rounded-2xl shadow-sm">
+          <div>
+            <div className="text-xs font-mono uppercase tracking-wider text-rain font-semibold">Agricultural Expert Account</div>
+            <div className="text-sm font-bold text-cream">Expert Profile & Preferences</div>
+          </div>
+          <button
+            onClick={() => setView('expert')}
+            className="text-xs bg-leaf hover:bg-forest text-cream font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer border border-white/20 shadow-sm"
+          >
+            ← Back to Expert Portal
+          </button>
+        </div>
+      ) : null}
+
+      <div className="mb-4">
         <h1 className="font-display text-3xl text-charcoal">{t('nav_settings')}</h1>
         <p className="text-sage text-sm mt-1">Manage your profile, preferences, and language settings.</p>
       </div>
@@ -561,7 +595,7 @@ export function Settings() {
         {/* Section nav */}
         <div className="lg:col-span-1">
           <nav className="space-y-0.5">
-            {SECTIONS.map((s) => (
+            {visibleSections.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
@@ -582,7 +616,7 @@ export function Settings() {
         <div className="lg:col-span-3">
           <div className="mb-4">
             <h2 className="font-display text-xl text-charcoal">
-              {SECTIONS.find((s) => s.id === activeSection)?.label}
+              {visibleSections.find((s) => s.id === activeSection)?.label || 'Settings'}
             </h2>
           </div>
           {renderSection()}
