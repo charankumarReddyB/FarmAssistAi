@@ -1,6 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap');
 
 @import 'tailwindcss';
+
+:root {
+  --app-font: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html[data-lang="en"], html[lang="en"], body[data-lang="en"] {
+  --app-font: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html[data-lang="te"], html[lang="te"], body[data-lang="te"] {
+  --app-font: 'Noto Sans Telugu', 'Inter', system-ui, sans-serif;
+}
+
+html[data-lang="ta"], html[lang="ta"], body[data-lang="ta"] {
+  --app-font: 'Noto Sans Tamil', 'Inter', system-ui, sans-serif;
+}
+
+html[data-lang="hi"], html[lang="hi"], body[data-lang="hi"] {
+  --app-font: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
+}
 
 @theme {
   --color-forest: #1f4d2f;
@@ -16,16 +36,20 @@
   --color-meadow: #2d6a4f;
   --color-ember: #7c3d0e;
 
-  --font-display: 'Inter', 'Noto Sans Telugu', 'Noto Sans Tamil', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
-  --font-sans: 'Inter', 'Noto Sans Telugu', 'Noto Sans Tamil', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+  --font-display: var(--app-font);
+  --font-sans: var(--app-font);
   --font-mono: 'DM Mono', monospace;
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--app-font) !important;
   background-color: #f7f3ed;
   color: #1a2e1e;
   -webkit-font-smoothing: antialiased;
+}
+
+body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, table, th, td, p, div, span, label, form, section, article, nav, aside, header, main, footer, .font-sans, .font-display {
+  font-family: var(--app-font) !important;
 }
 
 *::-webkit-scrollbar {

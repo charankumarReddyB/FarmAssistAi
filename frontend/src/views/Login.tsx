@@ -72,32 +72,6 @@ export function Login({ isExpert = false }: LoginProps) {
             <button onClick={() => setView('landing')}>
               <Logo size={28} />
             </button>
-            {/* Language Dropdown header toggle */}
-            <div className="relative">
-              <button
-                onClick={() => setLangOpen(!langOpen)}
-                className="flex items-center gap-1.5 text-sm text-sage hover:text-charcoal transition-colors bg-white px-3 py-1.5 rounded-full border border-pebble shadow-sm"
-              >
-                <span>🌐</span>
-                <span className="font-medium text-xs">{LANG_LABELS[lang]}</span>
-                <span className="text-sage/50 text-xs">{langOpen ? '▲' : '▼'}</span>
-              </button>
-              {langOpen && (
-                <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-xl border border-pebble min-w-44 z-50 overflow-hidden">
-                  {(Object.entries(LANG_LABELS) as [typeof lang, string][]).map(([code, label]) => (
-                    <button
-                      key={code}
-                      onClick={() => { setLang(code); setLangOpen(false) }}
-                      className={`w-full text-left px-4 py-2.5 text-xs transition-colors ${
-                        lang === code ? 'bg-forest text-cream font-medium' : 'text-charcoal hover:bg-mist'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Expert badge */}

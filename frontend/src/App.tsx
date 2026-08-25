@@ -1,4 +1,4 @@
-import { useState, createContext, useContext } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import { translate, type Lang } from './translations'
 import { Landing } from './views/Landing'
 import { Login } from './views/Login'
@@ -48,7 +48,13 @@ export const AppContext = createContext<AppCtx>({
 
 export const useApp = () => useContext(AppContext)
 
-const FARMER_VIEWS: View[] = ['dashboard', 'soil', 'crop', 'advisory', 'voice', 'farm', 'reports', 'alerts']
+function updateGlobalFontAndLang(newLang: Lang) {
+  document.documentElement.lang = newLang
+  document.documentElement.setAttribute('data-lang', newLang)
+  if (document.body) {
+    document.body.setAttribute('data-lang', newLang)
+  }
+}
 
 function AppShell({ view }: { view: View }) {
   const renderView = () => {
@@ -86,20 +92,55 @@ export default function App() {
     if (saved && ['en', 'te', 'ta', 'hi'].includes(saved)) {
       return saved
     }
+    const userJson = localStorage.getItem('farmassist_user')
+    if (userJson) {
+      try {
+        const userObj = JSON.parse(userJson)
+        if (userObj.preferred_language && ['en', 'te', 'ta', 'hi'].includes(userObj.preferred_language)) {
+          return userObj.preferred_language as Lang
+        }
+      } catch (e) {}
+    }
     return 'en'
   })
 
-  // Synchronize document language and font attributes on change
+  // Synchronize document language and global font attributes immediately on mount and change
+  useEffect(() => {
+    updateGlobalFontAndLang(lang)
+    
+    // Fetch stored user profile from backend on app load
+    fetch('http://127.0.0.1:8000/api/user/profile')
+      .then((res) => res.json())
+      .then((user) => {
+        if (user && user.preferred_language && ['en', 'te', 'ta', 'hi'].includes(user.preferred_language)) {
+          const backendLang = user.preferred_language as Lang
+          if (backendLang !== lang) {
+            setLangState(backendLang)
+            localStorage.setItem('farmassist_language', backendLang)
+            updateGlobalFontAndLang(backendLang)
+          }
+        }
+      })
+      .catch(() => {})
+  }, [lang])
+
   const setLang = (newLang: Lang) => {
     setLangState(newLang)
     localStorage.setItem('farmassist_language', newLang)
-    document.documentElement.lang = newLang
+    updateGlobalFontAndLang(newLang)
     
-    // Save to user profile in localStorage for backend sync
+    // Save to user profile in localStorage
     const userJson = localStorage.getItem('farmassist_user')
     const userObj = userJson ? JSON.parse(userJson) : { name: 'Raju Reddy', location: 'Kakinada, Andhra Pradesh' }
     userObj.preferred_language = newLang
     localStorage.setItem('farmassist_user', JSON.stringify(userObj))
+
+    // Save to backend user profile API
+    fetch('http://127.0.0.1:8000/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preferred_language: newLang })
+    }).catch(() => {})
   }
 
   const t = (key: string) => translate(lang, key)

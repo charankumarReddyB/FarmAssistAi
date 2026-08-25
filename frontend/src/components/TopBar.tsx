@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../App'
-import { LANG_LABELS } from '../translations'
 
 export function TopBar() {
-  const { t, lang, setLang, setView } = useApp()
+  const { t, setView } = useApp()
   const [temp, setTemp] = useState<number | string>('32°C')
   const [userLocation, setUserLocation] = useState<string>('Kakinada, Andhra Pradesh')
 
@@ -45,33 +44,16 @@ export function TopBar() {
       {/* Weather shortcut */}
       <button
         onClick={() => setView('dashboard')}
-        className="flex items-center gap-1.5 text-sm text-charcoal/80 hover:text-charcoal transition-colors px-2.5 py-1 rounded-md bg-mist/60 border border-pebble/40"
+        className="flex items-center gap-1.5 text-sm text-charcoal/80 hover:text-charcoal transition-colors px-2.5 py-1 rounded-md bg-mist/60 border border-pebble/40 cursor-pointer"
       >
         <span>⛅</span>
         <span className="font-mono font-semibold text-xs">{temp}</span>
       </button>
 
-      {/* Language quick switch */}
-      <div className="flex items-center gap-0.5 border border-pebble rounded-md overflow-hidden bg-white">
-        {(Object.keys(LANG_LABELS) as (keyof typeof LANG_LABELS)[]).map((code) => (
-          <button
-            key={code}
-            onClick={() => setLang(code)}
-            className={`px-2 py-1 text-xs transition-colors ${
-              lang === code
-                ? 'bg-forest text-cream font-medium'
-                : 'text-sage hover:text-charcoal hover:bg-mist'
-            }`}
-          >
-            {code.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
       {/* Voice button */}
       <button
         onClick={() => setView('voice')}
-        className="w-9 h-9 rounded-full bg-forest text-cream flex items-center justify-center hover:bg-leaf transition-colors shadow-sm"
+        className="w-9 h-9 rounded-full bg-forest text-cream flex items-center justify-center hover:bg-leaf transition-colors shadow-sm cursor-pointer"
         title="Voice Assistant"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -84,7 +66,7 @@ export function TopBar() {
       {/* Alerts */}
       <button
         onClick={() => setView('alerts')}
-        className="relative w-9 h-9 rounded-full hover:bg-mist flex items-center justify-center text-sage hover:text-charcoal transition-colors"
+        className="relative w-9 h-9 rounded-full hover:bg-mist flex items-center justify-center text-sage hover:text-charcoal transition-colors cursor-pointer"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -94,7 +76,7 @@ export function TopBar() {
       </button>
 
       {/* Profile avatar */}
-      <button onClick={() => setView('settings')} className="w-8 h-8 rounded-full bg-forest text-cream text-sm font-medium flex items-center justify-center hover:opacity-80 transition-opacity">
+      <button onClick={() => setView('settings')} className="w-8 h-8 rounded-full bg-forest text-cream text-sm font-medium flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
         R
       </button>
     </header>

@@ -77,23 +77,6 @@ export function Advisory() {
           <h1 className="font-display text-3xl text-charcoal">{t('advisory_title')}</h1>
           <p className="text-sage text-sm mt-1">Raju Reddy · Kakinada, AP · Paddy, Kharif 2026</p>
         </div>
-        {/* Language toggle inside advisory */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-sage text-xs mr-1">Advisory language:</span>
-          <div className="flex items-center border border-pebble rounded-lg overflow-hidden">
-            {(Object.keys(LANG_LABELS) as (keyof typeof LANG_LABELS)[]).map((code) => (
-              <button
-                key={code}
-                onClick={() => setLang(code)}
-                className={`px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-                  lang === code ? 'bg-forest text-cream font-medium' : 'text-sage hover:text-charcoal hover:bg-mist'
-                }`}
-              >
-                {LANG_LABELS[code]}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Expert Verification Status Banner */}

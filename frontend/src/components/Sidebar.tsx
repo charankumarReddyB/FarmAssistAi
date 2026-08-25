@@ -1,7 +1,5 @@
-import { useState } from 'react'
 import { useApp, type View } from '../App'
 import { Logo } from './Logo'
-import { LANG_LABELS } from '../translations'
 
 interface NavItem {
   id: View
@@ -21,8 +19,7 @@ const PRIMARY_NAV: NavItem[] = [
 ]
 
 export function Sidebar() {
-  const { view, setView, lang, setLang, t } = useApp()
-  const [langOpen, setLangOpen] = useState(false)
+  const { view, setView, t } = useApp()
 
   return (
     <aside className="w-56 flex-shrink-0 bg-forest flex flex-col h-full">
@@ -39,7 +36,7 @@ export function Sidebar() {
             <button
               key={item.id}
               onClick={() => setView(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-left transition-all duration-150 ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-left transition-all duration-150 cursor-pointer ${
                 isActive
                   ? 'bg-leaf text-cream font-medium'
                   : 'text-cream/70 hover:bg-white/8 hover:text-cream'
@@ -61,35 +58,8 @@ export function Sidebar() {
 
       {/* Bottom section */}
       <div className="px-3 pb-4 space-y-0.5 border-t border-white/10 pt-3">
-        {/* Language selector */}
-        <div className="relative">
-          <button
-            onClick={() => setLangOpen(!langOpen)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-cream/70 hover:bg-white/8 hover:text-cream transition-all"
-          >
-            <span className="text-base w-5 flex-shrink-0 text-center">🌐</span>
-            <span className="flex-1 text-left truncate">{LANG_LABELS[lang]}</span>
-            <span className="text-cream/40 text-xs">{langOpen ? '▲' : '▼'}</span>
-          </button>
-          {langOpen && (
-            <div className="absolute bottom-full left-0 right-0 mb-1 bg-charcoal rounded-md overflow-hidden shadow-xl border border-white/10 z-50">
-              {(Object.entries(LANG_LABELS) as [typeof lang, string][]).map(([code, label]) => (
-                <button
-                  key={code}
-                  onClick={() => { setLang(code); setLangOpen(false) }}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                    lang === code ? 'bg-leaf text-cream' : 'text-cream/70 hover:bg-white/10 hover:text-cream'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Profile */}
-        <button onClick={() => setView('settings')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-cream/70 hover:bg-white/8 hover:text-cream transition-all">
+        {/* Profile / Settings link */}
+        <button onClick={() => setView('settings')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-cream/70 hover:bg-white/8 hover:text-cream transition-all cursor-pointer">
           <span className="w-5 h-5 rounded-full bg-harvest/60 flex items-center justify-center text-xs text-cream font-medium flex-shrink-0">
             R
           </span>
@@ -101,7 +71,7 @@ export function Sidebar() {
 
         <button
           onClick={() => setView('landing')}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-cream/40 hover:text-cream/70 hover:bg-white/5 transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-cream/40 hover:text-cream/70 hover:bg-white/5 transition-all cursor-pointer"
         >
           <span className="text-base w-5 text-center opacity-70">⎋</span>
           <span>{t('nav_logout')}</span>
