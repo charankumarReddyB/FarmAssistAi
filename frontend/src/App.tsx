@@ -285,14 +285,19 @@ export default function App() {
       window.history.replaceState(null, '', window.location.pathname)
     }
 
-    // Direct routing decision
-    if (isOnboarded === false && !hasLocation) {
-      console.log('[AUTH] Incomplete location onboarding. Directing to location onboarding.')
+    // Direct routing decision — Admins and Experts bypass location detection completely
+    if (finalUser.role === 'admin') {
+      console.log('[AUTH] Admin session active. Routing directly to Admin Dashboard.')
+      setViewState('admin')
+    } else if (finalUser.role === 'expert') {
+      console.log('[AUTH] Expert session active. Routing directly to Expert Portal.')
+      setViewState('expert')
+    } else if (isOnboarded === false && !hasLocation) {
+      console.log('[AUTH] Incomplete location onboarding for farmer. Directing to location onboarding.')
       setViewState('login')
     } else {
-      const targetView = finalUser.role === 'admin' ? 'admin' : finalUser.role === 'expert' ? 'expert' : 'dashboard'
-      console.log('[AUTH] Routing authenticated user to dashboard:', targetView)
-      setViewState(targetView)
+      console.log('[AUTH] Routing authenticated farmer to dashboard.')
+      setViewState('dashboard')
     }
   }
 

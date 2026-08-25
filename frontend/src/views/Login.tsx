@@ -318,8 +318,10 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
           throw new Error(loginError || 'Invalid email or password. Please try again.')
         }
 
-        // Check onboarding status
-        if (userObj.onboarding_completed === false && !userObj.district && !userObj.latitude) {
+        // Check onboarding status — Admins and Experts strictly bypass location detection
+        if (userObj.role === 'admin' || userObj.role === 'expert') {
+          login(userObj, token)
+        } else if (userObj.onboarding_completed === false && !userObj.district && !userObj.latitude) {
           setPendingToken(token)
           setPendingUser(userObj)
           setStep('location-permission')
