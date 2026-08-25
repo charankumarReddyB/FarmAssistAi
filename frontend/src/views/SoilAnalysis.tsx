@@ -16,12 +16,12 @@ interface Nutrient {
   note: string
 }
 
-const PROCESSING_STEPS = [
-  'Reading your soil report...',
-  'Extracting soil information (pH, N, P, K)...',
-  'Analyzing soil conditions & regional baselines...',
-  'Matching Sentence-BERT agricultural knowledge...',
-  'Generating personalized recommendations...',
+const PROCESSING_STEP_KEYS = [
+  'soil_processing_1',
+  'soil_processing_2',
+  'soil_processing_3',
+  'soil_processing_4',
+  'soil_processing_5',
 ]
 
 const STATUS_BAR: Record<string, string> = {
@@ -55,7 +55,7 @@ export function SoilAnalysis() {
     setProcessingStep(0)
     const interval = setInterval(() => {
       setProcessingStep((s) => {
-        if (s >= PROCESSING_STEPS.length - 1) {
+        if (s >= PROCESSING_STEP_KEYS.length - 1) {
           clearInterval(interval)
           return s
         }
@@ -227,9 +227,9 @@ export function SoilAnalysis() {
 
           {/* Step messages */}
           <div className="space-y-3">
-            {PROCESSING_STEPS.map((stepMsg, i) => (
+            {PROCESSING_STEP_KEYS.map((stepKey, i) => (
               <div
-                key={stepMsg}
+                key={stepKey}
                 className={`flex items-center gap-3 transition-all duration-300 text-left ${
                   i < processingStep ? 'opacity-40' : i === processingStep ? 'opacity-100 step-in' : 'opacity-20'
                 }`}
@@ -240,13 +240,13 @@ export function SoilAnalysis() {
                   {i < processingStep ? '✓' : i + 1}
                 </div>
                 <span className={`text-sm ${i === processingStep ? 'text-charcoal font-semibold' : 'text-sage'}`}>
-                  {stepMsg}
+                  {t(stepKey)}
                 </span>
               </div>
             ))}
           </div>
 
-          <p className="text-sage text-xs">Analyzing soil report with Sentence-BERT & AI Models...</p>
+          <p className="text-sage text-xs">{t('soil_processing_4')}</p>
         </div>
       </div>
     )

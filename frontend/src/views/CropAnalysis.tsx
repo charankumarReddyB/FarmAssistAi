@@ -11,12 +11,12 @@ const GUIDANCE = [
   { icon: '📷', key: 'crop_guidance_blur' },
 ]
 
-const PROCESSING_STEPS = [
-  'Examining crop image & validating format...',
-  'Preprocessing RGB channels & PyTorch tensor conversion...',
-  'Running MobileNetV2 Deep Learning classifier...',
-  'Evaluating live Open-Meteo weather disease risk...',
-  'Synthesizing multilingual management advisory...',
+const PROCESSING_STEP_KEYS = [
+  'crop_processing_1',
+  'crop_processing_2',
+  'crop_processing_3',
+  'crop_processing_4',
+  'crop_processing_5',
 ]
 
 export function CropAnalysis() {
@@ -36,7 +36,7 @@ export function CropAnalysis() {
     setProcessingStep(0)
     const interval = setInterval(() => {
       setProcessingStep((s) => {
-        if (s >= PROCESSING_STEPS.length - 1) {
+        if (s >= PROCESSING_STEP_KEYS.length - 1) {
           clearInterval(interval)
           return s
         }
@@ -143,9 +143,9 @@ export function CropAnalysis() {
             </div>
           </div>
           <div className="space-y-3">
-            {PROCESSING_STEPS.map((step, i) => (
+            {PROCESSING_STEP_KEYS.map((stepKey, i) => (
               <div
-                key={step}
+                key={stepKey}
                 className={`flex items-center gap-3 transition-all duration-300 text-left ${
                   i < processingStep ? 'opacity-40' : i === processingStep ? 'opacity-100' : 'opacity-20'
                 }`}
@@ -156,12 +156,12 @@ export function CropAnalysis() {
                   {i < processingStep ? '✓' : i + 1}
                 </div>
                 <span className={`text-sm ${i === processingStep ? 'text-charcoal font-semibold' : 'text-sage'}`}>
-                  {step}
+                  {t(stepKey)}
                 </span>
               </div>
             ))}
           </div>
-          <p className="text-sage text-xs">MobileNetV2 Deep Learning Neural Network Inference...</p>
+          <p className="text-sage text-xs">{t('crop_processing_3')}</p>
         </div>
       </div>
     )

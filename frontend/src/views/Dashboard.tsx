@@ -184,15 +184,15 @@ export function Dashboard() {
       {/* Top summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Farm Health', value: `${overallScore}/100`, sub: 'Moderate Risk', color: 'text-harvest', nav: 'advisory' as FarmerView },
-          { label: 'Soil Score', value: '72/100', sub: 'Needs Attention', color: 'text-risk', nav: 'soil' as FarmerView },
-          { label: 'Crop Health', value: '84/100', sub: 'Good', color: 'text-meadow', nav: 'crop' as FarmerView },
-          { label: 'Active Alerts', value: '3', sub: '1 high priority', color: 'text-harvest', nav: 'alerts' as FarmerView },
+          { label: t('health_farm_health'), value: `${overallScore}/100`, sub: t('health_moderate'), color: 'text-harvest', nav: 'advisory' as FarmerView },
+          { label: t('health_soil_score'), value: '72/100', sub: t('health_needs_attention'), color: 'text-risk', nav: 'soil' as FarmerView },
+          { label: t('health_crop_health'), value: '84/100', sub: t('health_good'), color: 'text-meadow', nav: 'crop' as FarmerView },
+          { label: t('health_active_alerts'), value: '3', sub: `1 ${t('alerts_high').toLowerCase()}`, color: 'text-harvest', nav: 'alerts' as FarmerView },
         ].map((s) => (
           <button
             key={s.label}
             onClick={() => setView(s.nav)}
-            className="bg-white border border-pebble rounded-xl p-4 text-left hover:border-leaf/40 transition-colors group"
+            className="bg-white border border-pebble rounded-xl p-4 text-left hover:border-leaf/40 transition-colors group cursor-pointer"
           >
             <div className="text-sage text-xs font-mono uppercase tracking-wide mb-1">{s.label}</div>
             <div className={`font-display text-2xl ${s.color}`}>{s.value}</div>
@@ -221,7 +221,7 @@ export function Dashboard() {
                   </div>
                   <div className="pb-1.5">
                     <div className="text-cream font-medium text-lg leading-tight">{weatherData.condition}</div>
-                    <div className="text-cream/50 text-sm">Feels like {Math.round(weatherData.temperature + 2)}° · Live Forecast</div>
+                    <div className="text-cream/50 text-sm">{t('weather_feels_like')} {Math.round(weatherData.temperature + 2)}° · {t('weather_live_forecast')}</div>
                   </div>
                 </div>
               </div>
@@ -281,9 +281,9 @@ export function Dashboard() {
               <h2 className="font-display text-xl text-charcoal">{t('dash_today_advice')}</h2>
               <button
                 onClick={() => setView('advisory')}
-                className="text-xs text-leaf hover:text-forest transition-colors font-medium"
+                className="text-xs text-leaf hover:text-forest transition-colors font-medium cursor-pointer"
               >
-                Full Advisory →
+                {t('dash_full_advisory')} →
               </button>
             </div>
             <div className="space-y-3">
