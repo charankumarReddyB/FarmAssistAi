@@ -506,7 +506,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                 </button>
               </div>
 
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
+              <form onSubmit={handleAuthSubmit} autoComplete="off" className="space-y-4">
                 {mode === 'register' && (
                   <div>
                     <label className="block text-xs font-medium text-sage mb-1 uppercase tracking-wide">
@@ -516,6 +516,8 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                       type="text"
                       required
                       id="input-fullname"
+                      name="farm_user_fullname"
+                      autoComplete="off"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Raju Reddy"
@@ -532,6 +534,8 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                     type="email"
                     required
                     id="input-email"
+                    name="farm_user_email"
+                    autoComplete="off"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="farmer@farmassist.ai"
@@ -547,6 +551,8 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                     type="password"
                     required
                     id="input-password"
+                    name="farm_user_password"
+                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
@@ -656,7 +662,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                 </div>
               )}
 
-              <form onSubmit={handleManualLocationSubmit} className="space-y-4">
+              <form onSubmit={handleManualLocationSubmit} autoComplete="off" className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-sage mb-1 uppercase tracking-wide">
                     State

@@ -450,7 +450,7 @@ export function AdminDashboard() {
               </div>
             )}
 
-            <form onSubmit={handleCreateUserSubmit} className="space-y-4">
+            <form onSubmit={handleCreateUserSubmit} autoComplete="off" className="space-y-4">
               <div>
                 <label className="block text-xs font-mono text-sage uppercase tracking-wider mb-1">
                   Full Name
@@ -459,6 +459,8 @@ export function AdminDashboard() {
                   type="text"
                   required
                   id="admin-new-fullname"
+                  name="privileged_user_name"
+                  autoComplete="off"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g. Dr. Priya Sharma"
@@ -474,6 +476,8 @@ export function AdminDashboard() {
                   type="email"
                   required
                   id="admin-new-email"
+                  name="privileged_user_email"
+                  autoComplete="off"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="expert@farmassist.ai"
@@ -507,6 +511,8 @@ export function AdminDashboard() {
                   type="password"
                   required
                   id="admin-new-password"
+                  name="privileged_user_password"
+                  autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
@@ -522,6 +528,8 @@ export function AdminDashboard() {
                   type="password"
                   required
                   id="admin-new-confirm-password"
+                  name="privileged_user_confirm_password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
