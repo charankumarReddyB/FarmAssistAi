@@ -178,7 +178,7 @@ export default function App() {
       if (session?.user) {
         const token = session.access_token
         localStorage.setItem('farmassist_token', token)
-        
+
         // Fetch or create profile record in Supabase
         const { data: profile } = await supabase
           .from('profiles')
@@ -205,6 +205,14 @@ export default function App() {
           setLangState(userObj.preferred_language)
           updateGlobalFontAndLang(userObj.preferred_language)
         }
+
+        // Automatically redirect signed-in user from landing/login to role dashboard
+        setViewState((currentView) => {
+          if (currentView === 'landing' || currentView === 'login' || currentView === 'expert-login') {
+            return userObj.role === 'admin' ? 'admin' : userObj.role === 'expert' ? 'expert' : 'dashboard'
+          }
+          return currentView
+        })
       }
     })
 

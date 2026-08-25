@@ -6,7 +6,7 @@ import { LANG_LABELS } from '../translations'
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1528693404014-b13ebe6e723e?w=1920&h=1080&fit=crop&auto=format'
 
 export function Landing() {
-  const { t, setView, lang, setLang } = useApp()
+  const { t, setView, lang, setLang, user } = useApp()
   const [langOpen, setLangOpen] = useState(false)
 
   return (
@@ -80,24 +80,24 @@ export function Landing() {
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <button
-              onClick={() => setView('login')}
-              className="w-full sm:w-auto px-8 py-3.5 bg-leaf text-cream font-medium text-base rounded-lg hover:bg-meadow transition-colors shadow-lg"
+              onClick={() => setView(user ? (user.role === 'admin' ? 'admin' : user.role === 'expert' ? 'expert' : 'dashboard') : 'login')}
+              className="w-full sm:w-auto px-8 py-3.5 bg-leaf text-cream font-medium text-base rounded-lg hover:bg-meadow transition-colors shadow-lg cursor-pointer"
             >
-              {t('landing_cta')}
+              {user ? 'Go to Dashboard' : t('landing_cta')}
             </button>
             <button
-              onClick={() => setView('login')}
-              className="w-full sm:w-auto px-8 py-3.5 bg-cream/10 text-cream font-medium text-base rounded-lg border border-cream/25 hover:bg-cream/15 transition-colors backdrop-blur-sm"
+              onClick={() => setView(user ? (user.role === 'admin' ? 'admin' : user.role === 'expert' ? 'expert' : 'dashboard') : 'login')}
+              className="w-full sm:w-auto px-8 py-3.5 bg-cream/10 text-cream font-medium text-base rounded-lg border border-cream/25 hover:bg-cream/15 transition-colors backdrop-blur-sm cursor-pointer"
             >
-              {t('landing_signin')}
+              {user ? 'My Farm' : t('landing_signin')}
             </button>
           </div>
 
           {/* Expert portal link */}
           <div className="pt-2">
             <button
-              onClick={() => setView('expert-login')}
-              className="text-cream/45 hover:text-cream/70 text-sm transition-colors"
+              onClick={() => setView(user && user.role === 'expert' ? 'expert' : 'expert-login')}
+              className="text-cream/45 hover:text-cream/70 text-sm transition-colors cursor-pointer"
             >
               {t('landing_expert')} →
             </button>
