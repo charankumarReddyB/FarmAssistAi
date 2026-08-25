@@ -66,7 +66,7 @@ function Toggle({ label, description, defaultOn = false }: { label: string; desc
 }
 
 export function Settings() {
-  const { t, lang, setLang, setView, updateUser, user } = useApp()
+  const { t, lang, setLang, setView, updateUser, user, logout } = useApp()
   const [activeSection, setActiveSection] = useState<Section>('profile')
   const [textSize, setTextSize] = useState<'normal' | 'large' | 'xl'>('normal')
   const [notifMethod, setNotifMethod] = useState<'sms' | 'app' | 'both'>('both')
@@ -535,7 +535,8 @@ export function Settings() {
 
             <div className="pt-2 border-t border-pebble">
               <button
-                onClick={() => setView('landing')}
+                id="settings-signout-btn"
+                onClick={() => logout()}
                 className="w-full py-3 border border-risk/30 text-risk rounded-xl text-sm font-medium hover:bg-risk/5 transition-colors cursor-pointer"
               >
                 Sign Out of FarmAssist AI
