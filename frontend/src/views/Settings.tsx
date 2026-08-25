@@ -75,6 +75,51 @@ export function Settings() {
     setLang(newLang)
   }
 
+  const [profileState, setProfileState] = useState(() => {
+    const raw = localStorage.getItem('farmassist_user')
+    if (raw) {
+      try {
+        const u = JSON.parse(raw)
+        return u.state || 'Andhra Pradesh'
+      } catch (e) {}
+    }
+    return 'Andhra Pradesh'
+  })
+
+  const [profileDistrict, setProfileDistrict] = useState(() => {
+    const raw = localStorage.getItem('farmassist_user')
+    if (raw) {
+      try {
+        const u = JSON.parse(raw)
+        return u.district || 'Kakinada'
+      } catch (e) {}
+    }
+    return 'Kakinada'
+  })
+
+  const [profileVillage, setProfileVillage] = useState('Samalkota')
+
+  const handleSaveLocation = () => {
+    const raw = localStorage.getItem('farmassist_user')
+    const existing = raw ? JSON.parse(raw) : {}
+    const updated = {
+      ...existing,
+      state: profileState,
+      district: profileDistrict,
+      village: profileVillage,
+      location: `${profileDistrict}, ${profileState}`
+    }
+    localStorage.setItem('farmassist_user', JSON.stringify(updated))
+
+    fetch('http://127.0.0.1:8000/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    }).catch(() => {})
+
+    alert(`Location saved: ${profileDistrict}, ${profileState}. Farm analysis updated!`)
+  }
+
   const renderSection = () => {
     switch (activeSection) {
       case 'profile':
@@ -92,7 +137,7 @@ export function Settings() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-charcoal">Raju Reddy</h3>
-                <p className="text-xs text-sage font-mono">Farmer ID: farmer_001 · Kakinada, Andhra Pradesh</p>
+                <p className="text-xs text-sage font-mono">Farmer ID: farmer_001 · {profileDistrict}, {profileState}</p>
                 <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-leaf/10 text-leaf text-xs rounded-md font-semibold">
                   <span>🌐 App Language:</span>
                   <span>{LANG_LABELS[lang]}</span>
@@ -100,40 +145,55 @@ export function Settings() {
               </div>
             </div>
 
-            <div className="bg-white border border-pebble rounded-xl px-5 py-3 space-y-4">
+            <div className="bg-white border border-pebble rounded-xl px-5 py-4 space-y-4">
               <div className="text-xs font-mono uppercase tracking-widest text-sage border-b border-pebble/40 pb-2 font-semibold">
                 Farmer & Location Profile
               </div>
               <Field label="Full Name" value="Raju Reddy" />
               <Field label="Mobile Number" value="+91 9876543210" />
-              <Field label="State" value="Andhra Pradesh" />
-              <Field label="District" value="Kakinada" />
-              <Field label="City / Town / Village" value="Samalkota" />
-              <Field label="Country" value="India" />
-              <Field label="Coordinates" value="16.98° N, 82.24° E" />
+
+              <div className="py-2 border-b border-pebble/60">
+                <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">State</label>
+                <select
+                  value={profileState}
+                  onChange={(e) => setProfileState(e.target.value)}
+                  className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2 focus:outline-none"
+                >
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Kerala">Kerala</option>
+                </select>
+              </div>
+
+              <div className="py-2 border-b border-pebble/60">
+                <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">District / City</label>
+                <input
+                  type="text"
+                  value={profileDistrict}
+                  onChange={(e) => setProfileDistrict(e.target.value)}
+                  placeholder="e.g. Kakinada or Chennai"
+                  className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2 focus:outline-none"
+                />
+              </div>
+
+              <div className="py-2 border-b border-pebble/60">
+                <label className="text-xs font-mono uppercase tracking-wide text-sage block mb-1">Village / Town</label>
+                <input
+                  type="text"
+                  value={profileVillage}
+                  onChange={(e) => setProfileVillage(e.target.value)}
+                  className="w-full text-sm text-charcoal bg-mist/50 border border-pebble rounded-lg p-2 focus:outline-none"
+                />
+              </div>
             </div>
 
             <div className="bg-mist/60 border border-pebble rounded-xl p-4 flex items-center justify-between text-xs text-sage">
-              <span>📍 Changing location automatically updates live weather and dataset-based crop advisories.</span>
+              <span>📍 Changing location automatically updates live weather, climate context, soil baselines, and crop recommendations.</span>
               <button
-                onClick={() => {
-                  const userObj = {
-                    full_name: 'Raju Reddy',
-                    country: 'India',
-                    state: 'Andhra Pradesh',
-                    district: 'Kakinada',
-                    village: 'Samalkota',
-                    preferred_language: lang
-                  }
-                  localStorage.setItem('farmassist_user', JSON.stringify(userObj))
-                  fetch('http://127.0.0.1:8000/api/user/profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userObj)
-                  }).catch(() => {})
-                  alert('Profile & Location saved successfully!')
-                }}
-                className="px-3 py-1.5 bg-forest text-cream font-semibold rounded-lg hover:bg-leaf transition-colors flex-shrink-0 ml-3 cursor-pointer"
+                onClick={handleSaveLocation}
+                className="px-4 py-2 bg-forest text-cream font-semibold rounded-lg hover:bg-leaf transition-colors flex-shrink-0 ml-3 cursor-pointer"
               >
                 Save Location
               </button>

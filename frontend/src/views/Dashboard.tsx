@@ -116,15 +116,19 @@ export function Dashboard() {
     district: 'Kakinada'
   })
 
+  const [locAnalysis, setLocAnalysis] = useState<any>(null)
+
   useEffect(() => {
     // Read saved farmer profile from localStorage
     const savedUser = localStorage.getItem('farmassist_user')
+    let st = 'Andhra Pradesh'
+    let dist = 'Kakinada'
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser)
-        const nameStr = parsed.name || 'Raju'
-        const dist = parsed.district || 'Kakinada'
-        const st = parsed.state || 'Andhra Pradesh'
+        const nameStr = parsed.name || parsed.full_name || 'Raju'
+        dist = parsed.district || 'Kakinada'
+        st = parsed.state || 'Andhra Pradesh'
         setUserProfile({
           name: nameStr.split(' ')[0],
           location: `${dist}, ${st}`,
@@ -135,12 +139,12 @@ export function Dashboard() {
     }
 
     // Fetch dynamic weather from API
-    fetch('http://127.0.0.1:8000/api/weather')
+    fetch(`http://127.0.0.1:8000/api/weather?location=${encodeURIComponent(`${dist}, ${st}`)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.temperature !== undefined) {
           setWeatherData({
-            location: data.location || 'Kakinada, Andhra Pradesh',
+            location: data.location || `${dist}, ${st}`,
             temperature: data.temperature,
             humidity: data.humidity || 74,
             wind_speed: data.wind_speed || 12,
@@ -151,7 +155,17 @@ export function Dashboard() {
         }
       })
       .catch(() => {})
-  }, [])
+
+    // Fetch Location-Based Farm Analysis API
+    fetch(`http://127.0.0.1:8000/api/farm/location-analysis?state=${encodeURIComponent(st)}&district=${encodeURIComponent(dist)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setLocAnalysis(data)
+        }
+      })
+      .catch(() => {})
+  }, [lang])
 
   const overallScore = Math.round(
     HEALTH_ITEMS.reduce((sum, h) => sum + h.score, 0) / HEALTH_ITEMS.length
@@ -340,6 +354,101 @@ export function Dashboard() {
               ))}
             </div>
           </div>
+
+          {/* Location-Based Farm Intelligence Section */}
+          {locAnalysis && (
+            <div className="bg-white border border-pebble rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-pebble/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📍</span>
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-charcoal">
+                      {t('loc_analysis_title')}
+                    </h2>
+                    <p className="text-xs text-sage font-mono">
+                      Location Context: {locAnalysis.location?.full_location}
+                    </p>
+                  </div>
+                </div>
+                <AiBadge label="Location Sync" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                {/* 1. Regional Climate Context */}
+                <div className="p-3.5 bg-mist/60 border border-pebble/60 rounded-xl space-y-1.5">
+                  <div className="font-bold text-charcoal text-sm flex items-center gap-1.5">
+                    <span>🌦️</span> {t('loc_climate_context')}
+                  </div>
+                  <div className="text-sage font-medium">
+                    Zone: <span className="text-charcoal font-semibold">{locAnalysis.climate_context?.zone_name || 'Agro-Climatic Zone'}</span>
+                  </div>
+                  <div className="text-sage">
+                    Season: <span className="text-leaf font-semibold">{locAnalysis.climate_context?.current_season}</span>
+                  </div>
+                  <p className="text-charcoal/90 leading-snug mt-1">
+                    {locAnalysis.climate_context?.seasonal_agricultural_context}
+                  </p>
+                  {locAnalysis.climate_context?.climate_risks?.length > 0 && (
+                    <div className="mt-1 text-risk font-medium text-[11px]">
+                      ⚠️ Risks: {locAnalysis.climate_context.climate_risks.join(', ')}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Regional Soil Baseline Comparison */}
+                <div className="p-3.5 bg-mist/60 border border-pebble/60 rounded-xl space-y-1.5">
+                  <div className="font-bold text-charcoal text-sm flex items-center gap-1.5">
+                    <span>🌱</span> {t('loc_regional_soil')}
+                  </div>
+                  <div className="text-sage font-medium">
+                    Regional Soil Type: <span className="text-charcoal font-semibold">{locAnalysis.regional_soil_analysis?.regional_soil_type}</span>
+                  </div>
+                  <div className="text-charcoal/90 leading-snug space-y-1 mt-1">
+                    {locAnalysis.regional_soil_analysis?.regional_comparison_notes?.map((note: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-1">
+                        <span className="text-leaf">▪</span>
+                        <span>{note}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Location Crop Suitability */}
+                <div className="p-3.5 bg-mist/60 border border-pebble/60 rounded-xl space-y-1.5">
+                  <div className="font-bold text-charcoal text-sm flex items-center gap-1.5">
+                    <span>🌾</span> {t('loc_crop_suitability')}
+                  </div>
+                  <div className="text-forest font-bold text-sm">
+                    Recommended: {locAnalysis.crop_suitability?.recommended_crop}
+                  </div>
+                  <p className="text-charcoal/90 leading-snug">
+                    {locAnalysis.crop_suitability?.suitability_explanation}
+                  </p>
+                </div>
+
+                {/* 4. Disease Risk & Next Action */}
+                <div className="p-3.5 bg-mist/60 border border-pebble/60 rounded-xl space-y-1.5">
+                  <div className="font-bold text-charcoal text-sm flex items-center gap-1.5">
+                    <span>🛡️</span> {t('loc_disease_risk')} & Risk Level
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-sage">Overall Farm Risk:</span>
+                    <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${
+                      locAnalysis.farm_risk?.level === 'HIGH' ? 'bg-risk/15 text-risk' : 'bg-meadow/15 text-meadow'
+                    }`}>
+                      {locAnalysis.farm_risk?.level} RISK
+                    </span>
+                  </div>
+                  <div className="text-charcoal/90 text-xs mt-1">
+                    <span className="font-semibold text-charcoal">Recommended Next Action:</span>
+                    <p className="text-forest font-medium mt-0.5 leading-snug">
+                      {locAnalysis.recommended_action}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right column */}
