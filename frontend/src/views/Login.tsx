@@ -55,10 +55,10 @@ export function Login({ isExpert = false }: LoginProps) {
         <div className="relative z-10 flex flex-col justify-end p-10">
           <blockquote className="text-cream">
             <p className="font-display text-2xl leading-snug mb-3">
-              "Understand your farm.<br />Know what to do next."
+              "{t('quote_text')}"
             </p>
             <footer className="text-cream/50 text-sm font-mono tracking-wide">
-              — FarmAssist AI
+              {t('quote_author')}
             </footer>
           </blockquote>
         </div>
@@ -78,7 +78,7 @@ export function Login({ isExpert = false }: LoginProps) {
           {isExpert && (
             <div className="mb-6 inline-flex items-center gap-2 bg-rain/10 text-rain text-xs font-mono rounded-full px-3 py-1.5 border border-rain/20">
               <span>◈</span>
-              Agricultural Expert Portal
+              {t('landing_expert')}
             </div>
           )}
 
@@ -87,13 +87,13 @@ export function Login({ isExpert = false }: LoginProps) {
             <div className="space-y-6 step-in">
               <div>
                 <div className="inline-block text-xs font-semibold uppercase tracking-wider text-leaf bg-leaf/10 px-2.5 py-1 rounded-md mb-2">
-                  Step 1 of 2
+                  {t('auth_step_1_of_2')}
                 </div>
                 <h1 className="font-display text-2xl text-charcoal font-bold mb-1">
-                  Choose Your Preferred Language
+                  {t('choose_language_title')}
                 </h1>
                 <p className="text-sage text-sm">
-                  సభ్యత్వం లేదా సైన్ ఇన్ కోసం మీ భాషను ఎంచుకోండి
+                  {t('choose_language_sub')}
                 </p>
               </div>
 
@@ -135,7 +135,7 @@ export function Login({ isExpert = false }: LoginProps) {
                 onClick={() => setStep('auth')}
                 className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md flex items-center justify-center gap-2"
               >
-                <span>Continue to Sign In</span>
+                <span>{t('auth_continue_to_signin')}</span>
                 <span>→</span>
               </button>
             </div>
@@ -154,7 +154,7 @@ export function Login({ isExpert = false }: LoginProps) {
                   className="text-xs text-leaf hover:underline font-medium flex items-center gap-1"
                 >
                   <span>🌐 {LANG_LABELS[lang].split(' — ')[0]}</span>
-                  <span>(Change)</span>
+                  <span>{t('auth_change')}</span>
                 </button>
               </div>
 
@@ -212,13 +212,13 @@ export function Login({ isExpert = false }: LoginProps) {
               <>
                 <div>
                   <label className="block text-xs font-medium text-sage mb-1.5 uppercase tracking-wide">
-                    OTP sent to {mobile || '9876543210'}
+                    {t('auth_otp_sent_to')} {mobile || '9876543210'}
                   </label>
                   <input
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter 6-digit OTP"
+                    placeholder={t('auth_enter_otp')}
                     maxLength={6}
                     className="w-full px-4 py-3 rounded-lg border border-pebble bg-white text-charcoal placeholder:text-sage/50 text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-leaf/40 focus:border-leaf transition-all"
                   />
@@ -234,7 +234,7 @@ export function Login({ isExpert = false }: LoginProps) {
                   onClick={() => setShowOtp(false)}
                   className="w-full py-2.5 text-sage hover:text-charcoal text-sm transition-colors"
                 >
-                  ← Back to password
+                  ← {t('auth_back_to_password')}
                 </button>
               </>
             )}
