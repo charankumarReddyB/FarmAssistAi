@@ -269,23 +269,11 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
         setStep('location-permission')
       } else {
         // Sign In mode
-        let token = 'demo_jwt_token'
+        let token = ''
         let userObj: any = null
+        let loginError: string | null = null
 
-        if (isSupabaseConfigured()) {
-          try {
-            const supRes = await signInWithEmail(email, password)
-            if (supRes?.session?.access_token) {
-              token = supRes.session.access_token
-            }
-          } catch (supErr: any) {
-            console.warn('[AUTH] Supabase direct sign-in notice:', supErr?.message)
-            if (supErr.message && (supErr.message.includes('Invalid') || supErr.message.includes('credentials'))) {
-              throw supErr
-            }
-          }
-        }
-
+        // 1. Primary Authentication: FastAPI Backend
         try {
           const backendData = await apiRequest('/auth/login', {
             method: 'POST',
@@ -294,26 +282,40 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
               password,
             }),
           })
-          if (backendData?.user) {
+          if (backendData?.user && backendData?.access_token) {
             userObj = backendData.user
-            token = backendData.access_token || token
+            token = backendData.access_token
           }
         } catch (apiErr: any) {
-          console.warn('[AUTH] Backend login call notice:', apiErr)
-          if (!token || token === 'demo_jwt_token') {
-            throw apiErr
+          console.warn('[AUTH] Backend login call notice:', apiErr?.message)
+          loginError = apiErr?.message || 'Invalid email or password. Please try again.'
+        }
+
+        // 2. Secondary/Optional Authentication: Supabase (if configured)
+        if (!userObj && isSupabaseConfigured()) {
+          try {
+            const supRes = await signInWithEmail(email, password)
+            if (supRes?.session?.access_token) {
+              token = supRes.session.access_token
+              userObj = {
+                id: supRes.user?.id || `user_${Date.now()}`,
+                email: supRes.user?.email || email,
+                full_name: supRes.user?.user_metadata?.full_name || 'Farmer User',
+                role: 'farmer',
+                preferred_language: lang,
+                onboarding_completed: true,
+              }
+            }
+          } catch (supErr: any) {
+            console.warn('[AUTH] Supabase direct sign-in notice:', supErr?.message)
+            if (!supErr.message?.includes('API key')) {
+              loginError = supErr.message
+            }
           }
         }
 
-        if (!userObj) {
-          userObj = {
-            id: `user_${Date.now()}`,
-            email: email || 'farmer@farmassist.ai',
-            full_name: 'Farmer User',
-            role: 'farmer',
-            preferred_language: lang,
-            onboarding_completed: true,
-          }
+        if (!userObj || !token) {
+          throw new Error(loginError || 'Invalid email or password. Please try again.')
         }
 
         // Check onboarding status

@@ -77,8 +77,10 @@ export async function signInWithEmail(email: string, password: string) {
   if (error) {
     console.error('[AUTH] Supabase signIn error:', error)
     let userMsg = error.message
-    if (error.message.includes('Invalid login credentials')) {
+    if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_grant')) {
       userMsg = 'Invalid email or password. Please try again.'
+    } else if (error.message.includes('Invalid API key') || error.message.includes('apikey')) {
+      userMsg = 'Supabase API key is invalid or not yet configured. Connecting via backend server...'
     }
     throw new Error(userMsg)
   }
