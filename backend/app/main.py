@@ -110,6 +110,10 @@ def seed_default_users():
                 is_active=True
             )
             db.add(expert)
+        else:
+            expert.role = "expert"
+            expert.hashed_password = hash_password("Expert@123456")
+            db.add(expert)
 
         # 4. Farmer Account
         farmer = db.query(User).filter(User.email == "farmer@farmassist.ai").first()
@@ -122,6 +126,10 @@ def seed_default_users():
                 preferred_language="en",
                 is_active=True
             )
+            db.add(farmer)
+        else:
+            farmer.role = "farmer"
+            farmer.hashed_password = hash_password("Farmer@123456")
             db.add(farmer)
 
         db.commit()

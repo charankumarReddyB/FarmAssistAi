@@ -128,8 +128,8 @@ npm run dev
 | Role | Email | Password | Destination |
 |---|---|---|---|
 | **Administrator** | `charankumarreddybantrothula@gmail.com` | `Charan@123` | Administrator Console (`/admin`) |
-| **Agricultural Expert** | `expert@farmassist.ai` | `Expert@123` | Expert Review Portal (`/expert`) |
-| **Farmer (Demo)** | `farmer@farmassist.ai` | `Farmer@123` | Farmer Dashboard (`/dashboard`) |
+| **Agricultural Expert** | `expert@farmassist.ai` | `Expert@123456` | Expert Review Portal (`/expert`) |
+| **Farmer (Demo)** | `farmer@farmassist.ai` | `Farmer@123456` | Farmer Dashboard (`/dashboard`) |
 
 > **Note**: Any newly registered account via Email or Google OAuth automatically receives `role = farmer`.
 
