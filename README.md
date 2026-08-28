@@ -106,17 +106,21 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ---
 
 ### 2. Start the Frontend Application
-Open a second terminal:
+Open a second terminal in `frontend/`:
 
-#### If your terminal is in `C:\Charan\Farm Assist Ai\frontend` (Already inside frontend folder):
-Run directly with `cmd /c`:
+#### Option A: Using `npm.cmd` in PowerShell (Recommended for Windows)
 ```powershell
-cmd /c npm run dev
+# If already in frontend directory:
+npm.cmd install
+npm.cmd run dev
+
+# If in project root:
+cd frontend
+npm.cmd run dev
 ```
 
-#### If your terminal is in `C:\Charan\Farm Assist Ai` (Project Root):
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+#### Option B: Standard CMD / Bash
+```cmd
 cd frontend
 npm install
 npm run dev
