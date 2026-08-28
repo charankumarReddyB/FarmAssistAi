@@ -86,19 +86,17 @@ FarmAssistAi/
 ### 1. Start the FastAPI Backend Server
 Open a terminal in the `backend/` directory:
 
-```bash
+```powershell
 cd backend
 
-# Activate Virtual Environment (if applicable)
-# Windows PowerShell:
+# If PowerShell script execution policy blocks venv activation (Activate.ps1), run this first:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# Activate Virtual Environment (Optional)
 .\venv\Scripts\Activate.ps1
-# Linux / macOS:
-source venv/bin/activate
 
-# Install dependencies
+# Install dependencies & start server
 pip install -r requirements.txt
-
-# Start Backend Server on Port 8000
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 - **Backend API Base URL**: `http://127.0.0.1:8000`
