@@ -1,3 +1,4 @@
+import os
 import logging
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -5,9 +6,13 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-SQLITE_DB_PATH = "farmassist.db"
+# Resolve absolute path to farmassist.db in backend directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+SQLITE_DB_PATH = os.path.join(BASE_DIR, "farmassist.db").replace("\\", "/")
 
-db_url = settings.DATABASE_URL or f"sqlite:///./{SQLITE_DB_PATH}"
+db_url = settings.DATABASE_URL
+if not db_url or "farmassist.db" in db_url:
+    db_url = f"sqlite:///{SQLITE_DB_PATH}"
 
 # Test connection and fallback to SQLite if remote connection fails
 connect_args = {}
@@ -24,7 +29,7 @@ try:
         conn.execute(text("SELECT 1"))
 except Exception as e:
     logger.warning(f"[DATABASE] Connection to {db_url} failed ({e}). Falling back to SQLite local database.")
-    db_url = f"sqlite:///./{SQLITE_DB_PATH}"
+    db_url = f"sqlite:///{SQLITE_DB_PATH}"
     connect_args = {"check_same_thread": False}
     engine = create_engine(
         db_url,

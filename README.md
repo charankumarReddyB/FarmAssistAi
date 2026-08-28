@@ -7,15 +7,16 @@ FarmAssist AI is an intelligent agricultural decision-support web application th
 ## 🌾 Core System Features & Architecture
 
 1. **Integrated Auth & Secure Database Roles**
-   - **No Manual Role Selection**: Manual role picking is removed from user signup. All newly registered users (Email or Google OAuth) strictly default to the `farmer` role.
-   - **Administrative Authorization**: `expert` and `admin` roles can only be explicitly assigned in the database by authorized system administrators.
+   - **No Manual Role Selection**: All public registrations (Email/Password or Google OAuth) strictly default to the `farmer` role.
+   - **Administrative Authorization**: `expert` and `admin` roles can only be explicitly assigned by an authorized system administrator.
+   - **Predefined Initial Administrator**: Auto-bootstrapped initial admin account for system governance.
    - **Google OAuth & Profile Sync**: Syncs `display_name`, `avatar_url`, `auth_provider`, `onboarding_completed`, and `village_or_city`.
-   - **Automated Onboarding Flow**: New users complete Language Selection -> Location Confirmation -> Auth, and are seamlessly redirected to their role dashboard. Returning completed users navigate straight to their role dashboard.
+   - **Dynamic Location Detection**: Automatic browser GPS detection and reverse geocoding to State, District, and Village/City with manual fallback. (Admins/Experts automatically bypass location onboarding).
 2. **Public Landing Page Security**
    - Unauthenticated visitors see **ONLY** "Get Started" and "Sign In". Public links to the Expert Portal or authenticated CTA buttons ("Go to Dashboard", "My Farm") are hidden when unauthenticated.
-3. **Per-User Location & Weather Agricultural Context**
-   - Live weather and regional soil/crop suitability analysis are dynamically grounded in the authenticated user's location (`state`, `district`, `village_or_city`, `latitude`, `longitude`).
-   - Location changes in profile automatically update live weather and regional disease risk analysis.
+3. **Dynamic Profile → My Farm Live Synchronization**
+   - My Farm telemetry (crop, soil type, irrigation, farm size, sowing date, stage, survey number) is dynamically bound to the database.
+   - Updates in Profile, My Farm, or Settings immediately synchronize across TopBar, Sidebar, Dashboard, and My Farm in real time without page refreshes.
 4. **FastAPI AI/ML Backend**
    - **NLP Soil Extraction**: PyMuPDF text extraction, OCR fallback, and regex parameter extraction for N, P, K, pH, EC, and Organic Carbon.
    - **Deep Learning Crop Classifier**: PyTorch MobileNetV2 model trained on crop leaf disease datasets.
@@ -24,25 +25,25 @@ FarmAssist AI is an intelligent agricultural decision-support web application th
 5. **Role-Based Access Control (RBAC) & Row Level Security (RLS)**
    - **Farmer Portal**: Soil report upload, crop disease photo diagnosis, weather impact tracking, location-based farm intelligence, and structured advisories.
    - **Expert Review Portal**: Human-in-the-loop validation staging area where extension officers approve, modify, or reject AI advisories.
-   - **Admin Governance Console**: System metrics, user account management, expert provisioning, and platform audit logs.
+   - **Admin Governance Console**: System metrics, real-time user management, privileged expert/admin creation, and account activation/deactivation.
 
 ---
 
 ## 🏗 System Architecture Diagram
 
 ```
-Frontend React + Vite (Port 8443 / 5173)
+Frontend React + Vite (Port 8443)
         │
         ├──► Supabase Auth (Google OAuth, Email/Password, JWT Session)
         │
-        ├──► Supabase PostgreSQL (Profiles, RLS, Advisories, Soil Reports)
+        ├──► Supabase PostgreSQL (Profiles, Farm Profiles, RLS, Advisories, Soil Reports)
         │
         └──► FastAPI AI/ML Backend (Port 8000)
                  ├── PyMuPDF & Tesseract OCR
                  ├── PyTorch MobileNetV2 Crop Model
                  ├── Sentence-BERT Semantic Matcher
                  ├── Open-Meteo Weather API & Agro-Climatic KB
-                 └── Supabase Storage Upload (soil-reports, crop-images)
+                 └── SQLite Database (farmassist.db) & Supabase Storage Client
 ```
 
 ---
@@ -54,86 +55,103 @@ FarmAssistAi/
 ├── frontend/                 # React + Vite + TypeScript Frontend Application
 │   ├── src/
 │   │   ├── lib/
+│   │   │   ├── api.ts        # Central API Client & Error Translation
+│   │   │   ├── location.ts   # Browser Geolocation & Reverse Geocoding
 │   │   │   └── supabase.ts   # Supabase Client Instance & Auth Handlers
-│   │   ├── components/       # TopBar, Navigation, UI Cards & Alerts
-│   │   ├── views/            # Landing, Login, Dashboard, Soil, Crop, Expert & Admin Views
-│   │   └── App.tsx           # App Shell, Auth Session Listener & Role Guard
-│   └── .env.example          # Frontend Environment Template
+│   │   ├── components/       # TopBar, Sidebar, Navigation, UI Cards & Alerts
+│   │   ├── views/            # Landing, Login, Dashboard, MyFarm, Soil, Crop, Expert & Admin Views
+│   │   └── App.tsx           # App Shell, Auth Session State Machine & Role Guard
+│   └── .env                  # Frontend Environment Variables
 ├── backend/                  # Python FastAPI Backend Service
 │   ├── app/
-│   │   ├── main.py           # FastAPI Entrypoint & Middleware
+│   │   ├── main.py           # FastAPI Entrypoint, Seed Data & Middleware
 │   │   ├── api/routes/       # REST Routes (auth, user, farm, reports, crop_analysis, expert, admin)
-│   │   ├── core/             # Database, Security & Supabase Storage Client
-│   │   ├── models/           # SQLAlchemy ORM Models (User, Report, CropImageAnalysis, Advisory)
+│   │   ├── core/             # Database, Security & Config
+│   │   ├── models/           # SQLAlchemy Models (User, FarmProfile, Report, CropImageAnalysis, Advisory)
+│   │   ├── schemas/          # Pydantic Schemas (User, Farm, Report, Crop, Advisory)
 │   │   └── services/         # AI, ML, NLP & Location Weather Services
 │   ├── tests/
-│   │   └── test_integrated_system.py # Comprehensive Automated System Test Suite
+│   │   └── test_integrated_system.py # Comprehensive Automated System Test Suite (25 Test Points)
 │   ├── supabase_schema.sql   # PostgreSQL DDL, RLS Policies, Triggers & Storage SQL
 │   ├── requirements.txt      # Python Package Dependencies
-│   └── .env.example          # Backend Environment Template
+│   └── .env                  # Backend Environment Variables
 ├── .gitignore                # Git Exclusions
 └── README.md                 # Project Overview & Setup Instructions
 ```
 
 ---
 
-## 🚀 Running the Application & Test Suite
+## 🚀 Running the Application
 
 ### 1. Start the FastAPI Backend Server
-Open a terminal in the project directory:
+Open a terminal in the `backend/` directory:
 
 ```bash
 cd backend
 
-# (Optional) Activate Virtual Environment
-# On Windows:
-python -m venv venv
+# Activate Virtual Environment (if applicable)
+# Windows PowerShell:
 .\venv\Scripts\Activate.ps1
-# On Linux/macOS:
+# Linux / macOS:
 source venv/bin/activate
 
-# Install dependencies if not already installed
+# Install dependencies
 pip install -r requirements.txt
 
-# Run FastAPI Dev Server
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+# Start Backend Server on Port 8000
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
-- API Base URL: `http://127.0.0.1:8000`
-- Interactive OpenAPI Docs: `http://127.0.0.1:8000/docs`
+- **Backend API Base URL**: `http://127.0.0.1:8000`
+- **Interactive OpenAPI (Swagger) Docs**: `http://127.0.0.1:8000/docs`
+- **Health Endpoint**: `http://127.0.0.1:8000/api/health`
 
 ---
 
-### 2. Start the Frontend Web Application
-Open a second terminal window:
+### 2. Start the Frontend Application
+Open a second terminal in the `frontend/` directory:
 
 ```bash
 cd frontend
 
-# Install Node dependencies (if needed)
+# Install Node dependencies
 npm install
 
-# Run Vite Frontend Dev Server
+# Start Vite Frontend Dev Server (Port 8443)
 npm run dev
 ```
-- Web Application URL: `http://localhost:8443` (or `http://localhost:5173`)
+- **Web Application URL**: `http://localhost:8443`
 
 ---
 
-### 3. Run Automated Integration & System Tests
-To run the automated 22-point system verification test suite:
+## 🔑 Default Credentials
+
+| Role | Email | Password | Destination |
+|---|---|---|---|
+| **Administrator** | `charankumarreddybantrothula@gmail.com` | `Charan@123` | Administrator Console (`/admin`) |
+| **Agricultural Expert** | `expert@farmassist.ai` | `Expert@123` | Expert Review Portal (`/expert`) |
+| **Farmer (Demo)** | `farmer@farmassist.ai` | `Farmer@123` | Farmer Dashboard (`/dashboard`) |
+
+> **Note**: Any newly registered account via Email or Google OAuth automatically receives `role = farmer`.
+
+---
+
+## 🧪 Running Automated Tests
+
+### 1. Run Complete Backend Integration Test Suite
+Executes all 25 system integration, role authorization, and farm synchronization test points:
 
 ```bash
 cd backend
 python -m unittest tests.test_integrated_system
 ```
 
-To run all backend unit tests:
+### 2. Run All Backend Tests
 ```bash
 cd backend
 python -m unittest discover tests
 ```
 
-To verify the frontend production build:
+### 3. Verify Frontend Production Build
 ```bash
 cd frontend
 npm run build
@@ -143,8 +161,7 @@ npm run build
 
 ## 🔒 Security & Role Authorization Summary
 
-- **Farmer Role**: Access `/dashboard`, `/soil-analysis`, `/crop-analysis`, `/advisory`, `/reports`, `/settings`. Cannot access Expert or Admin routes.
+- **Farmer Role**: Access `/dashboard`, `/soil`, `/crop`, `/advisory`, `/reports`, `/farm`, `/settings`. Cannot access Expert or Admin routes.
 - **Expert Role**: Access `/expert` review dashboard to inspect, approve, modify, or reject advisories. Cannot access Admin routes.
-- **Admin Role**: Access `/admin` dashboard for user role management, expert provisioning, and system governance.
-- **Backend Enforcer**: `get_current_user` decodes Supabase JWT tokens. Endpoints decorated with `Depends(require_roles(['admin']))` return `403 Forbidden` for unauthorized roles and `401 Unauthorized` for missing/invalid tokens.
-
+- **Admin Role**: Access `/admin` dashboard for user role management, expert/admin provisioning, and system governance.
+- **Backend Enforcer**: `get_current_user` decodes JWT tokens. Endpoints decorated with `Depends(require_roles(['admin']))` return `403 Forbidden` for unauthorized roles.
