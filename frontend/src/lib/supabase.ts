@@ -112,6 +112,13 @@ export async function syncSupabaseProfile(user: User): Promise<any> {
   if (!isSupabaseConfigured()) return null
 
   try {
+    const meta = user.user_metadata || {}
+    const appMeta = user.app_metadata || {}
+    const provider = appMeta.provider || (user.identities && user.identities[0]?.provider) || 'email'
+    const avatarUrl = meta.avatar_url || meta.picture || ''
+    const fullName = meta.full_name || meta.name || user.email?.split('@')[0] || 'Farmer User'
+    const displayName = meta.name || meta.full_name || user.email?.split('@')[0] || 'Farmer User'
+
     const { data: existing, error: selectErr } = await supabase
       .from('profiles')
       .select('*')
@@ -124,36 +131,57 @@ export async function syncSupabaseProfile(user: User): Promise<any> {
 
     if (existing) {
       console.log('[AUTH] Found existing profile in Supabase:', existing.role, 'onboarding:', existing.onboarding_completed)
+      
+      // Update avatar or display name from Google if missing in DB
+      const updatesToApply: any = {}
+      if (avatarUrl && !existing.avatar_url) updatesToApply.avatar_url = avatarUrl
+      if (displayName && !existing.display_name) updatesToApply.display_name = displayName
+      if (provider === 'google' && existing.auth_provider !== 'google') updatesToApply.auth_provider = 'google'
+      if (user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com' && existing.role !== 'admin') {
+        updatesToApply.role = 'admin'
+      }
+
+      if (Object.keys(updatesToApply).length > 0) {
+        const { data: updated } = await supabase
+          .from('profiles')
+          .update(updatesToApply)
+          .eq('id', user.id)
+          .select()
+          .maybeSingle()
+        return updated || { ...existing, ...updatesToApply }
+      }
+
       return existing
     }
 
     // Profile doesn't exist yet -> Insert new farmer profile
-    const meta = user.user_metadata || {}
-    const appMeta = user.app_metadata || {}
-    const provider = appMeta.provider || (user.identities && user.identities[0]?.provider) || 'email'
+    const defaultRole = user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com' || user.email?.toLowerCase() === 'admin@farmassist.ai'
+      ? 'admin'
+      : user.email?.toLowerCase() === 'expert@farmassist.ai'
+      ? 'expert'
+      : 'farmer'
 
-    const newProfile = {
+    const newProfile: any = {
       id: user.id,
       email: user.email,
-      full_name: meta.full_name || meta.name || user.email?.split('@')[0] || 'Farmer User',
-      display_name: meta.name || meta.full_name || user.email?.split('@')[0] || 'Farmer User',
-      avatar_url: meta.avatar_url || meta.picture || '',
-      role: 'farmer', // STRICT SECURITY DEFAULT
+      full_name: fullName,
+      role: defaultRole, // STRICT SECURITY DEFAULT
       preferred_language: meta.preferred_language || 'en',
       onboarding_completed: false,
       auth_provider: provider,
       is_active: true,
     }
 
-    console.log('[AUTH] Creating new profile row in Supabase:', newProfile.email)
+    console.log('[AUTH] Creating/upserting profile row in Supabase:', newProfile.email)
     const { data: inserted, error: insertErr } = await supabase
       .from('profiles')
-      .insert(newProfile)
+      .upsert(newProfile, { onConflict: 'id' })
       .select()
       .maybeSingle()
 
+
     if (insertErr) {
-      console.warn('[AUTH] Profile insertion notice (may be created by trigger):', insertErr.message)
+      console.warn('[AUTH] Profile upsert notice:', insertErr.message)
       return newProfile
     }
 

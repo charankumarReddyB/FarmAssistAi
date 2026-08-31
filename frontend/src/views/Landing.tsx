@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useApp } from '../App'
 import { Logo } from '../components/Logo'
-import { LANG_LABELS } from '../translations'
+import { LANG_LABELS, type Lang } from '../translations'
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1528693404014-b13ebe6e723e?w=1920&h=1080&fit=crop&auto=format'
 
 export function Landing() {
-  const { t, setView, lang, setLang, user } = useApp()
+  const { t, openAuth, lang, setLang, user, setView } = useApp()
   const [langOpen, setLangOpen] = useState(false)
 
   return (
@@ -37,7 +37,7 @@ export function Landing() {
         <div className="relative">
           <button
             onClick={() => setLangOpen(!langOpen)}
-            className="flex items-center gap-2 text-cream/80 hover:text-cream text-sm transition-colors px-3 py-1.5 rounded-full border border-cream/20 hover:border-cream/40"
+            className="flex items-center gap-2 text-cream/80 hover:text-cream text-sm transition-colors px-3 py-1.5 rounded-full border border-cream/20 hover:border-cream/40 cursor-pointer"
           >
             <span>🌐</span>
             <span>{LANG_LABELS[lang]}</span>
@@ -45,11 +45,11 @@ export function Landing() {
           </button>
           {langOpen && (
             <div className="absolute top-full right-0 mt-2 bg-charcoal rounded-lg overflow-hidden shadow-2xl border border-white/10 min-w-36 z-50">
-              {(Object.entries(LANG_LABELS) as [typeof lang, string][]).map(([code, label]) => (
+              {(Object.entries(LANG_LABELS) as [Lang, string][]).map(([code, label]) => (
                 <button
                   key={code}
                   onClick={() => { setLang(code); setLangOpen(false) }}
-                  className={`w-full text-left px-4 py-3 text-sm transition-colors ${
+                  className={`w-full text-left px-4 py-3 text-sm transition-colors cursor-pointer ${
                     lang === code ? 'bg-leaf text-cream font-medium' : 'text-cream/70 hover:bg-white/10 hover:text-cream'
                   }`}
                 >
@@ -79,20 +79,41 @@ export function Landing() {
 
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              id="get-started-btn"
-              onClick={() => setView(user ? (user.role === 'admin' ? 'admin' : user.role === 'expert' ? 'expert' : 'dashboard') : 'login')}
-              className="w-full sm:w-auto px-8 py-3.5 bg-leaf text-cream font-medium text-base rounded-lg hover:bg-meadow transition-colors shadow-lg cursor-pointer"
-            >
-              {user ? 'Go to Dashboard' : t('landing_cta')}
-            </button>
-            <button
-              id="sign-in-btn"
-              onClick={() => setView(user ? (user.role === 'admin' ? 'admin' : user.role === 'expert' ? 'expert' : 'dashboard') : 'login')}
-              className="w-full sm:w-auto px-8 py-3.5 bg-cream/10 text-cream font-medium text-base rounded-lg border border-cream/25 hover:bg-cream/15 transition-colors backdrop-blur-sm cursor-pointer"
-            >
-              {user ? 'My Farm' : t('landing_signin')}
-            </button>
+            {user ? (
+              <>
+                <button
+                  id="dashboard-btn"
+                  onClick={() => setView(user.role === 'admin' ? 'admin' : user.role === 'expert' ? 'expert' : 'dashboard')}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-leaf text-cream font-medium text-base rounded-lg hover:bg-meadow transition-colors shadow-lg cursor-pointer"
+                >
+                  Go to Dashboard
+                </button>
+                <button
+                  id="my-farm-btn"
+                  onClick={() => setView(user.role === 'admin' ? 'admin' : user.role === 'expert' ? 'expert' : 'farm')}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-cream/10 text-cream font-medium text-base rounded-lg border border-cream/25 hover:bg-cream/15 transition-colors backdrop-blur-sm cursor-pointer"
+                >
+                  My Farm
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  id="get-started-btn"
+                  onClick={() => openAuth('register')}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-leaf text-cream font-semibold text-base rounded-lg hover:bg-meadow transition-colors shadow-lg cursor-pointer"
+                >
+                  {t('landing_cta')}
+                </button>
+                <button
+                  id="sign-in-btn"
+                  onClick={() => openAuth('login')}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-cream/10 text-cream font-medium text-base rounded-lg border border-cream/25 hover:bg-cream/15 transition-colors backdrop-blur-sm cursor-pointer"
+                >
+                  {t('landing_signin')}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,36 +1,40 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../App'
 import { Logo } from '../components/Logo'
-import { LANG_LABELS } from '../translations'
+import { LANG_LABELS, type Lang } from '../translations'
 import { signInWithGoogle, signInWithEmail, signUpWithEmail, isSupabaseConfigured } from '../lib/supabase'
 import { detectBrowserLocation, reverseGeocode } from '../lib/location'
 import { apiRequest } from '../lib/api'
 
 const SIDE_IMAGE = 'https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?w=800&h=1200&fit=crop&auto=format'
 
-export type LoginStep = 'language' | 'auth' | 'location-permission' | 'location-manual'
+export type LoginStep = 'auth' | 'location-permission' | 'location-manual'
 
 interface LoginProps {
   initialStep?: LoginStep
   initialMode?: 'login' | 'register'
 }
 
-export function Login({ initialStep = 'language', initialMode = 'login' }: LoginProps) {
+export function Login({ initialStep = 'auth', initialMode = 'login' }: LoginProps) {
   const { t, setView, lang, setLang, login, user: currentUser } = useApp()
   const [step, setStep] = useState<LoginStep>(initialStep)
   const [mode, setMode] = useState<'login' | 'register'>(initialMode)
 
-  // Keep step synchronized if initialStep changes from parent
+  // Keep step and mode synchronized if props change
   useEffect(() => {
     setStep(initialStep)
   }, [initialStep])
+
+  useEffect(() => {
+    setMode(initialMode)
+  }, [initialMode])
 
   // Auth fields
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  
-  // Manual location fields (strictly start EMPTY, no hardcoded defaults)
+
+  // Manual location fields
   const [stateName, setStateName] = useState('')
   const [districtName, setDistrictName] = useState('')
   const [villageName, setVillageName] = useState('')
@@ -42,13 +46,6 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
   const [locStatusText, setLocStatusText] = useState('')
   const [pendingToken, setPendingToken] = useState<string | null>(() => localStorage.getItem('farmassist_token'))
   const [pendingUser, setPendingUser] = useState<any>(currentUser || null)
-
-  const LANG_OPTIONS: { code: typeof lang; label: string; sub: string; flag: string }[] = [
-    { code: 'en', label: 'English', sub: 'English', flag: '🇬🇧' },
-    { code: 'te', label: 'తెలుగు', sub: 'Telugu', flag: '🇮🇳' },
-    { code: 'ta', label: 'தமிழ்', sub: 'Tamil', flag: '🇮🇳' },
-    { code: 'hi', label: 'हिन्दी', sub: 'Hindi', flag: '🇮🇳' },
-  ]
 
   const handleGoogleLogin = async () => {
     setErrorMsg(null)
@@ -119,7 +116,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
     try {
       const coords = await detectBrowserLocation()
       setLocStatusText('Reverse geocoding your region & climate zone...')
-      
+
       const geocoded = await reverseGeocode(coords.latitude, coords.longitude)
 
       const token = pendingToken || localStorage.getItem('farmassist_token') || 'auth_token'
@@ -197,7 +194,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
           throw new Error('Password must be at least 6 characters.')
         }
 
-        let token = 'demo_jwt_token'
+        let token = ''
         let userObj: any = null
 
         // 1. Supabase Auth signup
@@ -344,7 +341,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
         <div className="absolute inset-0 bg-forest">
           <img
             src={SIDE_IMAGE}
-            alt="Woman harvesting rice in a lush green paddy field"
+            alt="Farmer in a lush green agricultural field"
             className="w-full h-full object-cover object-top"
             style={{ opacity: 0.65 }}
           />
@@ -376,85 +373,34 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
             <button onClick={() => setView('landing')} className="cursor-pointer">
               <Logo size={28} />
             </button>
+            <div className="flex items-center gap-1.5 text-xs text-sage">
+              <span>🌐</span>
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as Lang)}
+                className="bg-transparent border border-pebble rounded-md px-2 py-1 text-xs text-charcoal font-medium focus:outline-none cursor-pointer"
+              >
+                {(Object.entries(LANG_LABELS) as [Lang, string][]).map(([code, label]) => (
+                  <option key={code} value={code}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* STEP 1: PROMINENT LANGUAGE SELECTION */}
-          {step === 'language' && (
-            <div className="space-y-6 step-in">
-              <div>
-                <div className="inline-block text-xs font-semibold uppercase tracking-wider text-leaf bg-leaf/10 px-2.5 py-1 rounded-md mb-2">
-                  Step 1 of 2
-                </div>
-                <h1 className="font-display text-2xl text-charcoal font-bold mb-1">
-                  {t('choose_language_title')}
-                </h1>
-                <p className="text-sage text-sm">
-                  {t('choose_language_sub')}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3">
-                {LANG_OPTIONS.map((opt) => {
-                  const isSelected = lang === opt.code
-                  return (
-                    <button
-                      key={opt.code}
-                      onClick={() => setLang(opt.code)}
-                      className={`flex items-center justify-between p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-forest bg-forest/8 ring-2 ring-forest/30 shadow-sm'
-                          : 'border-pebble bg-white hover:border-sage hover:bg-mist/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{opt.flag}</span>
-                        <div>
-                          <div className="font-semibold text-charcoal text-base">
-                            {opt.label}
-                          </div>
-                          <div className="text-sage text-xs">
-                            {opt.sub}
-                          </div>
-                        </div>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                        isSelected ? 'border-forest bg-forest text-white' : 'border-pebble'
-                      }`}>
-                        {isSelected && <span className="text-xs">✓</span>}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              <button
-                onClick={() => setStep('auth')}
-                className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>{t('auth_continue')}</span>
-                <span>→</span>
-              </button>
-            </div>
-          )}
-
-          {/* STEP 2: CREDENTIALS SIGN-IN / REGISTER */}
+          {/* STEP: CREDENTIALS SIGN-IN / REGISTER */}
           {step === 'auth' && (
             <div className="step-in space-y-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="font-display text-2xl text-charcoal font-bold mt-0.5">
-                    {mode === 'login' ? t('auth_title') : 'Create Account'}
-                  </h1>
-                  <p className="text-sage text-xs">
-                    Sign in to access your farm intelligence portal
-                  </p>
-                </div>
-                <button
-                  onClick={() => setStep('language')}
-                  className="text-xs text-leaf hover:underline font-medium cursor-pointer"
-                >
-                  🌐 {LANG_LABELS[lang].split(' — ')[0]}
-                </button>
+              <div>
+                <h1 className="font-display text-2xl text-charcoal font-bold">
+                  {mode === 'login' ? t('auth_title') : 'Create Farmer Account'}
+                </h1>
+                <p className="text-sage text-xs mt-1">
+                  {mode === 'login'
+                    ? 'Sign in to access your farm intelligence portal'
+                    : 'Register with your name, email and password'}
+                </p>
               </div>
 
               {errorMsg && (
@@ -521,10 +467,10 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                       required
                       id="input-fullname"
                       name="farm_user_fullname"
-                      autoComplete="off"
+                      autoComplete="name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Raju Reddy"
+                      placeholder="Enter your full name"
                       className="w-full px-4 py-3 rounded-lg border border-pebble bg-white text-charcoal placeholder:text-sage/50 text-sm focus:outline-none focus:ring-2 focus:ring-leaf/40"
                     />
                   </div>
@@ -539,7 +485,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                     required
                     id="input-email"
                     name="farm_user_email"
-                    autoComplete="off"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="farmer@farmassist.ai"
@@ -568,15 +514,15 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                   type="submit"
                   id="submit-auth-btn"
                   disabled={authLoading}
-                  className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md cursor-pointer"
+                  className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md cursor-pointer disabled:opacity-50"
                 >
-                  {authLoading ? 'Authenticating...' : mode === 'register' ? 'Continue to Location' : t('auth_signin')}
+                  {authLoading ? 'Authenticating...' : mode === 'register' ? 'Create Account & Continue' : t('auth_signin')}
                 </button>
               </form>
             </div>
           )}
 
-          {/* STEP 3: AUTOMATIC LOCATION PERMISSION REQUEST */}
+          {/* STEP: AUTOMATIC LOCATION PERMISSION REQUEST */}
           {step === 'location-permission' && (
             <div className="step-in space-y-6 text-center">
               <div className="w-16 h-16 bg-forest/10 text-forest rounded-full flex items-center justify-center mx-auto text-3xl shadow-sm">
@@ -585,10 +531,10 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
 
               <div>
                 <h1 className="font-display text-2xl text-charcoal font-bold mb-2">
-                  Enable Location
+                  Enable Farm Location
                 </h1>
                 <p className="text-sage text-sm leading-relaxed max-w-xs mx-auto">
-                  FarmAssist AI uses your location to provide local weather, climate analysis, and farming recommendations.
+                  FarmAssist AI uses your location to provide local weather intelligence, agro-climatic advisories, and crop disease risk assessments.
                 </p>
               </div>
 
@@ -613,7 +559,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                   onClick={handleAllowLocation}
                   className="w-full py-3.5 bg-forest text-cream font-semibold rounded-xl hover:bg-leaf transition-colors text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Allow Location Access</span>
+                  <span>Allow Location Access (GPS)</span>
                   <span>🛰</span>
                 </button>
 
@@ -634,13 +580,13 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                   onClick={handleSkipLocation}
                   className="text-xs text-sage hover:text-charcoal transition-colors pt-2 block mx-auto underline cursor-pointer"
                 >
-                  Skip for now (Weather & location-based analysis will be unavailable)
+                  Skip for now
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: MANUAL LOCATION FORM (ONLY WHEN EXPLICITLY CHOSEN OR GEOLOCATION FAILS) */}
+          {/* STEP: MANUAL LOCATION FORM (FALLBACK) */}
           {step === 'location-manual' && (
             <div className="step-in space-y-6">
               <div>
@@ -656,7 +602,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
                   Enter Your Farm Location
                 </h1>
                 <p className="text-sage text-sm">
-                  Specify your region to configure regional weather and crop analysis.
+                  Specify your state and district to configure local weather and soil matrices.
                 </p>
               </div>
 
@@ -699,7 +645,7 @@ export function Login({ initialStep = 'language', initialMode = 'login' }: Login
 
                 <div>
                   <label className="block text-xs font-medium text-sage mb-1 uppercase tracking-wide">
-                    Village / City
+                    Village / City (Optional)
                   </label>
                   <input
                     type="text"

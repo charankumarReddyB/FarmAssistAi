@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 -- Ensure newly added columns exist if table was already created
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS display_name TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS auth_provider TEXT DEFAULT 'email';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE;
@@ -136,24 +138,40 @@ CREATE TABLE IF NOT EXISTS public.expert_reviews (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (
-    id, email, full_name, display_name, avatar_url, role, preferred_language, onboarding_completed, auth_provider
-  )
-  VALUES (
-    new.id,
-    new.email,
-    COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    COALESCE(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
-    COALESCE(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', ''),
-    'farmer', -- SECURITY RULE: ALWAYS DEFAULT TO FARMER
-    COALESCE(new.raw_user_meta_data->>'preferred_language', 'en'),
-    FALSE,
-    COALESCE(new.raw_app_meta_data->>'provider', 'email')
-  ) ON CONFLICT (id) DO UPDATE SET
-    full_name = EXCLUDED.full_name,
-    display_name = EXCLUDED.display_name,
-    avatar_url = EXCLUDED.avatar_url,
-    auth_provider = EXCLUDED.auth_provider;
+  BEGIN
+    INSERT INTO public.profiles (
+      id, email, full_name, display_name, avatar_url, role, preferred_language, onboarding_completed, auth_provider
+    )
+    VALUES (
+      new.id,
+      new.email,
+      COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+      COALESCE(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+      COALESCE(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', ''),
+      'farmer', -- SECURITY RULE: ALWAYS DEFAULT TO FARMER
+      COALESCE(new.raw_user_meta_data->>'preferred_language', 'en'),
+      FALSE,
+      COALESCE(new.raw_app_meta_data->>'provider', 'email')
+    ) ON CONFLICT (id) DO UPDATE SET
+      full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+      auth_provider = COALESCE(EXCLUDED.auth_provider, public.profiles.auth_provider);
+  EXCEPTION WHEN OTHERS THEN
+    -- Fallback insert with minimal required columns so auth.users registration NEVER fails
+    BEGIN
+      INSERT INTO public.profiles (id, email, full_name, role, preferred_language, onboarding_completed)
+      VALUES (
+        new.id,
+        new.email,
+        COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+        'farmer',
+        'en',
+        FALSE
+      ) ON CONFLICT (id) DO NOTHING;
+    EXCEPTION WHEN OTHERS THEN
+      -- Silently allow auth.users to succeed
+      NULL;
+    END;
+  END;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -167,6 +185,12 @@ CREATE TRIGGER on_auth_user_created
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ====================================================================
 
+-- Helper function to check user role without triggering RLS infinite recursion
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS TEXT AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid();
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
 -- Enable RLS on all public tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.farm_profiles ENABLE ROW LEVEL SECURITY;
@@ -179,18 +203,23 @@ ALTER TABLE public.expert_reviews ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
 CREATE POLICY "Users can read own profile"
   ON public.profiles FOR SELECT
-  USING (auth.uid() = id OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('expert', 'admin'));
+  USING (auth.uid() = id OR public.get_my_role() IN ('expert', 'admin'));
+
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
 
 DROP POLICY IF EXISTS "Users can update own profile except role" ON public.profiles;
 CREATE POLICY "Users can update own profile except role"
   ON public.profiles FOR UPDATE
-  USING (auth.uid() = id OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin');
+  USING (auth.uid() = id OR public.get_my_role() = 'admin');
 
 -- 2. FARM PROFILES POLICIES
 DROP POLICY IF EXISTS "Farmers can read own farm profile" ON public.farm_profiles;
 CREATE POLICY "Farmers can read own farm profile"
   ON public.farm_profiles FOR SELECT
-  USING (auth.uid() = user_id OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('expert', 'admin'));
+  USING (auth.uid() = user_id OR public.get_my_role() IN ('expert', 'admin'));
 
 DROP POLICY IF EXISTS "Farmers can insert own farm profile" ON public.farm_profiles;
 CREATE POLICY "Farmers can insert own farm profile"
@@ -200,13 +229,13 @@ CREATE POLICY "Farmers can insert own farm profile"
 DROP POLICY IF EXISTS "Farmers can update own farm profile" ON public.farm_profiles;
 CREATE POLICY "Farmers can update own farm profile"
   ON public.farm_profiles FOR UPDATE
-  USING (auth.uid() = user_id OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin');
+  USING (auth.uid() = user_id OR public.get_my_role() = 'admin');
 
 -- 3. SOIL REPORTS POLICIES
 DROP POLICY IF EXISTS "Farmers can read own soil reports" ON public.soil_reports;
 CREATE POLICY "Farmers can read own soil reports"
   ON public.soil_reports FOR SELECT
-  USING (auth.uid() = farmer_id OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('expert', 'admin'));
+  USING (auth.uid() = farmer_id OR public.get_my_role() IN ('expert', 'admin'));
 
 DROP POLICY IF EXISTS "Farmers can insert own soil reports" ON public.soil_reports;
 CREATE POLICY "Farmers can insert own soil reports"
@@ -217,7 +246,7 @@ CREATE POLICY "Farmers can insert own soil reports"
 DROP POLICY IF EXISTS "Farmers can read own crop analyses" ON public.crop_analyses;
 CREATE POLICY "Farmers can read own crop analyses"
   ON public.crop_analyses FOR SELECT
-  USING (auth.uid() = farmer_id OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('expert', 'admin'));
+  USING (auth.uid() = farmer_id OR public.get_my_role() IN ('expert', 'admin'));
 
 DROP POLICY IF EXISTS "Farmers can insert own crop analyses" ON public.crop_analyses;
 CREATE POLICY "Farmers can insert own crop analyses"
@@ -225,15 +254,15 @@ CREATE POLICY "Farmers can insert own crop analyses"
   WITH CHECK (auth.uid() = farmer_id);
 
 -- 5. ADVISORIES POLICIES
-DROP POLICY IF EXISTS "Farmers can read own advisories" ON public.advisories;
-CREATE POLICY "Farmers can read own advisories"
+DROP POLICY IF EXISTS "Farmers and Experts can read advisories" ON public.advisories;
+CREATE POLICY "Farmers and Experts can read advisories"
   ON public.advisories FOR SELECT
-  USING (auth.uid() = farmer_id OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('expert', 'admin'));
+  USING (auth.uid() = farmer_id OR public.get_my_role() IN ('expert', 'admin'));
 
-DROP POLICY IF EXISTS "Experts and admins can update advisories" ON public.advisories;
-CREATE POLICY "Experts and admins can update advisories"
+DROP POLICY IF EXISTS "System and Experts can update advisories" ON public.advisories;
+CREATE POLICY "System and Experts can update advisories"
   ON public.advisories FOR UPDATE
-  USING ((SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('expert', 'admin'));
+  USING (public.get_my_role() IN ('expert', 'admin'));
 
 -- 6. EXPERT REVIEWS POLICIES
 DROP POLICY IF EXISTS "Experts can insert expert reviews" ON public.expert_reviews;

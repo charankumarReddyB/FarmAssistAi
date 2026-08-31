@@ -75,9 +75,64 @@ const CATEGORY_ICON: Record<string, string> = {
 }
 
 export function Alerts() {
-  const { t, setView } = useApp()
-  const [alerts, setAlerts] = useState(INITIAL_ALERTS)
+  const { t, setView, user } = useApp()
+  const userLoc = user?.district || user?.village_or_city || 'your farm region'
+  const userCrop = user?.current_crop || 'Paddy'
+
+  const [alerts, setAlerts] = useState<Alert[]>([
+    {
+      id: 1,
+      level: 'HIGH',
+      title: 'Possible crop disease risk detected',
+      detail: `Foliage humidity scan for your ${userCrop} crop indicates elevated fungal risk. Inspect lower leaf canopy today.`,
+      action: 'Apply recommended protective fungicide dosage if spots appear.',
+      time: '2 hours ago',
+      read: false,
+      category: 'crop',
+    },
+    {
+      id: 2,
+      level: 'MEDIUM',
+      title: 'Rain expected in your region',
+      detail: `Precipitation probability forecast for ${userLoc} indicates possible rainfall. Estimated 10–18 mm accumulation.`,
+      action: 'Postpone planned overhead irrigation and check field drainage channels.',
+      time: '5 hours ago',
+      read: false,
+      category: 'weather',
+    },
+    {
+      id: 3,
+      level: 'MEDIUM',
+      title: 'Nitrogen management reminder',
+      detail: `Soil nutrient telemetry for ${userCrop} recommends reviewing nitrogen application before the next flowering stage.`,
+      action: 'Review fertilizer recommendations in Soil Analysis.',
+      time: '1 day ago',
+      read: false,
+      category: 'soil',
+    },
+    {
+      id: 4,
+      level: 'LOW',
+      title: 'Personalized farm advisory active',
+      detail: `Your customized advisory for this week is active based on real-time weather and agro-climatic zone matrices.`,
+      action: 'Open Advisories to inspect task checklist.',
+      time: '2 days ago',
+      read: true,
+      category: 'advisory',
+    },
+    {
+      id: 5,
+      level: 'LOW',
+      title: 'Expert review workflow active',
+      detail: 'Agricultural extension officers are monitoring submitted reports for your district.',
+      action: 'View verified advisories in your portal.',
+      time: '3 days ago',
+      read: true,
+      category: 'expert',
+    },
+  ])
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+
 
   const markRead = (id: number) =>
     setAlerts((a) => a.map((al) => al.id === id ? { ...al, read: true } : al))

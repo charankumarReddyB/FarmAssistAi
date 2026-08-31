@@ -31,12 +31,18 @@ def analyze_report(
         raise HTTPException(status_code=404, detail=f"Report with ID '{report_id}' not found.")
 
     # Retrieve user location and language preferences
-    user = db.query(User).first()
+    user = None
+    if report.farmer_id:
+        user = db.query(User).filter(User.id == report.farmer_id).first()
+    if not user:
+        user = db.query(User).filter(User.role == "farmer").first()
+
     pref_lang = language or (user.preferred_language if user else "en")
-    location_str = f"{user.district}, {user.state}" if (user and user.district and user.state) else "Kakinada, Andhra Pradesh"
-    state_str = user.state if (user and user.state) else "Andhra Pradesh"
-    district_str = user.district if (user and user.district) else "Kakinada"
-    farmer_name_str = user.full_name if (user and user.full_name) else "Raju Reddy"
+    location_str = f"{user.district}, {user.state}" if (user and user.district and user.state) else (user.district if user and user.district else "Location Not Set")
+    state_str = user.state if (user and user.state) else ""
+    district_str = user.district if (user and user.district) else ""
+    farmer_name_str = (user.full_name or user.display_name) if user else "Farmer"
+
 
     raw_text = report.raw_text or ""
     if not raw_text.strip():

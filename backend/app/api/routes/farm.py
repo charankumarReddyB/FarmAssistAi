@@ -143,6 +143,34 @@ def update_user_farm_profile(
     db.refresh(farm)
     db.refresh(current_user)
 
+    # Sync to Supabase Cloud farm_profiles and profiles
+    try:
+        from app.core.supabase_client import sync_farm_profile_to_supabase, sync_profile_to_supabase
+        farm_dict = {
+            "farm_name": farm.farm_name,
+            "farm_size": farm.farm_size,
+            "current_crop": farm.current_crop,
+            "soil_type": farm.soil_type,
+            "irrigation_method": farm.irrigation_method,
+            "sowing_date": farm.sowing_date,
+            "crop_stage": farm.crop_stage,
+            "experience_years": farm.experience_years,
+            "water_source": farm.water_source,
+            "survey_number": farm.survey_number,
+        }
+        sync_farm_profile_to_supabase(str(current_user.id), farm_dict)
+        sync_profile_to_supabase({
+            "id": str(current_user.id),
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "state": current_user.state,
+            "district": current_user.district,
+            "village_or_city": current_user.village_or_city or current_user.village,
+            "phone": current_user.phone,
+        })
+    except Exception as e:
+        logger.warning(f"[FARM ROUTE] Supabase sync notice: {e}")
+
     loc_dict = {
         "state": current_user.state,
         "district": current_user.district,
@@ -150,6 +178,7 @@ def update_user_farm_profile(
         "latitude": current_user.latitude,
         "longitude": current_user.longitude
     }
+
 
     return FarmProfileResponse(
         id=farm.id,

@@ -27,9 +27,9 @@ class StructuredAdvisoryResponse(BaseModel):
     advisory_id: str
     report_id: Optional[str] = None
     crop_analysis_id: Optional[str] = None
-    farmer_id: Optional[str] = "farmer_001"
-    farmer_name: Optional[str] = "Raju Reddy"
-    farmer_location: Optional[str] = "Kakinada, Andhra Pradesh"
+    farmer_id: Optional[str] = None
+    farmer_name: Optional[str] = "Farmer"
+    farmer_location: Optional[str] = "Location Not Set"
     source_type: str = "soil_analysis"
     
     report_summary: str = ""
@@ -61,28 +61,29 @@ class StructuredAdvisoryResponse(BaseModel):
 
 
 class ExpertApproveRequest(BaseModel):
-    expert_id: Optional[str] = "exp_101"
-    expert_name: Optional[str] = "Dr. M. S. Swaminathan (Agri Specialist)"
+    expert_id: Optional[str] = None
+    expert_name: Optional[str] = "Agricultural Specialist"
     notes: Optional[str] = "Verified for field application."
 
 
 class ExpertModifyRequest(BaseModel):
-    expert_id: Optional[str] = "exp_101"
-    expert_name: Optional[str] = "Dr. M. S. Swaminathan (Agri Specialist)"
+    expert_id: Optional[str] = None
+    expert_name: Optional[str] = "Agricultural Specialist"
     modified_advisory: str
     expert_notes: str
 
 
 class ExpertRejectRequest(BaseModel):
-    expert_id: Optional[str] = "exp_101"
-    expert_name: Optional[str] = "Dr. M. S. Swaminathan (Agri Specialist)"
+    expert_id: Optional[str] = None
+    expert_name: Optional[str] = "Agricultural Specialist"
     rejection_reason: str
 
 
 class ExpertReviewRequest(BaseModel):
     report_id: Optional[str] = None
     advisory_id: Optional[str] = None
-    expert_name: str = "Dr. M. S. Swaminathan (Agri Specialist)"
+    expert_name: str = "Agricultural Specialist"
     expert_notes: str = ""
     action: str = "approve"  # approve, modify, reject
     modified_final_advisory: Optional[str] = None
+

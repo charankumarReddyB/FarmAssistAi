@@ -55,6 +55,23 @@ def register_user(payload: UserRegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
+    # Sync user profile to Supabase Cloud PostgreSQL
+    try:
+        from app.core.supabase_client import sync_profile_to_supabase
+        sync_profile_to_supabase({
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "preferred_language": user.preferred_language,
+            "state": user.state,
+            "district": user.district,
+            "village_or_city": user.village_or_city,
+            "is_active": user.is_active
+        })
+    except Exception as e:
+        logger.warning(f"Supabase sync notice on registration: {e}")
+
     token = create_access_token({"sub": user.id, "email": user.email, "role": user.role})
 
     return TokenResponse(

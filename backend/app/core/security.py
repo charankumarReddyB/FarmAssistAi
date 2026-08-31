@@ -118,10 +118,11 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
     email = payload.get("email") or payload.get("user_metadata", {}).get("email") or f"{user_id}@supabase.user"
     user_metadata = payload.get("user_metadata", {})
 
-    # Determine default role: only seed emails get expert/admin by default
-    if email == "admin@farmassist.ai":
+    # Determine default role: admin accounts recognized
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
+    if email.lower() in [primary_admin_email, "admin@farmassist.ai"]:
         token_role = "admin"
-    elif email == "expert@farmassist.ai":
+    elif email.lower() == "expert@farmassist.ai":
         token_role = "expert"
     else:
         token_role = "farmer"  # SECURITY RULE: ALWAYS DEFAULT TO FARMER
@@ -129,7 +130,12 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         # Check if matching email exists
-        user = db.query(User).filter(User.email == email).first()
+        user = db.query(User).filter(User.email.ilike(email)).first()
+        if user:
+            # If user exists by email, update ID to Supabase UUID
+            user.id = user_id
+            db.commit()
+            db.refresh(user)
 
     if not user:
         # Auto-provision profile from Supabase token claims
@@ -137,7 +143,7 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
         display_name = user_metadata.get("name") or user_metadata.get("full_name") or email.split("@")[0]
         avatar_url = user_metadata.get("avatar_url") or user_metadata.get("picture") or ""
         provider = payload.get("app_metadata", {}).get("provider", "email")
-        if "google" in provider.lower() or "google" in payload.get("iss", "").lower():
+        if "google" in str(provider).lower() or "google" in str(payload.get("iss", "")).lower():
             provider = "google"
 
         user = User(
@@ -164,6 +170,23 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
         db.add(user)
         db.commit()
         db.refresh(user)
+    else:
+        # Update avatar or display name if provided in token metadata and missing
+        changed = False
+        meta_avatar = user_metadata.get("avatar_url") or user_metadata.get("picture")
+        meta_name = user_metadata.get("name") or user_metadata.get("full_name")
+        if meta_avatar and not user.avatar_url:
+            user.avatar_url = meta_avatar
+            changed = True
+        if meta_name and not user.display_name:
+            user.display_name = meta_name
+            changed = True
+        if email.lower() == primary_admin_email and user.role != "admin":
+            user.role = "admin"
+            changed = True
+        if changed:
+            db.commit()
+            db.refresh(user)
 
     if not user.is_active:
         raise HTTPException(

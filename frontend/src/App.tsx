@@ -16,7 +16,7 @@ import { Settings } from './views/Settings'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { Logo } from './components/Logo'
-import { supabase, isSupabaseConfigured, syncSupabaseProfile } from './lib/supabase'
+import { supabase, isSupabaseConfigured, syncSupabaseProfile, signOutSupabase } from './lib/supabase'
 import { apiRequest } from './lib/api'
 
 export type View =
@@ -74,6 +74,9 @@ export interface UserProfile {
 interface AppCtx {
   view: View
   setView: (v: View) => void
+  authMode: 'login' | 'register'
+  setAuthMode: (m: 'login' | 'register') => void
+  openAuth: (m: 'login' | 'register') => void
   lang: Lang
   setLang: (l: Lang) => void
   t: (key: string) => string
@@ -87,6 +90,9 @@ interface AppCtx {
 export const AppContext = createContext<AppCtx>({
   view: 'landing',
   setView: () => {},
+  authMode: 'login',
+  setAuthMode: () => {},
+  openAuth: () => {},
   lang: 'en',
   setLang: () => {},
   t: (k) => k,
@@ -139,6 +145,7 @@ function AppShell({ view }: { view: View }) {
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>('loading')
   const [view, setViewState] = useState<View>('landing')
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
   const [user, setUser] = useState<UserProfile | null>(null)
 
   const role = user?.role || 'farmer'
@@ -189,121 +196,171 @@ export default function App() {
     }
   }
 
+  const openAuth = (mode: 'login' | 'register') => {
+    setAuthMode(mode)
+    setViewState('login')
+  }
+
   // Centralized Session Processing — Supabase is Source of Truth
   const processSession = async (session: any) => {
-    console.log('[AUTH] Checking session, user present:', Boolean(session?.user))
-
-    if (!session?.user) {
-      console.log('[AUTH] No active session found.')
-      localStorage.removeItem('farmassist_user')
-      localStorage.removeItem('farmassist_token')
-      localStorage.removeItem('farmassist_role')
-      setUser(null)
-      setAuthState('unauthenticated')
-      setViewState((cur) => (cur === 'login' || cur === 'expert-login' ? cur : 'landing'))
-      return
-    }
-
-    const token = session.access_token
-    localStorage.setItem('farmassist_token', token)
-    console.log('[AUTH] Active session found for user ID:', session.user.id, session.user.email)
-
-    // 1. Sync Supabase database profiles table
-    let supabaseProfile: any = null
     try {
-      supabaseProfile = await syncSupabaseProfile(session.user)
-    } catch (e) {
-      console.warn('[AUTH] Supabase profile sync error:', e)
-    }
+      console.log('[AUTH] Processing session. User present:', Boolean(session?.user))
 
-    // 2. Sync with FastAPI backend /api/auth/me
-    let backendUser: any = null
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        backendUser = await res.json()
-        console.log('[AUTH] Backend /api/auth/me sync succeeded. Role:', backendUser.role)
+      if (!session?.user) {
+        // If an OAuth hash is present in URL, do not treat as unauthenticated yet
+        const isOAuthHash = window.location.hash.includes('access_token=') || window.location.search.includes('code=')
+        if (isOAuthHash) {
+          console.log('[AUTH] OAuth hash detected. Awaiting onAuthStateChange to deliver session...')
+          return
+        }
+
+        console.log('[AUTH] No active session found.')
+        localStorage.removeItem('farmassist_user')
+        localStorage.removeItem('farmassist_token')
+        localStorage.removeItem('farmassist_role')
+        setUser(null)
+        setAuthState('unauthenticated')
+        setViewState((cur) => (cur === 'login' || cur === 'expert-login' ? cur : 'landing'))
+        return
       }
-    } catch (e) {
-      console.warn('[AUTH] Backend sync note:', e)
-    }
 
-    const effectiveRole = backendUser?.role || supabaseProfile?.role || 'farmer'
-    const isOnboarded = backendUser?.onboarding_completed ?? supabaseProfile?.onboarding_completed ?? false
-    const hasLocation = Boolean(
-      backendUser?.district || backendUser?.latitude || supabaseProfile?.district || supabaseProfile?.latitude
-    )
+      const token = session.access_token || localStorage.getItem('farmassist_token') || ''
+      localStorage.setItem('farmassist_token', token)
+      console.log('[AUTH] Active session found for user ID:', session.user.id, session.user.email)
 
-    const finalUser: UserProfile = {
-      id: session.user.id,
-      email: session.user.email || 'farmer@farmassist.ai',
-      full_name: backendUser?.full_name || supabaseProfile?.full_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Farmer User',
-      display_name: backendUser?.display_name || supabaseProfile?.display_name || session.user.user_metadata?.name || session.user.user_metadata?.full_name || 'Farmer User',
-      avatar_url: backendUser?.avatar_url || supabaseProfile?.avatar_url || session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || '',
-      phone: backendUser?.phone || supabaseProfile?.phone,
-      role: effectiveRole,
-      preferred_language: (backendUser?.preferred_language || supabaseProfile?.preferred_language || 'en') as Lang,
-      country: backendUser?.country || supabaseProfile?.country,
-      state: backendUser?.state || supabaseProfile?.state,
-      district: backendUser?.district || supabaseProfile?.district,
-      city_town: backendUser?.city_town || supabaseProfile?.city_town,
-      village_or_city: backendUser?.village_or_city || supabaseProfile?.village_or_city,
-      village: backendUser?.village || supabaseProfile?.village,
-      latitude: backendUser?.latitude ?? supabaseProfile?.latitude,
-      longitude: backendUser?.longitude ?? supabaseProfile?.longitude,
-      onboarding_completed: isOnboarded,
-      auth_provider: backendUser?.auth_provider || supabaseProfile?.auth_provider || 'google',
+      // 1. Sync Supabase database profiles table
+      let supabaseProfile: any = null
+      try {
+        supabaseProfile = await syncSupabaseProfile(session.user)
+      } catch (e) {
+        console.warn('[AUTH] Supabase profile sync error:', e)
+      }
 
-      // Farm fields
-      farm_name: backendUser?.farm_name,
-      farm_size: backendUser?.farm_size,
-      current_crop: backendUser?.current_crop,
-      soil_type: backendUser?.soil_type,
-      irrigation_method: backendUser?.irrigation_method,
-      sowing_date: backendUser?.sowing_date,
-      crop_stage: backendUser?.crop_stage,
-      experience_years: backendUser?.experience_years,
-      water_source: backendUser?.water_source,
-      survey_number: backendUser?.survey_number,
-    }
+      // 2. Sync with FastAPI backend /api/auth/me
+      let backendUser: any = null
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          backendUser = await res.json()
+          console.log('[AUTH] Backend /api/auth/me sync succeeded. Role:', backendUser.role)
+        }
+      } catch (e) {
+        console.warn('[AUTH] Backend sync note:', e)
+      }
 
-    setUser(finalUser)
-    localStorage.setItem('farmassist_user', JSON.stringify(finalUser))
-    localStorage.setItem('farmassist_role', finalUser.role)
+      const effectiveRole = (
+        session.user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com' ||
+        session.user.email?.toLowerCase() === 'admin@farmassist.ai'
+      ) ? 'admin' : (backendUser?.role || supabaseProfile?.role || 'farmer')
 
-    if (finalUser.preferred_language && ['en', 'te', 'ta', 'hi'].includes(finalUser.preferred_language)) {
-      setLangState(finalUser.preferred_language)
-      updateGlobalFontAndLang(finalUser.preferred_language)
-    }
+      const isOnboarded = backendUser?.onboarding_completed ?? supabaseProfile?.onboarding_completed ?? false
+      const hasLocation = Boolean(
+        backendUser?.district || backendUser?.latitude || supabaseProfile?.district || supabaseProfile?.latitude
+      )
 
-    setAuthState('authenticated')
+      const finalUser: UserProfile = {
+        id: session.user.id,
+        email: session.user.email || 'farmer@farmassist.ai',
+        full_name: backendUser?.full_name || supabaseProfile?.full_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Farmer User',
+        display_name: backendUser?.display_name || supabaseProfile?.display_name || session.user.user_metadata?.name || session.user.user_metadata?.full_name || 'Farmer User',
+        avatar_url: backendUser?.avatar_url || supabaseProfile?.avatar_url || session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || '',
+        phone: backendUser?.phone || supabaseProfile?.phone,
+        role: effectiveRole,
+        preferred_language: (backendUser?.preferred_language || supabaseProfile?.preferred_language || 'en') as Lang,
+        country: backendUser?.country || supabaseProfile?.country,
+        state: backendUser?.state || supabaseProfile?.state,
+        district: backendUser?.district || supabaseProfile?.district,
+        city_town: backendUser?.city_town || supabaseProfile?.city_town,
+        village_or_city: backendUser?.village_or_city || supabaseProfile?.village_or_city,
+        village: backendUser?.village || supabaseProfile?.village,
+        latitude: backendUser?.latitude ?? supabaseProfile?.latitude,
+        longitude: backendUser?.longitude ?? supabaseProfile?.longitude,
+        onboarding_completed: isOnboarded,
+        auth_provider: backendUser?.auth_provider || supabaseProfile?.auth_provider || (session.user.app_metadata?.provider || 'google'),
 
-    // Clean OAuth hash from URL without reload
-    if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
-      window.history.replaceState(null, '', window.location.pathname)
-    }
+        // Farm fields
+        farm_name: backendUser?.farm_name,
+        farm_size: backendUser?.farm_size,
+        current_crop: backendUser?.current_crop,
+        soil_type: backendUser?.soil_type,
+        irrigation_method: backendUser?.irrigation_method,
+        sowing_date: backendUser?.sowing_date,
+        crop_stage: backendUser?.crop_stage,
+        experience_years: backendUser?.experience_years,
+        water_source: backendUser?.water_source,
+        survey_number: backendUser?.survey_number,
+      }
 
-    // Direct routing decision — Admins and Experts bypass location detection completely
-    if (finalUser.role === 'admin') {
-      console.log('[AUTH] Admin session active. Routing directly to Admin Dashboard.')
-      setViewState('admin')
-    } else if (finalUser.role === 'expert') {
-      console.log('[AUTH] Expert session active. Routing directly to Expert Portal.')
-      setViewState('expert')
-    } else if (isOnboarded === false && !hasLocation) {
-      console.log('[AUTH] Incomplete location onboarding for farmer. Directing to location onboarding.')
-      setViewState('login')
-    } else {
-      console.log('[AUTH] Routing authenticated farmer to dashboard.')
-      setViewState('dashboard')
+      setUser(finalUser)
+      localStorage.setItem('farmassist_user', JSON.stringify(finalUser))
+      localStorage.setItem('farmassist_role', finalUser.role)
+
+      if (finalUser.preferred_language && ['en', 'te', 'ta', 'hi'].includes(finalUser.preferred_language)) {
+        setLangState(finalUser.preferred_language)
+        updateGlobalFontAndLang(finalUser.preferred_language)
+      }
+
+      setAuthState('authenticated')
+
+      // Clean OAuth hash from URL without reload
+      if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error') || window.location.hash === '#')) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+
+      // Direct routing decision — Admins and Experts bypass location detection completely
+      if (finalUser.role === 'admin') {
+        console.log('[AUTH] Admin session active. Routing directly to Admin Dashboard.')
+        setViewState('admin')
+      } else if (finalUser.role === 'expert') {
+        console.log('[AUTH] Expert session active. Routing directly to Expert Portal.')
+        setViewState('expert')
+      } else if (isOnboarded === false && !hasLocation) {
+        console.log('[AUTH] Incomplete location onboarding for farmer. Directing to location onboarding.')
+        setViewState('login')
+      } else {
+        console.log('[AUTH] Routing authenticated farmer to dashboard.')
+        setViewState('dashboard')
+      }
+    } catch (err) {
+      console.error('[AUTH] Critical error processing session:', err)
+      setAuthState('unauthenticated')
+      setViewState('landing')
     }
   }
 
   // Supabase Auth Listener & Session Initialization
   useEffect(() => {
+    let isMounted = true
+    const isOAuthHash = window.location.hash.includes('access_token=') || window.location.search.includes('code=')
+
+    // Safety timeout: if session resolution hangs after 4 seconds, default safely to unauthenticated
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        setAuthState((curr) => {
+          if (curr === 'loading') {
+            console.warn('[AUTH] Session check timed out. Defaulting to unauthenticated.')
+            setViewState('landing')
+            return 'unauthenticated'
+          }
+          return curr
+        })
+      }
+    }, 4000)
+
+    // Check for error parameters in URL (from OAuth redirects or failed signups)
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlHash = window.location.hash
+    const hasError = urlParams.has('error') || urlParams.has('error_description') || urlHash.includes('error=')
+    
+    if (hasError) {
+      console.warn('[AUTH] URL contained error parameters:', window.location.search, urlHash)
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+
     if (!isSupabaseConfigured()) {
+      clearTimeout(fallbackTimer)
       localStorage.removeItem('farmassist_user')
       localStorage.removeItem('farmassist_token')
       localStorage.removeItem('farmassist_role')
@@ -315,18 +372,31 @@ export default function App() {
 
     // 1. Initial Session Check on App Startup
     supabase.auth.getSession().then(({ data: { session } }) => {
-      processSession(session)
+      if (!isMounted) return
+      if (session?.user) {
+        processSession(session)
+      } else if (!isOAuthHash) {
+        processSession(null)
+      } else {
+        console.log('[AUTH] OAuth hash in progress. Waiting for Supabase onAuthStateChange...')
+      }
     }).catch((err) => {
+      if (!isMounted) return
       console.error('[AUTH] getSession startup error:', err)
-      setAuthState('unauthenticated')
-      setViewState('landing')
+      if (!isOAuthHash) {
+        setAuthState('unauthenticated')
+        setViewState('landing')
+      }
     })
 
     // 2. Real-time Auth State Subscription (handles OAuth callback redirect)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return
       console.log('[AUTH] onAuthStateChange event:', event, 'session user:', session?.user?.email)
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        processSession(session)
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        if (session?.user) {
+          processSession(session)
+        }
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         localStorage.removeItem('farmassist_user')
@@ -337,8 +407,13 @@ export default function App() {
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      clearTimeout(fallbackTimer)
+      subscription.unsubscribe()
+    }
   }, [])
+
 
   useEffect(() => {
     updateGlobalFontAndLang(lang)
@@ -402,14 +477,41 @@ export default function App() {
       return next
     })
 
-    // 1. Sync Supabase profiles table if configured
+    // 1. Sync Supabase profiles and farm_profiles tables if configured
     if (isSupabaseConfigured() && user?.id) {
-      supabase
-        .from('profiles')
-        .update(updatedFields)
-        .eq('id', user.id)
-        .then()
-        .catch(() => {})
+      // Profile attributes
+      const profileUpdates: any = {}
+      if (updatedFields.full_name !== undefined) profileUpdates.full_name = updatedFields.full_name
+      if (updatedFields.preferred_language !== undefined) profileUpdates.preferred_language = updatedFields.preferred_language
+      if (updatedFields.state !== undefined) profileUpdates.state = updatedFields.state
+      if (updatedFields.district !== undefined) profileUpdates.district = updatedFields.district
+      if (updatedFields.village_or_city !== undefined) profileUpdates.village_or_city = updatedFields.village_or_city
+      if (updatedFields.village !== undefined) profileUpdates.village = updatedFields.village
+      if (updatedFields.latitude !== undefined) profileUpdates.latitude = updatedFields.latitude
+      if (updatedFields.longitude !== undefined) profileUpdates.longitude = updatedFields.longitude
+      if (updatedFields.phone !== undefined) profileUpdates.phone = updatedFields.phone
+      if (updatedFields.onboarding_completed !== undefined) profileUpdates.onboarding_completed = updatedFields.onboarding_completed
+
+      if (Object.keys(profileUpdates).length > 0) {
+        supabase.from('profiles').update(profileUpdates).eq('id', user.id).then().catch(() => {})
+      }
+
+      // Farm attributes
+      const farmUpdates: any = { user_id: user.id }
+      if (updatedFields.farm_name !== undefined) farmUpdates.farm_name = updatedFields.farm_name
+      if (updatedFields.farm_size !== undefined) farmUpdates.farm_size = updatedFields.farm_size
+      if (updatedFields.current_crop !== undefined) farmUpdates.current_crop = updatedFields.current_crop
+      if (updatedFields.soil_type !== undefined) farmUpdates.soil_type = updatedFields.soil_type
+      if (updatedFields.irrigation_method !== undefined) farmUpdates.irrigation_method = updatedFields.irrigation_method
+      if (updatedFields.sowing_date !== undefined) farmUpdates.sowing_date = updatedFields.sowing_date
+      if (updatedFields.crop_stage !== undefined) farmUpdates.crop_stage = updatedFields.crop_stage
+      if (updatedFields.experience_years !== undefined) farmUpdates.experience_years = updatedFields.experience_years
+      if (updatedFields.water_source !== undefined) farmUpdates.water_source = updatedFields.water_source
+      if (updatedFields.survey_number !== undefined) farmUpdates.survey_number = updatedFields.survey_number
+
+      if (Object.keys(farmUpdates).length > 1) {
+        supabase.from('farm_profiles').upsert(farmUpdates, { onConflict: 'user_id' }).then().catch(() => {})
+      }
     }
 
     // 2. Sync FastAPI backend /api/user/profile
@@ -421,11 +523,12 @@ export default function App() {
     } catch (err) {
       console.warn('[AUTH] Background updateUser sync notice:', err)
     }
+
   }
 
   const logout = async () => {
     if (isSupabaseConfigured()) {
-      await supabase.auth.signOut().catch(() => {})
+      await signOutSupabase().catch(() => {})
     }
     setUser(null)
     localStorage.removeItem('farmassist_user')
@@ -440,7 +543,21 @@ export default function App() {
 
   const t = (key: string) => translate(lang, key)
 
-  const ctx: AppCtx = { view, setView, lang, setLang, t, user, updateUser, role, login, logout }
+  const ctx: AppCtx = {
+    view,
+    setView,
+    authMode,
+    setAuthMode,
+    openAuth,
+    lang,
+    setLang,
+    t,
+    user,
+    updateUser,
+    role,
+    login,
+    logout
+  }
 
   // 1. Loading state while checking Supabase session on startup / OAuth callback
   if (authState === 'loading') {
@@ -462,7 +579,7 @@ export default function App() {
     if (view === 'login' || view === 'expert-login') {
       return (
         <AppContext.Provider value={ctx}>
-          <Login initialStep="language" />
+          <Login initialStep="auth" initialMode={authMode} />
         </AppContext.Provider>
       )
     }
@@ -477,7 +594,7 @@ export default function App() {
   if (view === 'login' || view === 'expert-login') {
     return (
       <AppContext.Provider value={ctx}>
-        <Login key={user?.id || 'authenticated_onboarding'} initialStep="location-permission" />
+        <Login key={user?.id || 'authenticated_onboarding'} initialStep="location-permission" initialMode={authMode} />
       </AppContext.Provider>
     )
   }

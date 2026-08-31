@@ -13,6 +13,8 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.admin import router as admin_router
 from app.api.routes.farm import router as farm_router
 
+from app.api.routes.assistant import router as assistant_router
+
 api_router = APIRouter()
 
 api_router.include_router(health_router)
@@ -26,5 +28,7 @@ api_router.include_router(analysis_router)
 api_router.include_router(crop_analysis_router)
 api_router.include_router(advisory_router)
 api_router.include_router(expert_router)
+api_router.include_router(assistant_router)
+
 
 

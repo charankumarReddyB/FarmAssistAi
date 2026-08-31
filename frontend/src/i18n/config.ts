@@ -28,9 +28,14 @@ export function saveUserLanguage(lang: Lang) {
   document.documentElement.lang = lang
 
   const userJson = localStorage.getItem('farmassist_user')
-  const userObj = userJson ? JSON.parse(userJson) : { name: 'Raju Reddy', location: 'Kakinada, AP' }
-  userObj.preferred_language = lang
-  localStorage.setItem('farmassist_user', JSON.stringify(userObj))
+  if (userJson) {
+    try {
+      const userObj = JSON.parse(userJson)
+      userObj.preferred_language = lang
+      localStorage.setItem('farmassist_user', JSON.stringify(userObj))
+    } catch {}
+  }
+
 }
 
 export function t(key: string, lang: Lang = 'en'): string {

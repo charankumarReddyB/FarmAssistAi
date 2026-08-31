@@ -121,11 +121,12 @@ def seed_default_users():
             farmer = User(
                 email="farmer@farmassist.ai",
                 hashed_password=hash_password("Farmer@123456"),
-                full_name="Raju Reddy",
+                full_name="Farmer User",
                 role="farmer",
                 preferred_language="en",
                 is_active=True
             )
+
             db.add(farmer)
         else:
             farmer.role = "farmer"
@@ -133,11 +134,30 @@ def seed_default_users():
             db.add(farmer)
 
         db.commit()
+
+        # Sync accounts to Supabase profiles
+        try:
+            from app.core.supabase_client import sync_profile_to_supabase
+            for user_obj in [admin, fallback_admin, expert, farmer]:
+                if user_obj:
+                    sync_profile_to_supabase({
+                        "id": user_obj.id,
+                        "email": user_obj.email,
+                        "full_name": user_obj.full_name,
+                        "display_name": user_obj.display_name or user_obj.full_name,
+                        "role": user_obj.role,
+                        "preferred_language": user_obj.preferred_language,
+                        "is_active": user_obj.is_active
+                    })
+        except Exception as se:
+            logger.warning(f"Supabase sync warning on seeding: {se}")
+
     except Exception as e:
         db.rollback()
         logger.error(f"Failed to seed default accounts: {e}")
     finally:
         db.close()
+
 
 
 # Create database tables automatically on startup

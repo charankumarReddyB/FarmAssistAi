@@ -388,6 +388,57 @@ class TestFarmAssistIntegratedSystem(unittest.TestCase):
         })
         self.assertEqual(res_role.status_code, 403)
 
+    def test_assistant_multilingual_queries(self):
+        """Test Point 26: Multilingual Assistant queries in English, Telugu, Tamil, and Hindi."""
+        # 1. English weather query
+        en_res = client.post("/api/assistant/chat", headers={"Authorization": f"Bearer {self.farmer_token}"}, json={
+            "query": "What is the weather today?",
+            "language": "en"
+        })
+        self.assertEqual(en_res.status_code, 200)
+        en_data = en_res.json()
+        self.assertEqual(en_data["intent"], "weather")
+        self.assertIn("weather", en_data["response"].lower())
+
+        # 2. Telugu weather query
+        te_res = client.post("/api/assistant/chat", headers={"Authorization": f"Bearer {self.farmer_token}"}, json={
+            "query": "ఈరోజు వాతావరణం ఎలా ఉంది?",
+            "language": "te"
+        })
+        self.assertEqual(te_res.status_code, 200)
+        te_data = te_res.json()
+        self.assertEqual(te_data["intent"], "weather")
+        self.assertTrue(len(te_data["response"]) > 0)
+
+        # 3. Tamil soil query
+        ta_res = client.post("/api/assistant/chat", headers={"Authorization": f"Bearer {self.farmer_token}"}, json={
+            "query": "மண் அறிக்கை காட்டு",
+            "language": "ta"
+        })
+        self.assertEqual(ta_res.status_code, 200)
+        ta_data = ta_res.json()
+        self.assertEqual(ta_data["intent"], "soil_report")
+
+        # 4. Hindi crop query
+        hi_res = client.post("/api/assistant/chat", headers={"Authorization": f"Bearer {self.farmer_token}"}, json={
+            "query": "मेरी फसल का स्वास्थ्य कैसा है?",
+            "language": "hi"
+        })
+        self.assertEqual(hi_res.status_code, 200)
+        hi_data = hi_res.json()
+        self.assertEqual(hi_data["intent"], "crop_health")
+
+        # 5. Navigation query
+        nav_res = client.post("/api/assistant/chat", headers={"Authorization": f"Bearer {self.farmer_token}"}, json={
+            "query": "Open My Farm",
+            "language": "en"
+        })
+        self.assertEqual(nav_res.status_code, 200)
+        nav_data = nav_res.json()
+        self.assertEqual(nav_data["action"], "navigate")
+        self.assertEqual(nav_data["action_payload"]["target"], "farm")
+
 
 if __name__ == "__main__":
     unittest.main()
+

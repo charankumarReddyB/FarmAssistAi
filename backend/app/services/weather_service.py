@@ -1,5 +1,6 @@
 import logging
 import urllib.request
+import urllib.parse
 import json
 from typing import Dict, Any, Optional
 
@@ -40,9 +41,26 @@ class WeatherService:
                 target_lat = DISTRICT_COORDINATES[district_name]["lat"]
                 target_lon = DISTRICT_COORDINATES[district_name]["lon"]
             else:
-                # Default to Kakinada, Andhra Pradesh
+                # Try Open-Meteo live geocoding search for dynamic location lookup
+                try:
+                    search_name = urllib.parse.quote(district_name or location)
+                    geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={search_name}&count=1&format=json"
+                    geo_req = urllib.request.Request(geo_url, headers={"User-Agent": "FarmAssist-AI/1.0"})
+                    with urllib.request.urlopen(geo_req, timeout=3) as g_resp:
+                        g_data = json.loads(g_resp.read().decode())
+                        results = g_data.get("results", [])
+                        if results:
+                            target_lat = float(results[0]["latitude"])
+                            target_lon = float(results[0]["longitude"])
+                            logger.info(f"Geocoded location '{location}' to lat={target_lat}, lon={target_lon}")
+                except Exception as ge:
+                    logger.debug(f"Dynamic geocoding lookup notice: {ge}")
+
+            if target_lat is None or target_lon is None:
+                # Fallback to Kakinada, Andhra Pradesh
                 target_lat = 16.98
                 target_lon = 82.24
+
 
         try:
             # Open-Meteo free live weather forecast endpoint

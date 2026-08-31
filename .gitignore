@@ -1,7 +1,9 @@
 # Environment & Configuration
 backend/.env
+frontend/.env
 .env
 .env.local
+
 
 # Python Virtual Environment & Cache
 backend/venv/

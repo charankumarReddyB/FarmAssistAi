@@ -3,6 +3,8 @@ import { useApp } from '../App'
 import { AiBadge } from '../components/StatusBadge'
 import { FarmIntelligence, type FarmIntelligenceData } from '../components/FarmIntelligence'
 import { detectBrowserLocation, reverseGeocode } from '../lib/location'
+import { apiRequest } from '../lib/api'
+
 
 const FORECAST = [
   { day: 'Today', icon: '⛅', temp: '32°', rain: '12%', active: true },
@@ -201,8 +203,7 @@ export function Dashboard() {
       : ''
 
     // Fetch dynamic weather from API
-    fetch(`http://127.0.0.1:8000/api/weather?${weatherQuery}`)
-      .then((res) => res.json())
+    apiRequest(`/weather?${weatherQuery}`)
       .then((data) => {
         if (data && data.temperature !== undefined && data.temperature !== null) {
           setWeatherData({
@@ -225,8 +226,7 @@ export function Dashboard() {
       ? `lat=${user.latitude}&lon=${user.longitude}&state=${encodeURIComponent(st)}&district=${encodeURIComponent(dist)}&language=${encodeURIComponent(lang)}`
       : `state=${encodeURIComponent(st)}&district=${encodeURIComponent(dist)}&language=${encodeURIComponent(lang)}`
 
-    fetch(`http://127.0.0.1:8000/api/farm/location-analysis?${farmQuery}`)
-      .then((res) => res.json())
+    apiRequest(`/farm/location-analysis?${farmQuery}`)
       .then((data) => {
         if (data) {
           setLocAnalysis(data)
@@ -255,9 +255,10 @@ export function Dashboard() {
             <span>📍</span>
             <span>{userProfile.location}</span>
             <span className="text-pebble">·</span>
-            <span>🌾 {t('dash_current_crop')}</span>
+            <span>🌾 {user?.current_crop || t('dash_current_crop')}</span>
           </p>
         </div>
+
         <div className="flex items-center gap-2 flex-shrink-0">
           <AiBadge label={t('dash_ai_label')} />
           <AiBadge verified label={t('dash_expert_verified')} />

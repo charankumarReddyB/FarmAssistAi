@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../App'
 import { AiBadge, StatusBadge, RiskBadge } from '../components/StatusBadge'
 import { LANG_LABELS } from '../translations'
+import { apiRequest } from '../lib/api'
+
 
 type Tab = 'today' | 'week' | 'irrigation' | 'risk'
 
@@ -43,20 +45,19 @@ interface AdvisoryItem {
 }
 
 export function Advisory() {
-  const { t, lang, setLang } = useApp()
+  const { t, lang, user } = useApp()
   const [tab, setTab] = useState<Tab>('today')
   const [checked, setChecked] = useState<Record<number, boolean>>({})
   const [expertAdvisories, setExpertAdvisories] = useState<AdvisoryItem[]>([])
 
   const fetchAdvisories = async () => {
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/expert/advisories')
-      if (resp.ok) {
-        const data = await resp.json()
+      const data = await apiRequest('/advisories')
+      if (Array.isArray(data)) {
         setExpertAdvisories(data)
       }
     } catch (err) {
-      console.error('Failed to fetch advisories for farmer:', err)
+      console.warn('Failed to fetch advisories:', err)
     }
   }
 
@@ -69,15 +70,22 @@ export function Advisory() {
   const latestAdv = expertAdvisories.length > 0 ? expertAdvisories[0] : null
   const advStatus = latestAdv?.status || 'pending_review'
 
+  const displayName = user?.display_name || user?.full_name || 'Farmer'
+  const displayLocation = user?.district && user?.state
+    ? `${user.district}, ${user.state}`
+    : user?.district || user?.state || 'Location Not Set'
+  const displayCrop = user?.current_crop || 'Paddy (Rice)'
+
   return (
     <div className="p-6 space-y-6 max-w-screen-xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-display text-3xl text-charcoal">{t('advisory_title')}</h1>
-          <p className="text-sage text-sm mt-1">Raju Reddy · Kakinada, AP · Paddy, Kharif 2026</p>
+          <p className="text-sage text-sm mt-1">{displayName} · {displayLocation} · {displayCrop}</p>
         </div>
       </div>
+
 
       {/* Expert Verification Status Banner */}
       <div className={`rounded-xl p-5 border shadow-sm transition-all ${
@@ -259,11 +267,11 @@ export function Advisory() {
             <div className="space-y-2 text-xs text-charcoal/80">
               <div className="flex justify-between border-b border-pebble/40 pb-1.5">
                 <span className="text-sage">Farmer Name:</span>
-                <span className="font-medium">Raju Reddy</span>
+                <span className="font-medium">{displayName}</span>
               </div>
               <div className="flex justify-between border-b border-pebble/40 pb-1.5">
                 <span className="text-sage">Location:</span>
-                <span className="font-medium">Kakinada, Andhra Pradesh</span>
+                <span className="font-medium">{displayLocation}</span>
               </div>
               <div className="flex justify-between border-b border-pebble/40 pb-1.5">
                 <span className="text-sage">Preferred Language:</span>
@@ -280,3 +288,4 @@ export function Advisory() {
     </div>
   )
 }
+

@@ -103,6 +103,7 @@ def create_user_by_admin(payload: UserCreate, db: Session = Depends(get_db)):
         email=payload.email,
         hashed_password=hash_password(payload.password),
         full_name=payload.full_name,
+        display_name=payload.full_name,
         role=role,
         country=payload.country or None,
         state=payload.state or None,
@@ -115,6 +116,24 @@ def create_user_by_admin(payload: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Sync to Supabase profiles
+    try:
+        from app.core.supabase_client import sync_profile_to_supabase
+        sync_profile_to_supabase({
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "display_name": user.display_name,
+            "role": user.role,
+            "preferred_language": user.preferred_language,
+            "state": user.state,
+            "district": user.district,
+            "is_active": user.is_active
+        })
+    except Exception as e:
+        logger.warning(f"Failed to sync admin-created user to Supabase: {e}")
+
     return user
 
 
@@ -128,6 +147,17 @@ def update_user_status(user_id: str, payload: UserStatusUpdate, db: Session = De
     user.is_active = payload.is_active
     db.commit()
     db.refresh(user)
+
+    try:
+        from app.core.supabase_client import sync_profile_to_supabase
+        sync_profile_to_supabase({
+            "id": user.id,
+            "email": user.email,
+            "is_active": user.is_active
+        })
+    except Exception:
+        pass
+
     return user
 
 
@@ -149,4 +179,16 @@ def update_user_role(user_id: str, payload: UserRoleUpdate, db: Session = Depend
     user.role = role
     db.commit()
     db.refresh(user)
+
+    try:
+        from app.core.supabase_client import sync_profile_to_supabase
+        sync_profile_to_supabase({
+            "id": user.id,
+            "email": user.email,
+            "role": user.role
+        })
+    except Exception:
+        pass
+
     return user
+

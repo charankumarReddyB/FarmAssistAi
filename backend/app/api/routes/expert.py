@@ -57,13 +57,23 @@ def build_advisory_response(adv: Advisory, db: Session) -> StructuredAdvisoryRes
             electrical_conductivity=_extract_float(ed.get("electrical_conductivity"))
         )
 
+    farmer_name_val = adv.farmer_name
+    farmer_loc_val = adv.farmer_location
+
+    if (not farmer_name_val or not farmer_loc_val) and adv.farmer_id:
+        f_user = db.query(User).filter(User.id == adv.farmer_id).first()
+        if f_user:
+            farmer_name_val = farmer_name_val or f_user.full_name or f_user.display_name or f_user.email.split("@")[0]
+            if not farmer_loc_val:
+                farmer_loc_val = f"{f_user.district}, {f_user.state}" if f_user.district and f_user.state else f_user.district or f_user.state or "Location Not Set"
+
     return StructuredAdvisoryResponse(
         advisory_id=adv.id,
         report_id=adv.report_id,
         crop_analysis_id=adv.crop_analysis_id,
-        farmer_id=adv.farmer_id or "farmer_001",
-        farmer_name=adv.farmer_name or "Raju Reddy",
-        farmer_location=adv.farmer_location or "Kakinada, Andhra Pradesh",
+        farmer_id=adv.farmer_id or "farmer_user",
+        farmer_name=farmer_name_val or "Farmer",
+        farmer_location=farmer_loc_val or "Location Not Set",
         source_type=adv.source_type or "soil_analysis",
         report_summary=adv.report_summary or "",
         soil_health_analysis=adv.soil_health_analysis or "",

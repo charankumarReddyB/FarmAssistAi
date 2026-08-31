@@ -6,7 +6,7 @@ import { RiskBadge, AiBadge, StatusBadge } from '../components/StatusBadge'
 type ExpertView = 'dashboard' | 'review'
 
 interface AdvisoryData {
-  advisory_id: str
+  advisory_id: string
   report_id?: string
   crop_analysis_id?: string
   farmer_id?: string
@@ -43,7 +43,7 @@ interface AdvisoryData {
 }
 
 export function ExpertPortal() {
-  const { setView } = useApp()
+  const { setView, user, logout } = useApp()
   const [expertView, setExpertView] = useState<ExpertView>('dashboard')
   const [advisories, setAdvisories] = useState<AdvisoryData[]>([])
   const [selectedCase, setSelectedCase] = useState<AdvisoryData | null>(null)
@@ -51,19 +51,18 @@ export function ExpertPortal() {
   // Action input states
   const [editedAdvisory, setEditedAdvisory] = useState('')
   const [expertNotes, setExpertNotes] = useState('')
-  const [expertName, setExpertName] = useState('Dr. M. S. Swaminathan (Agri Specialist)')
+  const [expertName, setExpertName] = useState(user?.full_name || user?.display_name || 'Agricultural Specialist')
   const [loadingAction, setLoadingAction] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const fetchAdvisories = async () => {
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/expert/advisories')
-      if (resp.ok) {
-        const data = await resp.json()
+      const data = await apiRequest('/expert/advisories')
+      if (Array.isArray(data)) {
         setAdvisories(data)
       }
     } catch (err) {
-      console.error('Failed to fetch expert advisories:', err)
+      console.warn('Failed to fetch expert advisories:', err)
     }
   }
 
@@ -84,18 +83,14 @@ export function ExpertPortal() {
     setLoadingAction(true)
     setErrorMsg(null)
     try {
-      const resp = await fetch(`http://127.0.0.1:8000/api/expert/advisories/${selectedCase.advisory_id}/approve`, {
+      await apiRequest(`/expert/advisories/${selectedCase.advisory_id}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          expert_id: 'exp_101',
-          expert_name: expertName,
+          expert_id: user?.id || 'exp_user',
+          expert_name: expertName || user?.full_name || 'Agricultural Specialist',
           notes: expertNotes || 'Verified and approved for farmer implementation.',
         }),
       })
-      if (!resp.ok) {
-        throw new Error('Approval submission failed.')
-      }
       await fetchAdvisories()
       setExpertView('dashboard')
       setSelectedCase(null)
@@ -115,19 +110,15 @@ export function ExpertPortal() {
     setLoadingAction(true)
     setErrorMsg(null)
     try {
-      const resp = await fetch(`http://127.0.0.1:8000/api/expert/advisories/${selectedCase.advisory_id}/modify`, {
+      await apiRequest(`/expert/advisories/${selectedCase.advisory_id}/modify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          expert_id: 'exp_101',
-          expert_name: expertName,
+          expert_id: user?.id || 'exp_user',
+          expert_name: expertName || user?.full_name || 'Agricultural Specialist',
           modified_advisory: editedAdvisory,
           expert_notes: expertNotes || 'Updated specific dosage and application timing.',
         }),
       })
-      if (!resp.ok) {
-        throw new Error('Modification submission failed.')
-      }
       await fetchAdvisories()
       setExpertView('dashboard')
       setSelectedCase(null)
@@ -147,18 +138,14 @@ export function ExpertPortal() {
     setLoadingAction(true)
     setErrorMsg(null)
     try {
-      const resp = await fetch(`http://127.0.0.1:8000/api/expert/advisories/${selectedCase.advisory_id}/reject`, {
+      await apiRequest(`/expert/advisories/${selectedCase.advisory_id}/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          expert_id: 'exp_101',
-          expert_name: expertName,
-          rejection_reason: expertNotes,
+          expert_id: user?.id || 'exp_user',
+          expert_name: expertName || user?.full_name || 'Agricultural Specialist',
+          reason: expertNotes,
         }),
       })
-      if (!resp.ok) {
-        throw new Error('Rejection submission failed.')
-      }
       await fetchAdvisories()
       setExpertView('dashboard')
       setSelectedCase(null)
@@ -170,6 +157,8 @@ export function ExpertPortal() {
   }
 
   const pendingCount = advisories.filter((a) => a.status === 'pending_review' || a.status === 'generated' || a.status === 'under_review').length
+
+
   const highRiskCount = advisories.filter((a) => a.risk_level === 'HIGH' || a.risk_level === 'CRITICAL').length
   const approvedCount = advisories.filter((a) => a.status === 'approved' || a.status === 'modified').length
 
@@ -209,11 +198,11 @@ export function ExpertPortal() {
               <div className="text-xs font-mono uppercase tracking-widest text-cream/40 mb-3">Farmer Information</div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-leaf text-cream font-medium flex items-center justify-center">
-                  {(selectedCase.farmer_name || 'R')[0]}
+                  {(selectedCase.farmer_name || 'F')[0]}
                 </div>
                 <div>
-                  <div className="font-medium text-cream text-base">{selectedCase.farmer_name || 'Raju Reddy'}</div>
-                  <div className="text-cream/50 text-xs">{selectedCase.farmer_location} · ID: {selectedCase.farmer_id}</div>
+                  <div className="font-medium text-cream text-base">{selectedCase.farmer_name || 'Farmer'}</div>
+                  <div className="text-cream/50 text-xs">{selectedCase.farmer_location || 'Location Not Set'} · ID: {selectedCase.farmer_id || 'N/A'}</div>
                 </div>
               </div>
             </div>
@@ -419,8 +408,9 @@ export function ExpertPortal() {
                 >
                   <div className="space-y-1.5 max-w-3xl">
                     <div className="flex items-center gap-3">
-                      <span className="font-semibold text-cream text-base">{adv.farmer_name || 'Raju Reddy'}</span>
-                      <span className="text-xs text-cream/50 font-mono">({adv.farmer_location})</span>
+                      <span className="font-semibold text-cream text-base">{adv.farmer_name || 'Farmer'}</span>
+                      <span className="text-xs text-cream/50 font-mono">({adv.farmer_location || 'Location Not Set'})</span>
+
                       <span className="text-[10px] font-mono uppercase bg-white/10 px-2 py-0.5 rounded text-cream/70">
                         {adv.source_type.replace('_', ' ')}
                       </span>

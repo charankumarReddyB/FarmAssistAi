@@ -86,46 +86,61 @@ FarmAssistAi/
 ### 1. Start the FastAPI Backend Server
 Open a terminal in the `backend/` directory:
 
+#### Option A: Windows PowerShell (Using Python Virtual Environment)
 ```powershell
 cd backend
 
-# If PowerShell script execution policy blocks venv activation (Activate.ps1), run this first:
+# Allow PowerShell script execution if restricted
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-# Activate Virtual Environment (Optional)
+# Activate venv
 .\venv\Scripts\Activate.ps1
 
-# Install dependencies & start server
+# Install requirements (first time setup)
+pip install -r requirements.txt
+
+# Start backend dev server with auto-reload
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+#### Option B: Direct Python Execution (No activation required)
+```powershell
+cd backend
+.\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+#### Option C: Linux / macOS
+```bash
+cd backend
+source venv/bin/activate
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
 - **Backend API Base URL**: `http://127.0.0.1:8000`
 - **Interactive OpenAPI (Swagger) Docs**: `http://127.0.0.1:8000/docs`
-- **Health Endpoint**: `http://127.0.0.1:8000/api/health`
+- **Health Check Endpoint**: `http://127.0.0.1:8000/api/health`
 
 ---
 
 ### 2. Start the Frontend Application
-Open a second terminal in `frontend/`:
+Open a second terminal in the `frontend/` directory:
 
-#### Option A: Using `npm.cmd` in PowerShell (Recommended for Windows)
+#### Windows PowerShell / CMD
 ```powershell
-# If already in frontend directory:
-npm.cmd install
-npm.cmd run dev
-
-# If in project root:
 cd frontend
+npm.cmd install
 npm.cmd run dev
 ```
 
-#### Option B: Standard CMD / Bash
-```cmd
+#### Linux / macOS
+```bash
 cd frontend
 npm install
 npm run dev
 ```
-- **Web Application URL**: `http://localhost:8443`
+
+- **Frontend Web Application URL**: `http://localhost:8443`
 
 ---
 
@@ -141,33 +156,39 @@ npm run dev
 
 ---
 
-## 🧪 Running Automated Tests
+## 🧪 Running Automated Tests & Production Build
 
-### 1. Run Complete Backend Integration Test Suite
-Executes all 25 system integration, role authorization, and farm synchronization test points:
+### 1. Run Backend Automated Test Suite
+Executes the comprehensive test suite covering authentication, RBAC, weather, farm profile sync, and multilingual assistant:
 
-```bash
+```powershell
 cd backend
-python -m unittest tests.test_integrated_system
+.\venv\Scripts\python.exe -m unittest discover tests
 ```
 
-### 2. Run All Backend Tests
-```bash
-cd backend
-python -m unittest discover tests
-```
+### 2. Verify Frontend Production Build
+Validates TypeScript types and generates the optimized production bundle:
 
-### 3. Verify Frontend Production Build
-```bash
+```powershell
 cd frontend
-npm run build
+npm.cmd run build
 ```
+
+---
+
+## ☁️ Supabase Cloud Database Setup
+
+1. Copy the SQL schema from [backend/supabase_schema.sql](file:///c:/Charan/Farm%20Assist%20Ai/backend/supabase_schema.sql).
+2. Open your [Supabase SQL Editor](https://supabase.com/dashboard/project/vdadfdqqqtofnhfhdkvh/sql/new).
+3. Paste and click **Run** to provision tables, triggers, and Row Level Security (RLS) policies.
+4. Set your keys in `frontend/.env` and `backend/.env`.
 
 ---
 
 ## 🔒 Security & Role Authorization Summary
 
-- **Farmer Role**: Access `/dashboard`, `/soil`, `/crop`, `/advisory`, `/reports`, `/farm`, `/settings`. Cannot access Expert or Admin routes.
-- **Expert Role**: Access `/expert` review dashboard to inspect, approve, modify, or reject advisories. Cannot access Admin routes.
-- **Admin Role**: Access `/admin` dashboard for user role management, expert/admin provisioning, and system governance.
-- **Backend Enforcer**: `get_current_user` decodes JWT tokens. Endpoints decorated with `Depends(require_roles(['admin']))` return `403 Forbidden` for unauthorized roles.
+- **Farmer Role**: Access `/dashboard`, `/soil`, `/crop`, `/advisory`, `/reports`, `/farm`, `/voice`, `/settings`. Cannot access Expert or Admin routes.
+- **Expert Role**: Access `/expert` review dashboard to inspect, approve, modify, or reject AI-generated advisories. Cannot access Admin routes.
+- **Admin Role**: Access `/admin` dashboard for user role management, privileged expert/admin creation, and system governance.
+- **Backend Enforcer**: `get_current_user` extracts and validates Bearer JWT tokens. Endpoints with `require_roles(['admin'])` strictly reject unauthorized callers with `403 Forbidden`.
+

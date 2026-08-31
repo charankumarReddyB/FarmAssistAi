@@ -111,10 +111,15 @@ def analyze_crop_image(
     if not record:
         raise HTTPException(status_code=404, detail=f"Crop image with ID '{image_id}' not found.")
 
-    user = db.query(User).first()
+    user = None
+    if record.farmer_id:
+        user = db.query(User).filter(User.id == record.farmer_id).first()
+    if not user:
+        user = db.query(User).filter(User.role == "farmer").first()
+
     pref_lang = language or (user.preferred_language if user else "en")
-    location_str = f"{user.district}, {user.state}" if (user and user.district and user.state) else "Kakinada, Andhra Pradesh"
-    farmer_name_str = user.full_name if (user and user.full_name) else "Suresh Kumar"
+    location_str = f"{user.district}, {user.state}" if (user and user.district and user.state) else (user.district if user and user.district else "Location Not Set")
+    farmer_name_str = (user.full_name or user.display_name) if user else "Farmer"
 
     analysis = dataset_disease_service.analyze_crop_image(
         image_path=record.file_path,

@@ -11,10 +11,11 @@ class Advisory(Base):
     report_id = Column(String, ForeignKey("reports.id"), nullable=True)
     crop_analysis_id = Column(String, ForeignKey("crop_image_analyses.id"), nullable=True)
     
-    farmer_id = Column(String(255), nullable=True, default="farmer_001")
-    farmer_name = Column(String(255), nullable=True, default="Raju Reddy")
-    farmer_location = Column(String(255), nullable=True, default="Kakinada, Andhra Pradesh")
+    farmer_id = Column(String(255), nullable=True)
+    farmer_name = Column(String(255), nullable=True)
+    farmer_location = Column(String(255), nullable=True)
     source_type = Column(String(50), default="soil_analysis")  # soil_analysis, crop_analysis, combined_analysis
+
     
     report_summary = Column(Text, nullable=True)
     soil_health_analysis = Column(Text, nullable=True)
