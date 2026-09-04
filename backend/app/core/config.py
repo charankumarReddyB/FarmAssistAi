@@ -29,10 +29,16 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "farmassist_db"
     POSTGRES_PORT: str = "5432"
-    DATABASE_URL: Union[str, None] = f"sqlite:///{os.path.join(BASE_DIR, 'farmassist.db')}"
+    DATABASE_URL: Union[str, None] = (
+        os.getenv("DATABASE_URL")
+        or (f"sqlite:////tmp/farmassist.db" if os.getenv("VERCEL") else f"sqlite:///{os.path.join(BASE_DIR, 'farmassist.db')}")
+    )
 
     # Uploads
-    UPLOAD_DIR: str = os.path.join(BASE_DIR, "uploads")
+    UPLOAD_DIR: str = (
+        os.getenv("UPLOAD_DIR")
+        or ("/tmp/uploads" if os.getenv("VERCEL") else os.path.join(BASE_DIR, "uploads"))
+    )
     MAX_UPLOAD_SIZE_MB: int = 10
 
     # CORS
@@ -73,5 +79,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Ensure uploads directory exists
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+try:
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+except Exception:
+    pass
 

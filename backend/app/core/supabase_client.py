@@ -92,17 +92,17 @@ def sync_profile_to_supabase(user_data: Dict[str, Any]) -> bool:
         payload = {k: v for k, v in payload.items() if v is not None}
 
         if "id" in payload:
-            response = httpx.post(endpoint, headers=headers, json=payload, timeout=10.0)
+            response = httpx.post(endpoint, headers=headers, json=payload, timeout=3.0)
         elif user_email:
             # Query by email to update or insert
-            get_resp = httpx.get(f"{endpoint}?email=eq.{user_email}&select=id", headers=headers, timeout=10.0)
+            get_resp = httpx.get(f"{endpoint}?email=eq.{user_email}&select=id", headers=headers, timeout=3.0)
             if get_resp.status_code == 200 and len(get_resp.json()) > 0:
                 # Update existing profile
                 patch_headers = {k: v for k, v in headers.items() if k != "Prefer"}
-                response = httpx.patch(f"{endpoint}?email=eq.{user_email}", headers=patch_headers, json=payload, timeout=10.0)
+                response = httpx.patch(f"{endpoint}?email=eq.{user_email}", headers=patch_headers, json=payload, timeout=3.0)
             else:
                 # Insert new
-                response = httpx.post(endpoint, headers=headers, json=payload, timeout=10.0)
+                response = httpx.post(endpoint, headers=headers, json=payload, timeout=3.0)
         else:
             return False
 
