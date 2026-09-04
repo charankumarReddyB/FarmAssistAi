@@ -86,8 +86,19 @@ FarmAssistAi/
 
 ## 🚀 Running Locally
 
+### ⚡ Quick Start Command Cheat Sheet
+
+Open **two separate terminals** in the project root:
+
+| Component | First-Time Setup | Daily Run Command | URL |
+|---|---|---|---|
+| **Backend** (FastAPI) | `cd backend` <br> `python -m venv venv` <br> `.\venv\Scripts\pip install -r requirements.txt` | `cd backend` <br> `.\venv\Scripts\python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000` | `http://127.0.0.1:8000` |
+| **Frontend** (React + Vite) | `cd frontend` <br> `npm install` | `cd frontend` <br> `npm run dev` | `http://localhost:8443` |
+
+---
+
 ### Prerequisites
-- **Python 3.10+** with `venv`
+- **Python 3.10+** (ensure `python` is added to your PATH)
 - **Node.js 18+** with `npm`
 - **Git**
 
@@ -102,72 +113,87 @@ cd FarmAssistAi
 
 ---
 
-### Step 2: Set Up & Start the Backend
+### Step 2: Set Up & Run the Backend (Terminal 1)
 
-#### Windows (PowerShell)
+The backend runs on **FastAPI**, **Uvicorn**, and **SQLite/Supabase** on port **8000**.
+
+#### Option A: Windows (PowerShell)
 ```powershell
 cd backend
 
-# Allow PowerShell script execution if restricted
+# If PowerShell blocks scripts, bypass for this session:
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-# Create virtual environment (first time only)
+# 1. Create virtual environment (first time only)
 python -m venv venv
 
-# Activate virtual environment
+# 2. Activate virtual environment
 .\venv\Scripts\Activate.ps1
 
-# Install Python dependencies (first time only)
+# 3. Install dependencies (first time only)
 pip install -r requirements.txt
 
-# Start the FastAPI backend server with auto-reload
+# 4. Start the FastAPI server with auto-reload
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-#### Windows (CMD — No PowerShell activation needed)
+#### Option B: Windows (Direct / CMD — No Script Activation Needed)
 ```cmd
 cd backend
+
+:: 1. Create virtual environment (first time only)
+python -m venv venv
+
+:: 2. Install dependencies (first time only)
+.\venv\Scripts\pip.exe install -r requirements.txt
+
+:: 3. Run FastAPI server directly
 .\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-#### Linux / macOS
+#### Option C: Linux / macOS
 ```bash
 cd backend
+
+# 1. Create virtual environment (first time only)
 python3 -m venv venv
+
+# 2. Activate virtual environment
 source venv/bin/activate
+
+# 3. Install dependencies (first time only)
 pip install -r requirements.txt
+
+# 4. Start the FastAPI server with auto-reload
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-✅ Backend will auto-seed all default accounts and initialize the database on first startup.
-
-| URL | Description |
-|---|---|
-| `http://127.0.0.1:8000` | Backend API Root |
-| `http://127.0.0.1:8000/docs` | Interactive Swagger UI |
-| `http://127.0.0.1:8000/api/health` | Health Check Endpoint |
+✅ **Backend Verification:**
+- Backend API Root: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+- Interactive Swagger Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- System Health Check: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health)
 
 ---
 
-### Step 3: Set Up & Start the Frontend
+### Step 3: Set Up & Run the Frontend (Terminal 2)
 
-Open a **second terminal** in the project root:
+The frontend runs on **React 18**, **Vite**, and **Tailwind CSS** on port **8443**.
 
-#### Windows (PowerShell / CMD)
-```powershell
-cd frontend
-npm install
-npm run dev
-```
+Open a **new terminal window** in the `FarmAssistAi` directory:
 
-#### Linux / macOS
+#### Windows & Linux / macOS
 ```bash
 cd frontend
+
+# 1. Install NPM dependencies (first time only)
 npm install
+
+# 2. Start Vite development server
 npm run dev
 ```
 
-✅ Frontend will start at: **`http://localhost:8443`**
+✅ **Frontend Verification:**
+- Web Application: [http://localhost:8443](http://localhost:8443) (or `http://127.0.0.1:8443`)
 
 ---
 
