@@ -1,0 +1,6 @@
+[project]
+name = "farmassist-backend"
+version = "1.0.0"
+
+[tool.vercel]
+entrypoint = "main.py"
