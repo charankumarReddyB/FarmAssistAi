@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../App'
 import { AiBadge, StatusBadge } from '../components/StatusBadge'
+import { getApiBaseUrl, getAuthHeaders } from '../lib/api'
 
 type CropState = 'upload' | 'processing' | 'results'
 
@@ -72,8 +73,14 @@ export function CropAnalysis() {
       const formData = new FormData()
       formData.append('file', selectedFile)
 
-      const uploadResp = await fetch('http://127.0.0.1:8000/api/crop-analysis/upload', {
+      const baseUrl = getApiBaseUrl()
+      const authHeaders = getAuthHeaders()
+
+      const uploadResp = await fetch(`${baseUrl}/crop-analysis/upload`, {
         method: 'POST',
+        headers: {
+          ...authHeaders,
+        },
         body: formData,
       })
 
@@ -86,8 +93,11 @@ export function CropAnalysis() {
       const imageId = uploadData.image_id
 
       // Step 2: Trigger PyTorch MobileNetV2 Analysis
-      const analyzeResp = await fetch(`http://127.0.0.1:8000/api/crop-analysis/analyze/${imageId}?language=${lang}`, {
+      const analyzeResp = await fetch(`${baseUrl}/crop-analysis/analyze/${imageId}?language=${lang}`, {
         method: 'POST',
+        headers: {
+          ...authHeaders,
+        },
       })
 
       if (!analyzeResp.ok) {

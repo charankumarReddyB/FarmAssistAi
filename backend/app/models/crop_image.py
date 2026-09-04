@@ -8,6 +8,7 @@ class CropImageAnalysis(Base):
     __tablename__ = "crop_image_analyses"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    farmer_id = Column(String(255), nullable=True)
     filename = Column(String(255), nullable=False)
     file_path = Column(String(500), nullable=False)
     upload_status = Column(String(50), default="success")

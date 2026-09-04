@@ -17,7 +17,7 @@ import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { Logo } from './components/Logo'
 import { supabase, isSupabaseConfigured, syncSupabaseProfile, signOutSupabase } from './lib/supabase'
-import { apiRequest } from './lib/api'
+import { apiRequest, getApiBaseUrl } from './lib/api'
 
 export type View =
   | 'landing'
@@ -239,7 +239,7 @@ export default function App() {
       // 2. Sync with FastAPI backend /api/auth/me
       let backendUser: any = null
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/auth/me', {
+        const res = await fetch(`${getApiBaseUrl()}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (res.ok) {
@@ -251,8 +251,7 @@ export default function App() {
       }
 
       const effectiveRole = (
-        session.user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com' ||
-        session.user.email?.toLowerCase() === 'admin@farmassist.ai'
+        session.user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com'
       ) ? 'admin' : (backendUser?.role || supabaseProfile?.role || 'farmer')
 
       const isOnboarded = backendUser?.onboarding_completed ?? supabaseProfile?.onboarding_completed ?? false
@@ -439,7 +438,7 @@ export default function App() {
     }
 
     const token = localStorage.getItem('farmassist_token')
-    fetch('http://127.0.0.1:8000/api/user/profile', {
+    fetch(`${getApiBaseUrl()}/user/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

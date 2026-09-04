@@ -8,6 +8,7 @@ class Report(Base):
     __tablename__ = "reports"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    farmer_id = Column(String(255), nullable=True)
     filename = Column(String(255), nullable=False)
     file_type = Column(String(50), nullable=False)  # pdf, image/jpeg, image/png, etc.
     file_path = Column(String(500), nullable=False)

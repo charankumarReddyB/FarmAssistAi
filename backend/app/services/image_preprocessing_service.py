@@ -13,10 +13,49 @@ class ImagePreprocessingService:
     def validate_and_load_image(self, file_path: str) -> Image.Image:
         """
         Validates file existence and image integrity using PIL.
+        Supports local file paths, cached upload paths, and remote Supabase URLs.
         Converts all formats (RGBA, P, L) into 3-channel RGB.
         """
+        import io
+        from app.core.config import settings
+
+        # Handle remote HTTP/HTTPS Supabase storage URLs
+        if file_path.startswith("http://") or file_path.startswith("https://"):
+            # Check if local copy exists in uploads directory first
+            filename = file_path.split("/")[-1]
+            local_candidates = [
+                os.path.join(settings.UPLOAD_DIR, "crop_images", filename),
+                os.path.join(settings.UPLOAD_DIR, filename)
+            ]
+            for candidate in local_candidates:
+                if os.path.exists(candidate):
+                    file_path = candidate
+                    break
+            else:
+                # Fetch image from remote URL
+                try:
+                    import requests
+                    resp = requests.get(file_path, timeout=15)
+                    resp.raise_for_status()
+                    img = Image.open(io.BytesIO(resp.content)).convert("RGB")
+                    return img
+                except Exception as e:
+                    logger.error(f"Failed to fetch image from URL {file_path}: {e}")
+                    raise FileNotFoundError(f"Crop image could not be loaded from URL: {e}")
+
+        # If local file does not exist directly at given path, check candidate upload paths
         if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Crop image file not found at: {file_path}")
+            filename = os.path.basename(file_path)
+            local_candidates = [
+                os.path.join(settings.UPLOAD_DIR, "crop_images", filename),
+                os.path.join(settings.UPLOAD_DIR, filename)
+            ]
+            for candidate in local_candidates:
+                if os.path.exists(candidate):
+                    file_path = candidate
+                    break
+            else:
+                raise FileNotFoundError(f"Crop image file not found at: {file_path}")
 
         try:
             with Image.open(file_path) as img:

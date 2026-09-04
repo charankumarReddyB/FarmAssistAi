@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../App'
 import { StatusBadge, AiBadge } from '../components/StatusBadge'
+import { getApiBaseUrl, getAuthHeaders } from '../lib/api'
 
 type SoilState = 'upload' | 'processing' | 'results'
 
@@ -90,8 +91,14 @@ export function SoilAnalysis() {
       const formData = new FormData()
       formData.append('file', selectedFileObj)
 
-      const uploadResp = await fetch('http://127.0.0.1:8000/api/reports/upload', {
+      const baseUrl = getApiBaseUrl()
+      const authHeaders = getAuthHeaders()
+
+      const uploadResp = await fetch(`${baseUrl}/reports/upload`, {
         method: 'POST',
+        headers: {
+          ...authHeaders,
+        },
         body: formData,
       })
 
@@ -104,8 +111,11 @@ export function SoilAnalysis() {
       const reportId = reportData.id
 
       // Step 2: Trigger NLP & Semantic Analysis POST /api/analysis/{report_id}?language={lang}
-      const analyzeResp = await fetch(`http://127.0.0.1:8000/api/analysis/${reportId}?language=${lang}`, {
+      const analyzeResp = await fetch(`${baseUrl}/analysis/${reportId}?language=${lang}`, {
         method: 'POST',
+        headers: {
+          ...authHeaders,
+        },
       })
 
       if (!analyzeResp.ok) {

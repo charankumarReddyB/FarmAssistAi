@@ -32,8 +32,9 @@ def analyze_report(
 
     # Retrieve user location and language preferences
     user = None
-    if report.farmer_id:
-        user = db.query(User).filter(User.id == report.farmer_id).first()
+    farmer_id = getattr(report, "farmer_id", None)
+    if farmer_id:
+        user = db.query(User).filter(User.id == farmer_id).first()
     if not user:
         user = db.query(User).filter(User.role == "farmer").first()
 
@@ -83,7 +84,7 @@ def analyze_report(
     else:
         new_advisory = Advisory(
             report_id=report_id,
-            farmer_id="farmer_001",
+            farmer_id=user.id if user else None,
             farmer_name=farmer_name_str,
             farmer_location=location_str,
             source_type="soil_analysis",

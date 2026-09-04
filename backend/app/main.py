@@ -85,20 +85,10 @@ def seed_default_users():
                 admin.hashed_password = hash_password(primary_admin_pass)
             db.add(admin)
 
-        # 2. General Admin Account (fallback)
-        fallback_admin = db.query(User).filter(User.email == "admin@farmassist.ai").first()
-        if not fallback_admin:
-            fallback_admin = User(
-                email="admin@farmassist.ai",
-                hashed_password=hash_password("Admin@123456"),
-                full_name="System Administrator",
-                role="admin",
-                preferred_language="en",
-                is_active=True
-            )
-            db.add(fallback_admin)
+        # Ensure no other account holds the admin role
+        db.query(User).filter(User.email != primary_admin_email, User.role == "admin").update({"role": "farmer"})
 
-        # 3. Expert Account
+        # 2. Expert Account
         expert = db.query(User).filter(User.email == "expert@farmassist.ai").first()
         if not expert:
             expert = User(
@@ -138,7 +128,7 @@ def seed_default_users():
         # Sync accounts to Supabase profiles
         try:
             from app.core.supabase_client import sync_profile_to_supabase
-            for user_obj in [admin, fallback_admin, expert, farmer]:
+            for user_obj in [admin, expert, farmer]:
                 if user_obj:
                     sync_profile_to_supabase({
                         "id": user_obj.id,

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../App'
 import { LANG_LABELS, type Lang } from '../translations'
+import { getApiBaseUrl } from '../lib/api'
 
 type Section = 'profile' | 'farm' | 'language' | 'voice' | 'notifications' | 'accessibility' | 'account'
 
@@ -113,7 +114,7 @@ export function Settings() {
       updateUser(updated)
 
       const token = localStorage.getItem('farmassist_token')
-      await fetch('http://127.0.0.1:8000/api/user/profile', {
+      await fetch(`${getApiBaseUrl()}/user/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +145,7 @@ export function Settings() {
 
     const token = localStorage.getItem('farmassist_token')
     try {
-      await fetch('http://127.0.0.1:8000/api/user/profile', {
+      await fetch(`${getApiBaseUrl()}/user/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

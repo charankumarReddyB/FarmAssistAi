@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../App'
+import { getApiBaseUrl } from '../lib/api'
 
 export function TopBar() {
   const { t, setView, user } = useApp()
@@ -29,7 +30,7 @@ export function TopBar() {
       return
     }
 
-    fetch(`http://127.0.0.1:8000/api/weather?${query}`)
+    fetch(`${getApiBaseUrl()}/weather?${query}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.temperature !== undefined && data.temperature !== null) {

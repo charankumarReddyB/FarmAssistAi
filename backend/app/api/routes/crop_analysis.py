@@ -112,8 +112,9 @@ def analyze_crop_image(
         raise HTTPException(status_code=404, detail=f"Crop image with ID '{image_id}' not found.")
 
     user = None
-    if record.farmer_id:
-        user = db.query(User).filter(User.id == record.farmer_id).first()
+    farmer_id = getattr(record, "farmer_id", None)
+    if farmer_id:
+        user = db.query(User).filter(User.id == farmer_id).first()
     if not user:
         user = db.query(User).filter(User.role == "farmer").first()
 
@@ -160,7 +161,7 @@ def analyze_crop_image(
     else:
         new_adv = Advisory(
             crop_analysis_id=image_id,
-            farmer_id="farmer_002",
+            farmer_id=user.id if user else None,
             farmer_name=farmer_name_str,
             farmer_location=location_str,
             source_type="crop_analysis",

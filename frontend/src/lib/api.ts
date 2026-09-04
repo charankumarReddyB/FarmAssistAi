@@ -3,7 +3,29 @@
  * Provides robust error translation, CORS support, and automatic token management.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+export function getApiBaseUrl(): string {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/$/, '')
+  }
+  // If running in browser on HTTPS (like Vercel production) or non-localhost domain
+  if (typeof window !== 'undefined') {
+    if (window.location.protocol === 'https:' || (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')) {
+      return '/api'
+    }
+  }
+  return 'http://127.0.0.1:8000/api'
+}
+
+export const API_BASE_URL = getApiBaseUrl()
+
+export function getAuthHeaders(): Record<string, string> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('farmassist_token') : null
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  return headers
+}
 
 export class ApiError extends Error {
   status?: number
@@ -21,10 +43,11 @@ export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const baseUrl = getApiBaseUrl()
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
-  const url = `${API_BASE_URL}${cleanEndpoint}`
+  const url = `${baseUrl}${cleanEndpoint}`
 
-  const token = localStorage.getItem('farmassist_token')
+  const token = typeof window !== 'undefined' ? localStorage.getItem('farmassist_token') : null
   const headers = new Headers(options.headers || {})
 
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {

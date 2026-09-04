@@ -3,7 +3,7 @@ import { useApp } from '../App'
 import { AiBadge } from '../components/StatusBadge'
 import { FarmIntelligence, type FarmIntelligenceData } from '../components/FarmIntelligence'
 import { detectBrowserLocation, reverseGeocode } from '../lib/location'
-import { apiRequest } from '../lib/api'
+import { apiRequest, getApiBaseUrl } from '../lib/api'
 
 
 const FORECAST = [
@@ -146,7 +146,7 @@ export function Dashboard() {
       updateUser(updated)
 
       const token = localStorage.getItem('farmassist_token')
-      await fetch('http://127.0.0.1:8000/api/user/profile', {
+      await fetch(`${getApiBaseUrl()}/user/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -190,18 +190,19 @@ DATABASE_URL=sqlite:///./farmassist.db
 
 ---
 
-## 🔑 Default Login Credentials
+## 🔑 User Roles & Login Credentials
 
-All accounts are **auto-seeded on first backend startup** — no manual setup required.
+All sample accounts are **auto-seeded on backend startup** — ready for immediate testing:
 
-| Role | Email | Password | Access |
+| Role | Email | Password | Access / Permissions |
 |---|---|---|---|
-| 👑 **Admin (Primary)** | `charankumarreddybantrothula@gmail.com` | `Charan@123` | `/admin` Dashboard |
-| 👑 **Admin (Fallback)** | `admin@farmassist.ai` | `Admin@123456` | `/admin` Dashboard |
-| 🌿 **Agricultural Expert** | `expert@farmassist.ai` | `Expert@123456` | `/expert` Review Portal |
-| 🌾 **Farmer (Demo)** | `farmer@farmassist.ai` | `Farmer@123456` | `/dashboard` |
+| 👑 **System Administrator** *(One & Only Admin)* | `charankumarreddybantrothula@gmail.com` | `Charan@123` | Full `/admin` console, user management, promoting roles, system telemetry |
+| 🌿 **Agricultural Expert** | `expert@farmassist.ai` | `Expert@123456` | `/expert` review portal, advisory verification, modification & approvals |
+| 🌾 **Farmer (Sample/Demo)** | `farmer@farmassist.ai` | `Farmer@123456` | `/dashboard`, `/soil`, `/crop`, `/advisory`, farm profile & weather intelligence |
 
-> **Note**: Any newly registered account via Email or Google OAuth automatically receives `role = farmer`. Only admins can promote users to `expert` or `admin` via the Admin Console.
+> ⚠️ **Admin Policy**: Only `charankumarreddybantrothula@gmail.com` possesses the master Administrator privilege.
+> 
+> ℹ️ **Farmer Registration**: Any newly registered user (via Email or Google OAuth) automatically defaults to `role = farmer`. Admins can promote users to `expert` via the Admin Console.
 
 ---
 
