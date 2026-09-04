@@ -61,6 +61,7 @@ FarmAssistAi/
 │   │   ├── components/       # TopBar, Sidebar, Navigation, UI Cards & Alerts
 │   │   ├── views/            # Landing, Login, Dashboard, MyFarm, Soil, Crop, Expert & Admin Views
 │   │   └── App.tsx           # App Shell, Auth Session State Machine & Role Guard
+│   ├── vercel.json           # Vercel SPA rewrite rules
 │   └── .env                  # Frontend Environment Variables
 ├── backend/                  # Python FastAPI Backend Service
 │   ├── app/
@@ -74,63 +75,89 @@ FarmAssistAi/
 │   │   └── test_integrated_system.py # Comprehensive Automated System Test Suite (25 Test Points)
 │   ├── supabase_schema.sql   # PostgreSQL DDL, RLS Policies, Triggers & Storage SQL
 │   ├── requirements.txt      # Python Package Dependencies
+│   ├── main.py               # Vercel Python Entrypoint
 │   └── .env                  # Backend Environment Variables
+├── vercel.json               # Vercel multi-service deployment config
 ├── .gitignore                # Git Exclusions
 └── README.md                 # Project Overview & Setup Instructions
 ```
 
 ---
 
-## 🚀 Running the Application
+## 🚀 Running Locally
 
-### 1. Start the FastAPI Backend Server
-Open a terminal in the `backend/` directory:
+### Prerequisites
+- **Python 3.10+** with `venv`
+- **Node.js 18+** with `npm`
+- **Git**
 
-#### Option A: Windows PowerShell (Using Python Virtual Environment)
+---
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/charankumarReddyB/FarmAssistAi.git
+cd FarmAssistAi
+```
+
+---
+
+### Step 2: Set Up & Start the Backend
+
+#### Windows (PowerShell)
 ```powershell
 cd backend
 
 # Allow PowerShell script execution if restricted
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-# Activate venv
+# Create virtual environment (first time only)
+python -m venv venv
+
+# Activate virtual environment
 .\venv\Scripts\Activate.ps1
 
-# Install requirements (first time setup)
+# Install Python dependencies (first time only)
 pip install -r requirements.txt
 
-# Start backend dev server with auto-reload
+# Start the FastAPI backend server with auto-reload
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-#### Option B: Direct Python Execution (No activation required)
-```powershell
+#### Windows (CMD — No PowerShell activation needed)
+```cmd
 cd backend
 .\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-#### Option C: Linux / macOS
+#### Linux / macOS
 ```bash
 cd backend
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-- **Backend API Base URL**: `http://127.0.0.1:8000`
-- **Interactive OpenAPI (Swagger) Docs**: `http://127.0.0.1:8000/docs`
-- **Health Check Endpoint**: `http://127.0.0.1:8000/api/health`
+✅ Backend will auto-seed all default accounts and initialize the database on first startup.
+
+| URL | Description |
+|---|---|
+| `http://127.0.0.1:8000` | Backend API Root |
+| `http://127.0.0.1:8000/docs` | Interactive Swagger UI |
+| `http://127.0.0.1:8000/api/health` | Health Check Endpoint |
 
 ---
 
-### 2. Start the Frontend Application
-Open a second terminal in the `frontend/` directory:
+### Step 3: Set Up & Start the Frontend
 
-#### Windows PowerShell / CMD
+Open a **second terminal** in the project root:
+
+#### Windows (PowerShell / CMD)
 ```powershell
 cd frontend
-npm.cmd install
-npm.cmd run dev
+npm install
+npm run dev
 ```
 
 #### Linux / macOS
@@ -140,48 +167,76 @@ npm install
 npm run dev
 ```
 
-- **Frontend Web Application URL**: `http://localhost:8443`
+✅ Frontend will start at: **`http://localhost:8443`**
 
 ---
 
-## 🔑 Default Credentials
+### Step 4: Configure Environment Variables
 
-| Role | Email | Password | Destination |
+**Frontend** — create `frontend/.env`:
+```env
+VITE_SUPABASE_URL=https://vdadfdqqqtofnhfhdkvh.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkYWRmZHFxcXRvZm5oZmhka3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDgyMjksImV4cCI6MjEwMzIyNDIyOX0.JaQHTxmAvLD1hOb7rHlkecoOkohgYweb614-1at8-tE
+```
+
+**Backend** — create `backend/.env`:
+```env
+SUPABASE_URL=https://vdadfdqqqtofnhfhdkvh.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkYWRmZHFxcXRvZm5oZmhka3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDgyMjksImV4cCI6MjEwMzIyNDIyOX0.JaQHTxmAvLD1hOb7rHlkecoOkohgYweb614-1at8-tE
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkYWRmZHFxcXRvZm5oZmhka3ZoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzY0ODIyOSwiZXhwIjoyMTAzMjI0MjI5fQ.x1SSFotDr6xfHN8YUUjBMbB4AkMa2dvfwDhksv3GjKA
+SECRET_KEY=farmassist_ai_jwt_secret_key_2026_production
+DATABASE_URL=sqlite:///./farmassist.db
+```
+
+---
+
+## 🔑 Default Login Credentials
+
+All accounts are **auto-seeded on first backend startup** — no manual setup required.
+
+| Role | Email | Password | Access |
 |---|---|---|---|
-| **Administrator** | `charankumarreddybantrothula@gmail.com` | `Charan@123` | Administrator Console (`/admin`) |
-| **Agricultural Expert** | `expert@farmassist.ai` | `Expert@123456` | Expert Review Portal (`/expert`) |
-| **Farmer (Demo)** | `farmer@farmassist.ai` | `Farmer@123456` | Farmer Dashboard (`/dashboard`) |
+| 👑 **Admin (Primary)** | `charankumarreddybantrothula@gmail.com` | `Charan@123` | `/admin` Dashboard |
+| 👑 **Admin (Fallback)** | `admin@farmassist.ai` | `Admin@123456` | `/admin` Dashboard |
+| 🌿 **Agricultural Expert** | `expert@farmassist.ai` | `Expert@123456` | `/expert` Review Portal |
+| 🌾 **Farmer (Demo)** | `farmer@farmassist.ai` | `Farmer@123456` | `/dashboard` |
 
-> **Note**: Any newly registered account via Email or Google OAuth automatically receives `role = farmer`.
+> **Note**: Any newly registered account via Email or Google OAuth automatically receives `role = farmer`. Only admins can promote users to `expert` or `admin` via the Admin Console.
 
 ---
 
 ## 🧪 Running Automated Tests & Production Build
 
 ### 1. Run Backend Automated Test Suite
-Executes the comprehensive test suite covering authentication, RBAC, weather, farm profile sync, and multilingual assistant:
-
 ```powershell
 cd backend
 .\venv\Scripts\python.exe -m unittest discover tests
 ```
 
 ### 2. Verify Frontend Production Build
-Validates TypeScript types and generates the optimized production bundle:
-
 ```powershell
 cd frontend
-npm.cmd run build
+npm run build
 ```
 
 ---
 
 ## ☁️ Supabase Cloud Database Setup
 
-1. Copy the SQL schema from [backend/supabase_schema.sql](file:///c:/Charan/Farm%20Assist%20Ai/backend/supabase_schema.sql).
+1. Copy the SQL schema from `backend/supabase_schema.sql`.
 2. Open your [Supabase SQL Editor](https://supabase.com/dashboard/project/vdadfdqqqtofnhfhdkvh/sql/new).
 3. Paste and click **Run** to provision tables, triggers, and Row Level Security (RLS) policies.
 4. Set your keys in `frontend/.env` and `backend/.env`.
+
+### Supabase OAuth Redirect URLs
+In **Supabase Dashboard → Authentication → URL Configuration**, add these Redirect URLs:
+```
+http://localhost:8443
+http://localhost:3000
+http://localhost:5173
+https://farm-assist-ai.vercel.app
+https://*.vercel.app
+```
 
 ---
 
@@ -194,7 +249,7 @@ npm.cmd run build
 
 ---
 
-## ⚡ Deploying to Vercel
+## ⚡ Deploying to Vercel (Full Stack)
 
 ### Method 1: Deploy via Vercel Web Dashboard (Recommended)
 
@@ -207,37 +262,32 @@ npm.cmd run build
 
 2. **Import Project into Vercel**:
    - Go to [vercel.com/new](https://vercel.com/new) and log in.
-   - Click **Import** next to your repository (`charankumarReddyB/FarmAssistAi`).
-   
+   - Click **Import** next to repository `charankumarReddyB/FarmAssistAi`.
+
 3. **Configure Project Settings**:
-   - **Framework Preset**: `Vite`
-   - **Root Directory**: Click `Edit` and select `frontend` (or leave as `./` as root `vercel.json` is configured).
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
+   - **Application Preset**: `Other`
+   - **Root Directory**: `./` (leave as default)
+   - **Build Command** (Toggle ON): `cd frontend && npm install && npm run build`
+   - **Output Directory** (Toggle ON): `frontend/dist`
 
-4. **Add Environment Variables**:
-   In the **Environment Variables** section on Vercel, add:
-   - `VITE_SUPABASE_URL`: `https://vdadfdqqqtofnhfhdkvh.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY`: `<your-supabase-anon-key>`
-   - `VITE_API_URL`: `<your-deployed-backend-url>/api` *(optional, for AI/OCR FastAPI services)*
+4. **Add Environment Variables** (paste all at once in Vercel's env section):
+   ```env
+   VITE_SUPABASE_URL=https://vdadfdqqqtofnhfhdkvh.supabase.co
+   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkYWRmZHFxcXRvZm5oZmhka3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDgyMjksImV4cCI6MjEwMzIyNDIyOX0.JaQHTxmAvLD1hOb7rHlkecoOkohgYweb614-1at8-tE
+   SUPABASE_URL=https://vdadfdqqqtofnhfhdkvh.supabase.co
+   SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkYWRmZHFxcXRvZm5oZmhka3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDgyMjksImV4cCI6MjEwMzIyNDIyOX0.JaQHTxmAvLD1hOb7rHlkecoOkohgYweb614-1at8-tE
+   SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkYWRmZHFxcXRvZm5oZmhka3ZoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzY0ODIyOSwiZXhwIjoyMTAzMjI0MjI5fQ.x1SSFotDr6xfHN8YUUjBMbB4AkMa2dvfwDhksv3GjKA
+   SECRET_KEY=farmassist_ai_jwt_secret_key_2026_production
+   PROJECT_NAME=FarmAssist AI
+   ```
 
-5. **Deploy**:
-   - Click **Deploy**. Vercel will build and deploy your application in ~30 seconds with a live global CDN URL (e.g., `https://farm-assist-ai.vercel.app`).
+5. **Deploy** → Click the white **Deploy** button!
 
 ---
 
 ### Method 2: Deploy via Vercel CLI
 
-1. Run Vercel CLI from the `frontend` directory:
-   ```bash
-   cd frontend
-   npx vercel
-   ```
-2. Follow the interactive prompts (select default settings).
-3. Set your environment variables when prompted or via `npx vercel env add`.
-4. Deploy to production:
-   ```bash
-   npx vercel --prod
-   ```
-
-
+```bash
+cd frontend
+npx vercel --prod
+```
