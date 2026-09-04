@@ -176,7 +176,7 @@ export function Dashboard() {
       hasLocation: hasLoc,
     })
 
-    if (!hasLoc && user?.latitude === undefined && user?.latitude === null) {
+    if (!hasLoc) {
       setWeatherData({
         location_configured: false,
         location: 'Location Not Set',
@@ -185,7 +185,7 @@ export function Dashboard() {
         wind_speed: null,
         rain_probability: null,
         condition: 'Unknown',
-        farm_impact: 'Configure your location in Settings to enable live weather and regional crop recommendations.',
+        farm_impact: 'Configure your location in Settings or enable GPS to receive live weather and regional crop recommendations.',
         source: 'unconfigured'
       })
       setLocAnalysis(null)
@@ -251,9 +251,17 @@ export function Dashboard() {
           <h1 className="font-display text-3xl text-charcoal">
             {t('dash_greeting')}, {userProfile.name}
           </h1>
-          <p className="text-sage text-sm mt-1 flex items-center gap-2">
+          <p className="text-sage text-sm mt-1 flex flex-wrap items-center gap-2">
             <span>📍</span>
             <span>{userProfile.location}</span>
+            <button
+              type="button"
+              onClick={handleQuickEnableLocation}
+              disabled={detectingLoc}
+              className="text-xs bg-leaf/10 text-leaf hover:bg-leaf hover:text-white px-2 py-0.5 rounded-full border border-leaf/30 transition flex items-center gap-1 cursor-pointer"
+            >
+              <span>{detectingLoc ? '📡 Detecting...' : (userProfile.hasLocation ? '🔄 Update GPS' : '📍 Auto-detect GPS')}</span>
+            </button>
             <span className="text-pebble">·</span>
             <span>🌾 {user?.current_crop || t('dash_current_crop')}</span>
           </p>

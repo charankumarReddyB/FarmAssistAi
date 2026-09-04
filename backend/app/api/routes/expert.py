@@ -166,6 +166,19 @@ def approve_advisory(
 
     db.commit()
     db.refresh(adv)
+    try:
+        from app.core.supabase_client import sync_advisory_to_supabase
+        sync_advisory_to_supabase({
+            "id": adv.id,
+            "status": adv.status,
+            "reviewed_by": adv.reviewed_by,
+            "expert_id": adv.expert_id,
+            "expert_notes": adv.expert_notes,
+            "reviewed_at": adv.reviewed_at,
+            "updated_at": adv.updated_at
+        })
+    except Exception as e:
+        logger.warning(f"Failed to sync approved advisory: {e}")
     return build_advisory_response(adv, db)
 
 
@@ -192,6 +205,20 @@ def modify_advisory(
 
     db.commit()
     db.refresh(adv)
+    try:
+        from app.core.supabase_client import sync_advisory_to_supabase
+        sync_advisory_to_supabase({
+            "id": adv.id,
+            "status": adv.status,
+            "final_advisory": adv.final_advisory,
+            "reviewed_by": adv.reviewed_by,
+            "expert_id": adv.expert_id,
+            "expert_notes": adv.expert_notes,
+            "reviewed_at": adv.reviewed_at,
+            "updated_at": adv.updated_at
+        })
+    except Exception as e:
+        logger.warning(f"Failed to sync modified advisory: {e}")
     return build_advisory_response(adv, db)
 
 
@@ -217,6 +244,19 @@ def reject_advisory(
 
     db.commit()
     db.refresh(adv)
+    try:
+        from app.core.supabase_client import sync_advisory_to_supabase
+        sync_advisory_to_supabase({
+            "id": adv.id,
+            "status": adv.status,
+            "reviewed_by": adv.reviewed_by,
+            "expert_id": adv.expert_id,
+            "expert_notes": adv.expert_notes,
+            "reviewed_at": adv.reviewed_at,
+            "updated_at": adv.updated_at
+        })
+    except Exception as e:
+        logger.warning(f"Failed to sync rejected advisory: {e}")
     return build_advisory_response(adv, db)
 
 

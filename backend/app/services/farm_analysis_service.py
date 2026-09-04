@@ -87,10 +87,27 @@ class UnifiedFarmAnalysisService:
         soil_analysis["data_classification"] = "Dataset 3 (Soil Nutrient Dataset of Southern Indian States)"
 
         # 4. Location-Aware Crop Suitability (Dataset 1 + Environmental Context)
-        n_val = report_n if report_n is not None else 120.0
-        p_val = report_p if report_p is not None else 14.0
-        k_val = report_k if report_k is not None else 110.0
-        ph_val = report_ph if report_ph is not None else 6.5
+        def _to_f(v, default_val):
+            if v is None:
+                return default_val
+            if isinstance(v, (int, float)):
+                return float(v)
+            if isinstance(v, dict):
+                inner = v.get("value")
+                if inner is not None:
+                    try:
+                        return float(inner)
+                    except (ValueError, TypeError):
+                        pass
+            try:
+                return float(v)
+            except (ValueError, TypeError):
+                return default_val
+
+        n_val = _to_f(report_n, 120.0)
+        p_val = _to_f(report_p, 14.0)
+        k_val = _to_f(report_k, 110.0)
+        ph_val = _to_f(report_ph, 6.5)
 
         crop_suitability = crop_suitability_service.evaluate_crop_suitability(
             n=n_val, p=p_val, k=k_val, ph=ph_val,

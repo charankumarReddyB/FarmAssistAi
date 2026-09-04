@@ -181,7 +181,19 @@ The frontend runs on **React 18**, **Vite**, and **Tailwind CSS** on port **8443
 
 Open a **new terminal window** in the `FarmAssistAi` directory:
 
-#### Windows & Linux / macOS
+#### Windows (PowerShell or Command Prompt)
+```powershell
+cd frontend
+
+# 1. Install NPM dependencies (first time only)
+# Note: Use npm.cmd if PowerShell script policy blocks npm
+npm.cmd install
+
+# 2. Start Vite development server
+npm.cmd run dev
+```
+
+#### Linux / macOS
 ```bash
 cd frontend
 
@@ -218,17 +230,17 @@ DATABASE_URL=sqlite:///./farmassist.db
 
 ## 🔑 User Roles & Login Credentials
 
-All sample accounts are **auto-seeded on backend startup** — ready for immediate testing:
+All sample accounts are **auto-seeded on backend startup** and synchronized with Supabase Cloud — ready for immediate testing:
 
-| Role | Email | Password | Access / Permissions |
-|---|---|---|---|
-| 👑 **System Administrator** *(One & Only Admin)* | `charankumarreddybantrothula@gmail.com` | `Charan@123` | Full `/admin` console, user management, promoting roles, system telemetry |
-| 🌿 **Agricultural Expert** | `expert@farmassist.ai` | `Expert@123456` | `/expert` review portal, advisory verification, modification & approvals |
-| 🌾 **Farmer (Sample/Demo)** | `farmer@farmassist.ai` | `Farmer@123456` | `/dashboard`, `/soil`, `/crop`, `/advisory`, farm profile & weather intelligence |
+| Role | Email / Username | Password | Access / Permissions | Notes |
+|---|---|---|---|---|
+| 👑 **System Administrator** *(One & Only Admin)* | `charankumarreddybantrothula@gmail.com` | `Charan@123` | Full `/admin` console, user management, promoting roles, system telemetry | **Sole Administrator** allowed in the system |
+| 🌿 **Agricultural Expert** *(Sample)* | `expert@farmassist.ai` | `Expert@123456` | `/expert` review portal, advisory verification, modification & approvals | Field Agronomist / Extension Officer |
+| 🌾 **Farmer** *(Sample)* | `farmer@farmassist.ai` | `Farmer@123456` | `/dashboard`, `/soil`, `/crop`, `/advisory`, farm profile & weather intelligence | Standard Farmer User |
 
-> ⚠️ **Admin Policy**: Only `charankumarreddybantrothula@gmail.com` possesses the master Administrator privilege.
+> ⚠️ **One & Only Admin Rule**: `charankumarreddybantrothula@gmail.com` is the system's sole master Administrator. No other account can claim admin rights unless granted by this administrator.
 > 
-> ℹ️ **Farmer Registration**: Any newly registered user (via Email or Google OAuth) automatically defaults to `role = farmer`. Admins can promote users to `expert` via the Admin Console.
+> ℹ️ **Farmer Registration**: Any newly registered user (via Email or Google OAuth) automatically defaults to `role = farmer`. Admins can promote qualified users to `expert` via the Admin Console.
 
 ---
 

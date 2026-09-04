@@ -99,6 +99,24 @@ async def upload_report(
     db.commit()
     db.refresh(new_report)
 
+    # Sync to Supabase Cloud PostgreSQL
+    try:
+        from app.core.supabase_client import sync_soil_report_to_supabase
+        sync_soil_report_to_supabase({
+            "id": new_report.id,
+            "farmer_id": new_report.farmer_id,
+            "filename": new_report.filename,
+            "file_type": new_report.file_type,
+            "file_path": new_report.file_path,
+            "status": new_report.status,
+            "raw_text": new_report.raw_text,
+            "extracted_data": new_report.extracted_data,
+            "created_at": new_report.created_at,
+            "updated_at": new_report.updated_at
+        })
+    except Exception as e:
+        logger.warning(f"Failed to sync soil report to Supabase: {e}")
+
     # Attach response metadata
     response_data = ReportResponse.model_validate(new_report)
     response_data.upload_status = "success"

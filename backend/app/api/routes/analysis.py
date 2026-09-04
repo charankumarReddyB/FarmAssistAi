@@ -109,6 +109,53 @@ def analyze_report(
     report.status = "analyzed"
     db.commit()
 
+    # Sync advisory and report update to Supabase Cloud PostgreSQL
+    try:
+        from app.core.supabase_client import sync_advisory_to_supabase, sync_soil_report_to_supabase
+        sync_advisory_to_supabase({
+            "id": target_advisory.id,
+            "report_id": target_advisory.report_id,
+            "farmer_id": target_advisory.farmer_id,
+            "farmer_name": target_advisory.farmer_name,
+            "farmer_location": target_advisory.farmer_location,
+            "source_type": target_advisory.source_type,
+            "report_summary": target_advisory.report_summary,
+            "soil_health_analysis": target_advisory.soil_health_analysis,
+            "crop_disease_info": target_advisory.crop_disease_info,
+            "extracted_data": target_advisory.extracted_data,
+            "nutrient_deficiencies": target_advisory.nutrient_deficiencies,
+            "crop_recommendations": target_advisory.crop_recommendations,
+            "fertilizer_recommendations": target_advisory.fertilizer_recommendations,
+            "irrigation_suggestions": target_advisory.irrigation_suggestions,
+            "pest_disease_alerts": target_advisory.pest_disease_alerts,
+            "risk_analysis": target_advisory.risk_analysis,
+            "risk_level": target_advisory.risk_level,
+            "weather_impact": target_advisory.weather_impact,
+            "original_ai_advisory": target_advisory.original_ai_advisory,
+            "final_advisory": target_advisory.final_advisory,
+            "status": target_advisory.status,
+            "reviewed_by": target_advisory.reviewed_by,
+            "expert_id": target_advisory.expert_id,
+            "expert_notes": target_advisory.expert_notes,
+            "reviewed_at": target_advisory.reviewed_at,
+            "created_at": target_advisory.created_at,
+            "updated_at": target_advisory.updated_at
+        })
+        sync_soil_report_to_supabase({
+            "id": report.id,
+            "farmer_id": report.farmer_id,
+            "filename": report.filename,
+            "file_type": report.file_type,
+            "file_path": report.file_path,
+            "status": report.status,
+            "raw_text": report.raw_text,
+            "extracted_data": report.extracted_data,
+            "created_at": report.created_at,
+            "updated_at": report.updated_at
+        })
+    except Exception as e:
+        logger.warning(f"Failed to sync advisory to Supabase: {e}")
+
     soil_ext = ExtractedSoilData(
         ph=advisory_schema.extracted_data.ph,
         nitrogen=advisory_schema.extracted_data.nitrogen,

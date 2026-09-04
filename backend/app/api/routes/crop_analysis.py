@@ -97,6 +97,7 @@ async def upload_crop_image(
 
 
 @router.post("/analyze/{image_id}", response_model=CropDiseaseAnalysisResponse, status_code=status.HTTP_200_OK, summary="Analyze crop leaf image using MobileNetV2 Deep Learning classifier")
+@router.post("/{image_id}/analyze", response_model=CropDiseaseAnalysisResponse, status_code=status.HTTP_200_OK, include_in_schema=False)
 def analyze_crop_image(
     image_id: str,
     language: Optional[str] = None,
@@ -144,6 +145,7 @@ def analyze_crop_image(
 
     # Persist corresponding Advisory for Expert Review
     existing_adv = db.query(Advisory).filter(Advisory.crop_analysis_id == image_id).first()
+    saved_adv = None
     if existing_adv:
         existing_adv.farmer_name = farmer_name_str
         existing_adv.farmer_location = location_str
@@ -158,6 +160,8 @@ def analyze_crop_image(
             existing_adv.final_advisory = analysis["final_advisory"]
             existing_adv.status = "pending_review"
         db.commit()
+        db.refresh(existing_adv)
+        saved_adv = existing_adv
     else:
         new_adv = Advisory(
             crop_analysis_id=image_id,
@@ -176,6 +180,50 @@ def analyze_crop_image(
         )
         db.add(new_adv)
         db.commit()
+        db.refresh(new_adv)
+        saved_adv = new_adv
+
+    # Sync Crop Analysis and Advisory to Supabase Cloud PostgreSQL
+    try:
+        from app.core.supabase_client import sync_crop_analysis_to_supabase, sync_advisory_to_supabase
+        sync_crop_analysis_to_supabase({
+            "id": record.id,
+            "farmer_id": record.farmer_id or (user.id if user else None),
+            "filename": record.filename,
+            "file_path": record.file_path,
+            "crop_type": record.crop_type,
+            "disease_class": record.disease_class,
+            "disease_name": record.disease_name,
+            "confidence_score": record.confidence_score,
+            "risk_level": record.risk_level,
+            "symptoms": record.symptoms,
+            "management_recommendations": record.management_recommendations,
+            "weather_impact": record.weather_impact,
+            "final_advisory": record.final_advisory,
+            "status": record.status,
+            "created_at": record.created_at
+        })
+        if saved_adv:
+            sync_advisory_to_supabase({
+                "id": saved_adv.id,
+                "crop_analysis_id": saved_adv.crop_analysis_id,
+                "farmer_id": saved_adv.farmer_id,
+                "farmer_name": saved_adv.farmer_name,
+                "farmer_location": saved_adv.farmer_location,
+                "source_type": saved_adv.source_type,
+                "crop_disease_info": saved_adv.crop_disease_info,
+                "risk_level": saved_adv.risk_level,
+                "weather_impact": saved_adv.weather_impact,
+                "crop_recommendations": saved_adv.crop_recommendations,
+                "pest_disease_alerts": saved_adv.pest_disease_alerts,
+                "original_ai_advisory": saved_adv.original_ai_advisory,
+                "final_advisory": saved_adv.final_advisory,
+                "status": saved_adv.status,
+                "created_at": saved_adv.created_at,
+                "updated_at": saved_adv.updated_at
+            })
+    except Exception as e:
+        logger.warning(f"Failed to sync crop analysis or advisory to Supabase: {e}")
 
     return CropDiseaseAnalysisResponse(
         analysis_id=record.id,

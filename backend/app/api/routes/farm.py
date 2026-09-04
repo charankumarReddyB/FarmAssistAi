@@ -255,10 +255,28 @@ def get_farm_location_analysis(
     report_n, report_p, report_k, report_ph = None, None, None, None
     if latest_report and latest_report.extracted_data:
         ext = latest_report.extracted_data
-        report_n = ext.get("nitrogen")
-        report_p = ext.get("phosphorus")
-        report_k = ext.get("potassium")
-        report_ph = ext.get("ph")
+
+        def _to_float(v):
+            if v is None:
+                return None
+            if isinstance(v, (int, float)):
+                return float(v)
+            if isinstance(v, dict):
+                inner_val = v.get("value")
+                if inner_val is not None:
+                    try:
+                        return float(inner_val)
+                    except (ValueError, TypeError):
+                        pass
+            try:
+                return float(v)
+            except (ValueError, TypeError):
+                return None
+
+        report_n = _to_float(ext.get("nitrogen"))
+        report_p = _to_float(ext.get("phosphorus"))
+        report_k = _to_float(ext.get("potassium"))
+        report_ph = _to_float(ext.get("ph"))
 
     # Fetch latest crop image analysis if available
     latest_crop_analysis = db.query(CropImageAnalysis).order_by(CropImageAnalysis.created_at.desc()).first()
