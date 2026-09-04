@@ -192,3 +192,52 @@ npm.cmd run build
 - **Admin Role**: Access `/admin` dashboard for user role management, privileged expert/admin creation, and system governance.
 - **Backend Enforcer**: `get_current_user` extracts and validates Bearer JWT tokens. Endpoints with `require_roles(['admin'])` strictly reject unauthorized callers with `403 Forbidden`.
 
+---
+
+## ⚡ Deploying to Vercel
+
+### Method 1: Deploy via Vercel Web Dashboard (Recommended)
+
+1. **Push your code to GitHub**:
+   ```bash
+   git add .
+   git commit -m "feat: configure vercel deployment"
+   git push origin main
+   ```
+
+2. **Import Project into Vercel**:
+   - Go to [vercel.com/new](https://vercel.com/new) and log in.
+   - Click **Import** next to your repository (`charankumarReddyB/FarmAssistAi`).
+   
+3. **Configure Project Settings**:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: Click `Edit` and select `frontend` (or leave as `./` as root `vercel.json` is configured).
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+
+4. **Add Environment Variables**:
+   In the **Environment Variables** section on Vercel, add:
+   - `VITE_SUPABASE_URL`: `https://vdadfdqqqtofnhfhdkvh.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY`: `<your-supabase-anon-key>`
+   - `VITE_API_URL`: `<your-deployed-backend-url>/api` *(optional, for AI/OCR FastAPI services)*
+
+5. **Deploy**:
+   - Click **Deploy**. Vercel will build and deploy your application in ~30 seconds with a live global CDN URL (e.g., `https://farm-assist-ai.vercel.app`).
+
+---
+
+### Method 2: Deploy via Vercel CLI
+
+1. Run Vercel CLI from the `frontend` directory:
+   ```bash
+   cd frontend
+   npx vercel
+   ```
+2. Follow the interactive prompts (select default settings).
+3. Set your environment variables when prompted or via `npx vercel env add`.
+4. Deploy to production:
+   ```bash
+   npx vercel --prod
+   ```
+
+

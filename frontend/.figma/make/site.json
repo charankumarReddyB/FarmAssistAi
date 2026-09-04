@@ -1,7 +1,9 @@
 {
-  "description": "Streamline project management with an intuitive interface that enhances collaboration, task tracking, and productivity for teams of all sizes.",
+  "title": "FarmAssist AI — Agricultural Interpretation & Farmer Advisory",
+  "description": "AI-powered agricultural intelligence platform providing automated soil report interpretation, crop disease diagnosis, weather risk alerts, and expert agronomy advisory for farmers.",
+  "language": "en",
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
