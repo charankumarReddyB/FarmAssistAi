@@ -95,6 +95,18 @@ class UserRoleUpdate(BaseModel):
     role: str
 
 
+class UserAdminEditRequest(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+    state: Optional[str] = None
+    district: Optional[str] = None
+    village_or_city: Optional[str] = None
+    preferred_language: Optional[str] = None
+    password: Optional[str] = None
+
+
 class UserResponse(UserBase):
     id: str
     is_active: bool

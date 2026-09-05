@@ -69,7 +69,23 @@ export function AdminDashboard() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [newName, setNewName] = useState('')
   const [newRole, setNewRole] = useState<'expert' | 'farmer'>('expert')
+  const [newState, setNewState] = useState('Andhra Pradesh')
+  const [newDistrict, setNewDistrict] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
+
+  // Edit User Form state
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null)
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    email: '',
+    role: 'farmer' as 'farmer' | 'expert',
+    state: '',
+    district: '',
+    village_or_city: '',
+    is_active: true,
+    password: '',
+  })
+  const [editLoading, setEditLoading] = useState(false)
 
   const fetchStats = async () => {
     try {
@@ -181,6 +197,8 @@ export function AdminDashboard() {
           password: newPassword,
           full_name: newName.trim(),
           role: newRole,
+          state: newState.trim() || undefined,
+          district: newDistrict.trim() || undefined,
           preferred_language: 'en',
         }),
       })
@@ -192,6 +210,7 @@ export function AdminDashboard() {
       setConfirmPassword('')
       setNewName('')
       setNewRole('expert')
+      setNewDistrict('')
       fetchUsers()
       fetchStats()
     } catch (err: any) {
@@ -200,6 +219,78 @@ export function AdminDashboard() {
     } finally {
       setCreateLoading(false)
     }
+  }
+
+  const handleOpenEdit = (targetUser: UserItem) => {
+    setEditingUser(targetUser)
+    setEditForm({
+      full_name: targetUser.full_name || targetUser.display_name || '',
+      email: targetUser.email || '',
+      role: (targetUser.role === 'admin' ? 'farmer' : targetUser.role) as 'farmer' | 'expert',
+      state: targetUser.state || '',
+      district: targetUser.district || '',
+      village_or_city: targetUser.village_or_city || '',
+      is_active: targetUser.is_active,
+      password: '',
+    })
+  }
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser) return
+    setEditLoading(true)
+    setErrorMsg(null)
+    setSuccessMsg(null)
+
+    try {
+      const payload: any = {
+        full_name: editForm.full_name.trim(),
+        email: editForm.email.trim(),
+        role: editForm.role,
+        state: editForm.state.trim(),
+        district: editForm.district.trim(),
+        village_or_city: editForm.village_or_city.trim(),
+        is_active: editForm.is_active,
+      }
+      if (editForm.password && editForm.password.trim().length >= 6) {
+        payload.password = editForm.password.trim()
+      }
+
+      await apiRequest(`/admin/users/${editingUser.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      })
+
+      setSuccessMsg(`User ${editForm.email} updated successfully.`)
+      setEditingUser(null)
+      fetchUsers()
+      fetchStats()
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to update user.')
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  const handleDeleteUser = (targetUser: UserItem) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Confirm Delete User',
+      message: `Are you sure you want to permanently delete user "${targetUser.full_name || targetUser.email}" from the database? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }))
+        try {
+          await apiRequest(`/admin/users/${targetUser.id}`, {
+            method: 'DELETE',
+          })
+          setSuccessMsg(`User ${targetUser.email} deleted successfully.`)
+          fetchUsers()
+          fetchStats()
+        } catch (err: any) {
+          setErrorMsg(err.message || 'Failed to delete user.')
+        }
+      },
+    })
   }
 
   return (
@@ -402,15 +493,15 @@ export function AdminDashboard() {
                               </span>
                             ) : (
                               <>
-                                {/* Role Dropdown (Only Farmer or Expert allowed) */}
-                                <select
-                                  value={u.role}
-                                  onChange={(e) => handleChangeUserRole(u, e.target.value)}
-                                  className="text-xs border border-pebble rounded-lg px-2 py-1 bg-white text-charcoal font-medium focus:outline-none cursor-pointer"
+                                {/* Edit Details Button */}
+                                <button
+                                  onClick={() => handleOpenEdit(u)}
+                                  className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border border-rain/40 text-rain hover:bg-rain/10 flex items-center gap-1"
+                                  title="Edit user details"
                                 >
-                                  <option value="farmer">Farmer</option>
-                                  <option value="expert">Expert</option>
-                                </select>
+                                  <span>✏️</span>
+                                  <span>Edit</span>
+                                </button>
 
                                 {/* Status Toggle Button */}
                                 <button
@@ -422,6 +513,15 @@ export function AdminDashboard() {
                                   }`}
                                 >
                                   {u.is_active ? 'Deactivate' : 'Activate'}
+                                </button>
+
+                                {/* Delete Button */}
+                                <button
+                                  onClick={() => handleDeleteUser(u)}
+                                  className="px-2 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border border-risk/40 text-risk hover:bg-risk/10 flex items-center gap-1"
+                                  title="Delete user from database"
+                                >
+                                  <span>🗑️</span>
                                 </button>
                               </>
                             )}

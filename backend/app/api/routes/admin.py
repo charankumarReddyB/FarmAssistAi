@@ -12,6 +12,7 @@ from app.schemas.user import (
     UserStatusUpdate,
     UserRoleUpdate,
     UserCreate,
+    UserAdminEditRequest,
 )
 from app.core.security import require_roles, hash_password
 
@@ -218,4 +219,112 @@ def update_user_role(user_id: str, payload: UserRoleUpdate, db: Session = Depend
         pass
 
     return user
+
+
+@router.put("/users/{user_id}", response_model=UserResponse, dependencies=[admin_guard], summary="Edit all user details")
+def edit_user_by_admin(user_id: str, payload: UserAdminEditRequest, db: Session = Depends(get_db)):
+    """Admin edits user details: name, email, role, location, status, or resets password."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
+
+    # If updating email, check for duplicate
+    if payload.email and payload.email.strip().lower() != user.email.lower():
+        clean_new_email = payload.email.strip().lower()
+        if user.email.lower() == primary_admin_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The primary administrator email cannot be modified."
+            )
+        existing = db.query(User).filter(User.email.ilike(clean_new_email), User.id != user_id).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"An account with email '{clean_new_email}' already exists."
+            )
+        user.email = clean_new_email
+
+    if payload.full_name is not None:
+        user.full_name = payload.full_name.strip()
+        user.display_name = payload.full_name.strip()
+
+    if payload.role is not None:
+        role = payload.role.strip().lower()
+        valid_roles = ["farmer", "expert", "admin"]
+        if role not in valid_roles:
+            raise HTTPException(status_code=400, detail=f"Invalid role '{role}'. Allowed: {valid_roles}")
+        if role == "admin" and user.email.lower() != primary_admin_email:
+            raise HTTPException(status_code=400, detail=f"Administrator access is strictly restricted to {primary_admin_email}.")
+        if user.email.lower() == primary_admin_email and role != "admin":
+            raise HTTPException(status_code=400, detail="Primary administrator role cannot be altered.")
+        user.role = role
+
+    if payload.is_active is not None:
+        if user.email.lower() == primary_admin_email and not payload.is_active:
+            raise HTTPException(status_code=400, detail="Primary administrator account cannot be deactivated.")
+        user.is_active = payload.is_active
+
+    if payload.state is not None:
+        user.state = payload.state.strip() or None
+    if payload.district is not None:
+        user.district = payload.district.strip() or None
+    if payload.village_or_city is not None:
+        user.village_or_city = payload.village_or_city.strip() or None
+        user.village = payload.village_or_city.strip() or None
+    if payload.preferred_language is not None:
+        user.preferred_language = payload.preferred_language.strip() or "en"
+
+    if payload.password and len(payload.password.strip()) >= 6:
+        user.hashed_password = hash_password(payload.password.strip())
+
+    db.commit()
+    db.refresh(user)
+
+    # Sync to Supabase profiles
+    try:
+        from app.core.supabase_client import sync_profile_to_supabase
+        sync_profile_to_supabase({
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "display_name": user.display_name,
+            "role": user.role,
+            "preferred_language": user.preferred_language,
+            "state": user.state,
+            "district": user.district,
+            "is_active": user.is_active
+        })
+    except Exception as e:
+        logger.warning(f"Supabase sync warning on admin edit: {e}")
+
+    return user
+
+
+@router.delete("/users/{user_id}", dependencies=[admin_guard], summary="Delete a user from the database")
+def delete_user_by_admin(user_id: str, db: Session = Depends(get_db)):
+    """Admin permanently deletes a user and cleans up their data from the database."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
+    if user.email.lower() == primary_admin_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The primary administrator account cannot be deleted."
+        )
+
+    # Clean up associated reports, advisories, crop analyses
+    db.query(Report).filter(Report.farmer_id == user_id).delete(synchronize_session=False)
+    db.query(CropImageAnalysis).filter(CropImageAnalysis.farmer_id == user_id).delete(synchronize_session=False)
+    db.query(Advisory).filter(Advisory.farmer_id == user_id).delete(synchronize_session=False)
+
+    deleted_email = user.email
+    db.delete(user)
+    db.commit()
+
+    return {"message": f"User '{deleted_email}' and all associated records deleted successfully."}
+
 
