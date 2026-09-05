@@ -1,7 +1,7 @@
 import os
 import logging
 from typing import Dict, Any
-import numpy as np
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -57,45 +57,52 @@ class CropDiseaseModelService:
 
     def _analyze_image_features(self, tensor_or_array) -> Dict[str, Any]:
         """
-        Numpy-based image feature analysis fallback.
-        Analyzes color channels, texture patterns, and pixel statistics
-        to classify crop disease when PyTorch is unavailable.
+        Pure Python fallback for image feature analysis.
+        Analyzes color channels, texture patterns, and pixel statistics.
         """
         try:
+            # Check if it's a PyTorch tensor, numpy array, or Pillow Image
+            arr = None
             if hasattr(tensor_or_array, 'numpy'):
-                arr = tensor_or_array.numpy()
+                arr = tensor_or_array.numpy().tolist()
+            elif hasattr(tensor_or_array, 'tolist'):
+                arr = tensor_or_array.tolist()
             else:
-                arr = np.array(tensor_or_array)
+                arr = tensor_or_array
 
-            # arr shape: (1, 3, 224, 224) — C, H, W normalized
-            if len(arr.shape) == 4:
-                arr = arr[0]  # remove batch dim -> (3, 224, 224)
-
-            # Denormalize from ImageNet stats back to [0, 1]
-            mean = np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
-            std = np.array([0.229, 0.224, 0.225]).reshape(3, 1, 1)
-            arr_denorm = arr * std + mean
-            arr_denorm = np.clip(arr_denorm, 0, 1)
-
-            # R, G, B channel means
-            r_mean = float(np.mean(arr_denorm[0]))
-            g_mean = float(np.mean(arr_denorm[1]))
-            b_mean = float(np.mean(arr_denorm[2]))
-
-            # Standard deviations (texture proxy)
-            r_std = float(np.std(arr_denorm[0]))
-            g_std = float(np.std(arr_denorm[1]))
-            b_std = float(np.std(arr_denorm[2]))
+            # Determine shape and get R, G, B channels
+            # Usually input is (1, 3, 224, 224) or (3, 224, 224)
+            if isinstance(arr, list) and len(arr) == 1 and len(arr[0]) == 3:
+                arr = arr[0]
+            
+            # Simple heuristic if shape is unknown
+            r_mean, g_mean, b_mean = 0.35, 0.45, 0.25
+            r_std, g_std, b_std = 0.1, 0.1, 0.1
+            
+            if isinstance(arr, list) and len(arr) == 3:
+                r_flat = [item for sublist in arr[0] for item in sublist]
+                g_flat = [item for sublist in arr[1] for item in sublist]
+                b_flat = [item for sublist in arr[2] for item in sublist]
+                
+                # Denormalize from ImageNet stats back to [0, 1]
+                mean_rgb = [0.485, 0.456, 0.406]
+                std_rgb = [0.229, 0.224, 0.225]
+                
+                def process_channel(flat_list, c_mean, c_std):
+                    vals = [max(0, min(1, v * c_std + c_mean)) for v in flat_list[:1000]] # Sample to avoid slowness
+                    if not vals:
+                        return 0.0, 0.0
+                    avg = sum(vals) / len(vals)
+                    var = sum((x - avg)**2 for x in vals) / len(vals)
+                    return avg, math.sqrt(var)
+                
+                r_mean, r_std = process_channel(r_flat, mean_rgb[0], std_rgb[0])
+                g_mean, g_std = process_channel(g_flat, mean_rgb[1], std_rgb[1])
+                b_mean, b_std = process_channel(b_flat, mean_rgb[2], std_rgb[2])
 
             total_std = r_std + g_std + b_std
 
             # --- Heuristic rules based on color signature of leaf diseases ---
-            # Healthy: dominant green channel
-            # Bacterial leaf blight: yellow-brown patches, high R, low B
-            # Brown spot/blast: brown spots, high R+G, low B
-            # Leaf smut/rust: dark brown-orange, high R, low G
-            # Powdery mildew: whitish-gray, high R+G+B uniformly
-
             greenness = g_mean - (r_mean + b_mean) / 2.0
             brownness = r_mean - g_mean
             whiteness = min(r_mean, g_mean, b_mean)
@@ -103,7 +110,7 @@ class CropDiseaseModelService:
 
             scores = {
                 "healthy_crop": max(0.0, greenness * 2.5 + 0.3),
-                "bacterial_leaf_blight": max(0.0, brownness * 1.8 + (b_mean < 0.35) * 0.3),
+                "bacterial_leaf_blight": max(0.0, brownness * 1.8 + (1 if b_mean < 0.35 else 0) * 0.3),
                 "brown_spot_blast": max(0.0, brownness * 1.5 + texture_var * 0.8 + 0.1),
                 "leaf_smut_rust": max(0.0, (r_mean - g_mean - b_mean) * 2.0 + 0.05),
                 "powdery_mildew": max(0.0, whiteness * 3.0 - greenness * 1.5),
@@ -119,7 +126,7 @@ class CropDiseaseModelService:
             # Clamp confidence to a realistic range
             confidence = max(0.55, min(0.96, confidence))
 
-            logger.info(f"[NumpyFallback] Predicted: {predicted_class} ({confidence:.2%}) — R:{r_mean:.3f} G:{g_mean:.3f} B:{b_mean:.3f}")
+            logger.info(f"[PurePythonFallback] Predicted: {predicted_class} ({confidence:.2%}) — R:{r_mean:.3f} G:{g_mean:.3f} B:{b_mean:.3f}")
 
             return {
                 "predicted_class": predicted_class,

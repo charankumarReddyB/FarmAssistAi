@@ -1,7 +1,6 @@
 import os
 import logging
 from PIL import Image, ImageFile
-import numpy as np
 
 # Allow truncated image loading safely
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -70,33 +69,44 @@ class ImagePreprocessingService:
 
     def preprocess_image_tensor(self, file_path: str, target_size=(224, 224)):
         """
-        Preprocesses crop leaf image into a normalized PyTorch Tensor ([1, 3, 224, 224]).
+        Preprocesses crop leaf image into a normalized PyTorch Tensor ([1, 3, 224, 224])
+        or a nested Python list fallback.
         Applies ImageNet mean and std normalization.
         """
         img = self.validate_and_load_image(file_path)
         img_resized = img.resize(target_size, Image.Resampling.BILINEAR)
 
-        # Convert to numpy array float32 in range [0, 1]
-        img_np = np.array(img_resized, dtype=np.float32) / 255.0
+        # Convert to nested lists directly using Python
+        width, height = img_resized.size
+        pixels = list(img_resized.getdata())
+        
+        # ImageNet normalization values
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        
+        # Initialize [C, H, W] lists
+        c_h_w = [[], [], []]
+        for c in range(3):
+            for h in range(height):
+                c_h_w[c].append([0.0] * width)
+                
+        # Fill the tensor
+        for i, (r, g, b) in enumerate(pixels):
+            h = i // width
+            w = i % width
+            c_h_w[0][h][w] = ((r / 255.0) - mean[0]) / std[0]
+            c_h_w[1][h][w] = ((g / 255.0) - mean[1]) / std[1]
+            c_h_w[2][h][w] = ((b / 255.0) - mean[2]) / std[2]
 
-        # Transpose from (H, W, C) -> (C, H, W)
-        img_transposed = np.transpose(img_np, (2, 0, 1))
-
-        # Normalize with ImageNet standard mean and std
-        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape((3, 1, 1))
-        std = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape((3, 1, 1))
-        normalized = (img_transposed - mean) / std
-
-        # Add batch dimension (1, 3, 224, 224)
-        batch_array = np.expand_dims(normalized, axis=0)
+        batch_list = [c_h_w]
 
         try:
             import torch
-            tensor = torch.from_numpy(batch_array)
+            tensor = torch.tensor(batch_list, dtype=torch.float32)
             return tensor
         except Exception as e:
             logger.warning(f"PyTorch tensor conversion fallback: {e}")
-            return batch_array
+            return batch_list
 
 
 image_preprocessing_service = ImagePreprocessingService()
