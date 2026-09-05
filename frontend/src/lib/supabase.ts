@@ -1,7 +1,7 @@
 import { createClient, type Session, type User } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://demo-project.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'demo-anon-key'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://vdadfdqqqtofnhfhdkvh.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkYWRmZHFxcXRvZm5oZmhka3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDgyMjksImV4cCI6MjEwMzIyNDIyOX0.JaQHTxmAvLD1hOb7rHlkecoOkohgYweb614-1at8-tE'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -12,7 +12,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('demo-project'))
+  return Boolean(
+    supabaseUrl &&
+    supabaseAnonKey &&
+    !supabaseUrl.includes('demo-project') &&
+    supabaseAnonKey !== 'demo-anon-key'
+  )
 }
 
 export async function signInWithGoogle() {

@@ -141,7 +141,15 @@ class AdvisoryService:
             f"Extracted {prep_results['raw_tokens_count']} tokens. Sentence-BERT semantic score: {semantic_dto.top_similarity_score}."
         )
 
+        # Combine regional soil info into the soil health analysis string
         soil_health_analysis = " ".join(soil_analysis_parts)
+        if reg_summary:
+            soil_health_analysis = soil_health_analysis + " " + reg_summary
+
+        # Include top semantic match in report summary if available
+        if matched_topic_objs:
+            top_match = matched_topic_objs[0]
+            report_summary = report_summary + f" KB Match: {top_match.matched_knowledge[:120]}"
 
         # Multilingual phrasing prefix based on preferred language
         lang_prefix = {
@@ -163,6 +171,7 @@ class AdvisoryService:
             report_id=report_id,
             report_summary=report_summary,
             soil_health_analysis=soil_health_analysis,
+            regional_soil_analysis=reg_summary,
             extracted_data=ExtractedSoilData(
                 ph=ph_val,
                 nitrogen=n_val,
@@ -172,7 +181,6 @@ class AdvisoryService:
                 electrical_conductivity=ec_val
             ),
             semantic_analysis=semantic_dto,
-            regional_soil_analysis=reg_summary,
             crop_recommendations=list(crop_recs_set)[:6],
             fertilizer_recommendations=fertilizer_recs,
             irrigation_suggestions=irrigation_suggs,

@@ -31,12 +31,14 @@ class StructuredAdvisoryResponse(BaseModel):
     farmer_name: Optional[str] = "Farmer"
     farmer_location: Optional[str] = "Location Not Set"
     source_type: str = "soil_analysis"
-    
+
     report_summary: str = ""
     soil_health_analysis: str = ""
+    regional_soil_analysis: Optional[str] = None
     crop_disease_info: Optional[str] = None
-    
+
     extracted_data: Optional[ExtractedSoilData] = None
+    semantic_analysis: Optional[SemanticAnalysisResult] = None
     crop_recommendations: List[str] = []
     fertilizer_recommendations: List[str] = []
     irrigation_suggestions: List[str] = []
@@ -45,10 +47,10 @@ class StructuredAdvisoryResponse(BaseModel):
     risk_analysis: List[str] = []
     risk_level: str = "MODERATE"
     weather_impact: Optional[str] = None
-    
+
     original_ai_advisory: str = ""
     final_advisory: str = ""
-    
+
     status: str = "pending_review"  # generated, pending_review, under_review, approved, modified, rejected
     reviewed_by: Optional[str] = None
     expert_id: Optional[str] = None

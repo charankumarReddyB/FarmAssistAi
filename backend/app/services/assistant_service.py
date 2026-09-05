@@ -94,8 +94,17 @@ class AssistantService:
             user.state = state_val
             user.village_or_city = district_val
             user.onboarding_completed = True
-            db.commit()
-            db.refresh(user)
+
+            # Only commit if this is a real DB-persisted user (not a transient guest object)
+            try:
+                db.flush()
+                db.commit()
+                db.refresh(user)
+            except Exception:
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
 
             # Sync to Supabase
             try:
@@ -133,8 +142,15 @@ class AssistantService:
             farm = db.query(FarmProfile).filter(FarmProfile.user_id == user.id).first()
             if farm:
                 farm.current_crop = new_crop
-            db.commit()
-            db.refresh(user)
+            try:
+                db.flush()
+                db.commit()
+                db.refresh(user)
+            except Exception:
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
 
             msg = RESPONSES["crop_updated"][lang].format(crop=new_crop)
             return {

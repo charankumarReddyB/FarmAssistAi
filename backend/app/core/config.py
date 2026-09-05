@@ -2,6 +2,18 @@ import os
 from typing import List, Union, Any
 from pydantic import field_validator
 
+# Load env files early — support both 'env' and '.env' filenames
+try:
+    from dotenv import load_dotenv
+    _base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    for _fname in [".env", "env"]:
+        _fpath = os.path.join(_base, _fname)
+        if os.path.exists(_fpath):
+            load_dotenv(_fpath, override=False)
+            break
+except Exception:
+    pass
+
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
 except ImportError:
@@ -16,7 +28,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "FarmAssist AI"
     API_V1_STR: str = "/api"
     SECRET_KEY: str = "farmassist_secret_key_change_in_production"
-    
+
     # Supabase Settings
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
@@ -69,7 +81,7 @@ class Settings(BaseSettings):
 
     if SettingsConfigDict is not None:
         model_config = SettingsConfigDict(
-            env_file=".env",
+            env_file=(".env", "env"),
             env_file_encoding="utf-8",
             extra="ignore",
             case_sensitive=True
@@ -83,4 +95,3 @@ try:
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 except Exception:
     pass
-
