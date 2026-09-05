@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../App'
 import { AiBadge, StatusBadge } from '../components/StatusBadge'
-import { getApiBaseUrl, getAuthHeaders } from '../lib/api'
+import { apiRequest, getApiBaseUrl, getAuthHeaders } from '../lib/api'
 
 type CropState = 'upload' | 'processing' | 'results'
 
