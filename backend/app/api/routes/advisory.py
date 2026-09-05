@@ -10,10 +10,11 @@ from app.api.routes.expert import build_advisory_response
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/advisories", tags=["Farmer Advisories"])
+router = APIRouter(tags=["Farmer Advisories"])
 
 
-@router.get("/{report_id}", response_model=StructuredAdvisoryResponse, summary="Get structured advisory by report ID or advisory ID")
+@router.get("/advisories/{report_id}", response_model=StructuredAdvisoryResponse, summary="Get structured advisory by report ID or advisory ID")
+@router.get("/advisory/{report_id}", response_model=StructuredAdvisoryResponse, include_in_schema=False)
 def get_advisory_by_report(report_id: str, db: Session = Depends(get_db)):
     """
     Retrieves generated farmer advisory in structured JSON format for a specific report ID or advisory ID.
@@ -37,7 +38,8 @@ def get_advisory_by_report(report_id: str, db: Session = Depends(get_db)):
     return build_advisory_response(advisory, db)
 
 
-@router.get("", response_model=List[StructuredAdvisoryResponse], summary="List all advisories")
+@router.get("/advisories", response_model=List[StructuredAdvisoryResponse], summary="List all advisories")
+@router.get("/advisory", response_model=List[StructuredAdvisoryResponse], include_in_schema=False)
 def list_advisories(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
     """Lists all advisories in the system."""
     advisories = db.query(Advisory).order_by(Advisory.created_at.desc()).offset(skip).limit(limit).all()

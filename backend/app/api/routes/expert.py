@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.models.advisory import Advisory
 from app.models.report import Report
 from app.models.crop_image import CropImageAnalysis
+from app.models.user import User
 from app.schemas.advisory import (
     StructuredAdvisoryResponse,
     ExtractedSoilData,

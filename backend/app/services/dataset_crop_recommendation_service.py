@@ -1,99 +1,67 @@
+import os
+import csv
 import logging
 from typing import Dict, Any, List
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
-# Crop parameter bounds derived from Kaggle Crop Recommendation Dataset
-CROP_DATASET_RULES = [
-    {
-        "crop": "Rice",
-        "n_range": (60, 120), "p_range": (35, 60), "k_range": (35, 45),
-        "ph_range": (5.0, 7.8), "temp_range": (20, 27), "humidity_range": (80, 90), "rainfall_range": (150, 300)
-    },
-    {
-        "crop": "Maize",
-        "n_range": (60, 100), "p_range": (35, 60), "k_range": (15, 25),
-        "ph_range": (5.5, 7.5), "temp_range": (18, 27), "humidity_range": (55, 75), "rainfall_range": (60, 110)
-    },
-    {
-        "crop": "Chickpea",
-        "n_range": (20, 60), "p_range": (55, 80), "k_range": (75, 85),
-        "ph_range": (6.0, 8.5), "temp_range": (17, 22), "humidity_range": (14, 20), "rainfall_range": (65, 95)
-    },
-    {
-        "crop": "Kidneybeans",
-        "n_range": (15, 40), "p_range": (55, 80), "k_range": (15, 25),
-        "ph_range": (5.5, 6.0), "temp_range": (15, 24), "humidity_range": (18, 25), "rainfall_range": (60, 150)
-    },
-    {
-        "crop": "Pigeonpeas",
-        "n_range": (15, 40), "p_range": (55, 80), "k_range": (15, 25),
-        "ph_range": (4.5, 7.5), "temp_range": (18, 38), "humidity_range": (30, 70), "rainfall_range": (90, 200)
-    },
-    {
-        "crop": "Mothbeans",
-        "n_range": (0, 40), "p_range": (35, 60), "k_range": (15, 25),
-        "ph_range": (3.5, 10.0), "temp_range": (24, 32), "humidity_range": (40, 65), "rainfall_range": (30, 70)
-    },
-    {
-        "crop": "Blackgram",
-        "n_range": (40, 60), "p_range": (55, 80), "k_range": (15, 25),
-        "ph_range": (6.5, 7.5), "temp_range": (25, 35), "humidity_range": (60, 70), "rainfall_range": (60, 75)
-    },
-    {
-        "crop": "Lentil",
-        "n_range": (15, 40), "p_range": (55, 80), "k_range": (15, 25),
-        "ph_range": (5.5, 7.0), "temp_range": (18, 30), "humidity_range": (60, 70), "rainfall_range": (40, 55)
-    },
-    {
-        "crop": "Pomegranate",
-        "n_range": (15, 40), "p_range": (10, 30), "k_range": (35, 45),
-        "ph_range": (5.5, 7.2), "temp_range": (18, 25), "humidity_range": (85, 95), "rainfall_range": (100, 110)
-    },
-    {
-        "crop": "Banana",
-        "n_range": (80, 120), "p_range": (70, 95), "k_range": (45, 55),
-        "ph_range": (5.5, 6.5), "temp_range": (25, 30), "humidity_range": (75, 85), "rainfall_range": (90, 120)
-    },
-    {
-        "crop": "Mango",
-        "n_range": (15, 40), "p_range": (15, 40), "k_range": (25, 35),
-        "ph_range": (4.5, 7.0), "temp_range": (27, 36), "humidity_range": (45, 55), "rainfall_range": (80, 100)
-    },
-    {
-        "crop": "Grapes",
-        "n_range": (15, 40), "p_range": (120, 145), "k_range": (195, 205),
-        "ph_range": (5.5, 6.5), "temp_range": (8, 42), "humidity_range": (80, 85), "rainfall_range": (60, 75)
-    },
-    {
-        "crop": "Watermelon",
-        "n_range": (80, 120), "p_range": (5, 30), "k_range": (45, 55),
-        "ph_range": (6.0, 7.0), "temp_range": (24, 27), "humidity_range": (80, 90), "rainfall_range": (40, 60)
-    },
-    {
-        "crop": "Apple",
-        "n_range": (0, 40), "p_range": (120, 145), "k_range": (195, 205),
-        "ph_range": (5.5, 6.5), "temp_range": (21, 24), "humidity_range": (90, 95), "rainfall_range": (100, 125)
-    },
-    {
-        "crop": "Orange",
-        "n_range": (0, 40), "p_range": (5, 30), "k_range": (5, 15),
-        "ph_range": (6.0, 7.5), "temp_range": (10, 35), "humidity_range": (90, 95), "rainfall_range": (100, 120)
-    },
-    {
-        "crop": "Cotton",
-        "n_range": (100, 140), "p_range": (35, 60), "k_range": (15, 25),
-        "ph_range": (6.0, 8.0), "temp_range": (22, 26), "humidity_range": (75, 85), "rainfall_range": (60, 90)
-    },
-    {
-        "crop": "Coffee",
-        "n_range": (80, 120), "p_range": (15, 40), "k_range": (25, 35),
-        "ph_range": (6.0, 7.5), "temp_range": (23, 28), "humidity_range": (50, 70), "rainfall_range": (115, 190)
-    }
-]
+CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "crop_recommendation", "crop_recommendation.csv")
 
 
 class DatasetCropRecommendationService:
+    def __init__(self):
+        self._crop_profiles = {}
+        self._load_dataset()
+
+    def _load_dataset(self):
+        """Loads and precomputes crop nutrient & climate profiles directly from crop_recommendation.csv."""
+        if not os.path.exists(CSV_PATH):
+            logger.warning(f"Crop dataset not found at {CSV_PATH}. Using default rules.")
+            return
+
+        try:
+            crop_data = defaultdict(lambda: {
+                "n": [], "p": [], "k": [], "temp": [], "humidity": [], "ph": [], "rainfall": []
+            })
+
+            with open(CSV_PATH, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    crop = row["label"].strip().title()
+                    crop_data[crop]["n"].append(float(row["N"]))
+                    crop_data[crop]["p"].append(float(row["P"]))
+                    crop_data[crop]["k"].append(float(row["K"]))
+                    crop_data[crop]["temp"].append(float(row["temperature"]))
+                    crop_data[crop]["humidity"].append(float(row["humidity"]))
+                    crop_data[crop]["ph"].append(float(row["ph"]))
+                    crop_data[crop]["rainfall"].append(float(row["rainfall"]))
+
+            profiles = {}
+            for crop, values in crop_data.items():
+                profiles[crop] = {
+                    "crop": crop,
+                    "avg_n": sum(values["n"]) / len(values["n"]),
+                    "min_n": min(values["n"]), "max_n": max(values["n"]),
+                    "avg_p": sum(values["p"]) / len(values["p"]),
+                    "min_p": min(values["p"]), "max_p": max(values["p"]),
+                    "avg_k": sum(values["k"]) / len(values["k"]),
+                    "min_k": min(values["k"]), "max_k": max(values["k"]),
+                    "avg_ph": sum(values["ph"]) / len(values["ph"]),
+                    "min_ph": min(values["ph"]), "max_ph": max(values["ph"]),
+                    "avg_temp": sum(values["temp"]) / len(values["temp"]),
+                    "min_temp": min(values["temp"]), "max_temp": max(values["temp"]),
+                    "avg_humidity": sum(values["humidity"]) / len(values["humidity"]),
+                    "min_humidity": min(values["humidity"]), "max_humidity": max(values["humidity"]),
+                    "avg_rainfall": sum(values["rainfall"]) / len(values["rainfall"]),
+                    "min_rainfall": min(values["rainfall"]), "max_rainfall": max(values["rainfall"]),
+                }
+
+            self._crop_profiles = profiles
+            logger.info(f"Loaded {len(profiles)} crop profiles from Kaggle Crop Recommendation Dataset ({CSV_PATH}).")
+        except Exception as e:
+            logger.error(f"Error parsing crop_recommendation.csv: {e}")
+
     def recommend_crops(
         self,
         n: float = 100.0,
@@ -105,38 +73,75 @@ class DatasetCropRecommendationService:
         rainfall: float = 100.0
     ) -> List[Dict[str, Any]]:
         """
-        Recommends crops based on Kaggle Crop Recommendation Dataset parameters:
-        N, P, K, pH, Temperature, Humidity, and Rainfall.
+        Recommends top suitable crops evaluated against the Kaggle Crop Recommendation Dataset.
+        Uses multi-factor suitability scoring and provides explainable rationale.
         """
+        if not self._crop_profiles:
+            self._load_dataset()
+
         scored_crops = []
 
-        for item in CROP_DATASET_RULES:
-            crop_name = item["crop"]
+        for crop, prof in self._crop_profiles.items():
             score = 0.0
+            reasons = []
 
-            # Match Nitrogen
-            if item["n_range"][0] <= n <= item["n_range"][1]:
+            # 1. Nitrogen suitability
+            if prof["min_n"] <= n <= prof["max_n"]:
                 score += 1.5
-            # Match Phosphorus
-            if item["p_range"][0] <= p <= item["p_range"][1]:
+                reasons.append("Optimal soil Nitrogen")
+            elif abs(n - prof["avg_n"]) < 30:
+                score += 0.8
+
+            # 2. Phosphorus suitability
+            if prof["min_p"] <= p <= prof["max_p"]:
                 score += 1.5
-            # Match Potassium
-            if item["k_range"][0] <= k <= item["k_range"][1]:
+                reasons.append("Optimal soil Phosphorus")
+            elif abs(p - prof["avg_p"]) < 15:
+                score += 0.8
+
+            # 3. Potassium suitability
+            if prof["min_k"] <= k <= prof["max_k"]:
                 score += 1.5
-            # Match pH
-            if item["ph_range"][0] <= ph <= item["ph_range"][1]:
+                reasons.append("Optimal soil Potassium")
+            elif abs(k - prof["avg_k"]) < 20:
+                score += 0.8
+
+            # 4. pH suitability
+            if prof["min_ph"] <= ph <= prof["max_ph"]:
                 score += 2.0
-            # Match Temp
-            if item["temp_range"][0] <= temp <= item["temp_range"][1]:
+                reasons.append(f"Ideal soil pH ({round(ph, 1)})")
+            elif abs(ph - prof["avg_ph"]) < 0.8:
                 score += 1.0
-            # Match Humidity
-            if item["humidity_range"][0] <= humidity <= item["humidity_range"][1]:
+
+            # 5. Temperature suitability
+            if prof["min_temp"] <= temp <= prof["max_temp"]:
                 score += 1.0
+                reasons.append(f"Favorable ambient temperature ({round(temp, 1)}°C)")
+            elif abs(temp - prof["avg_temp"]) < 5.0:
+                score += 0.5
+
+            # 6. Humidity suitability
+            if prof["min_humidity"] <= humidity <= prof["max_humidity"]:
+                score += 1.0
+            elif abs(humidity - prof["avg_humidity"]) < 15.0:
+                score += 0.5
+
+            suitability_pct = min(100, int((score / 8.5) * 100))
 
             scored_crops.append({
-                "crop": crop_name,
+                "crop": crop,
                 "suitability_score": round(score, 2),
-                "max_score": 8.5
+                "suitability_percentage": suitability_pct,
+                "max_score": 8.5,
+                "dataset_source": "Kaggle Crop Recommendation Dataset",
+                "ideal_parameters": {
+                    "n_range": f"{int(prof['min_n'])}-{int(prof['max_n'])} kg/ha",
+                    "p_range": f"{int(prof['min_p'])}-{int(prof['max_p'])} kg/ha",
+                    "k_range": f"{int(prof['min_k'])}-{int(prof['max_k'])} kg/ha",
+                    "ph_range": f"{round(prof['min_ph'], 1)}-{round(prof['max_ph'], 1)}",
+                    "optimal_temp": f"{int(prof['min_temp'])}-{int(prof['max_temp'])}°C"
+                },
+                "reasons": reasons[:3]
             })
 
         scored_crops.sort(key=lambda x: x["suitability_score"], reverse=True)

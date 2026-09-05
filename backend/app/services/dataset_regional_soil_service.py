@@ -1,65 +1,117 @@
+import os
+import csv
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
-# Baseline soil nutrient averages derived from Soil Nutrient Dataset of Southern Indian States
-SOUTHERN_STATES_SOIL_DATA = {
-    "andhra pradesh": {
-        "kakinada": {"avg_n": 145.0, "avg_p": 18.5, "avg_k": 160.0, "avg_ph": 7.1, "soil_type": "Alluvial / Coastal Delta"},
-        "guntur": {"avg_n": 160.0, "avg_p": 22.0, "avg_k": 180.0, "avg_ph": 7.4, "soil_type": "Black Cotton Soil"},
-        "kurnool": {"avg_n": 125.0, "avg_p": 14.0, "avg_k": 130.0, "avg_ph": 7.8, "soil_type": "Red & Black Saline"},
-        "default": {"avg_n": 140.0, "avg_p": 18.0, "avg_k": 150.0, "avg_ph": 7.2, "soil_type": "Red Loamy"}
-    },
-    "telangana": {
-        "warangal": {"avg_n": 135.0, "avg_p": 16.0, "avg_k": 140.0, "avg_ph": 6.8, "soil_type": "Red Sandy Loam"},
-        "default": {"avg_n": 130.0, "avg_p": 15.0, "avg_k": 135.0, "avg_ph": 6.9, "soil_type": "Red Chalkas"}
-    },
-    "tamil nadu": {
-        "coimbatore": {"avg_n": 150.0, "avg_p": 20.0, "avg_k": 190.0, "avg_ph": 6.5, "soil_type": "Red Loam / Clay"},
-        "madurai": {"avg_n": 130.0, "avg_p": 15.0, "avg_k": 140.0, "avg_ph": 7.0, "soil_type": "Black Soil"},
-        "default": {"avg_n": 140.0, "avg_p": 17.0, "avg_k": 160.0, "avg_ph": 6.7, "soil_type": "Red Sandy"}
-    },
-    "karnataka": {
-        "mysuru": {"avg_n": 155.0, "avg_p": 24.0, "avg_k": 175.0, "avg_ph": 6.4, "soil_type": "Red Sandy Loam"},
-        "default": {"avg_n": 145.0, "avg_p": 20.0, "avg_k": 165.0, "avg_ph": 6.5, "soil_type": "Laterite & Red"}
-    },
-    "kerala": {
-        "default": {"avg_n": 165.0, "avg_p": 28.0, "avg_k": 120.0, "avg_ph": 5.4, "soil_type": "Laterite Acidic Soil"}
-    }
-}
+CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "soil_nutrients", "southern_indian_soil_nutrients.csv")
 
 
 class DatasetRegionalSoilService:
+    def __init__(self):
+        self._district_data = {}
+        self._state_data = {}
+        self._load_dataset()
+
+    def _load_dataset(self):
+        """Loads and precomputes district and state nutrient baselines directly from CSV."""
+        if not os.path.exists(CSV_PATH):
+            logger.warning(f"Southern Indian soil dataset not found at {CSV_PATH}.")
+            return
+
+        try:
+            district_records = defaultdict(lambda: {"n": [], "p": [], "k": [], "ph": [], "soils": []})
+            state_records = defaultdict(lambda: {"n": [], "p": [], "k": [], "ph": [], "soils": []})
+
+            with open(CSV_PATH, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    st = row["State"].strip().lower()
+                    dist = row["District"].strip().lower()
+                    n = float(row["Nitrogen"])
+                    p = float(row["Phosphorus"])
+                    k = float(row["Potassium"])
+                    ph = float(row["pH"])
+                    soil = row["Soil_Type"].strip()
+
+                    key = (st, dist)
+                    district_records[key]["n"].append(n)
+                    district_records[key]["p"].append(p)
+                    district_records[key]["k"].append(k)
+                    district_records[key]["ph"].append(ph)
+                    district_records[key]["soils"].append(soil)
+
+                    state_records[st]["n"].append(n)
+                    state_records[st]["p"].append(p)
+                    state_records[st]["k"].append(k)
+                    state_records[st]["ph"].append(ph)
+                    state_records[st]["soils"].append(soil)
+
+            # Compute district baselines
+            self._district_data = {}
+            for (st, dist), vals in district_records.items():
+                self._district_data[(st, dist)] = {
+                    "avg_n": round(sum(vals["n"]) / len(vals["n"]), 1),
+                    "avg_p": round(sum(vals["p"]) / len(vals["p"]), 1),
+                    "avg_k": round(sum(vals["k"]) / len(vals["k"]), 1),
+                    "avg_ph": round(sum(vals["ph"]) / len(vals["ph"]), 2),
+                    "soil_type": max(set(vals["soils"]), key=vals["soils"].count)
+                }
+
+            # Compute state baselines
+            self._state_data = {}
+            for st, vals in state_records.items():
+                self._state_data[st] = {
+                    "avg_n": round(sum(vals["n"]) / len(vals["n"]), 1),
+                    "avg_p": round(sum(vals["p"]) / len(vals["p"]), 1),
+                    "avg_k": round(sum(vals["k"]) / len(vals["k"]), 1),
+                    "avg_ph": round(sum(vals["ph"]) / len(vals["ph"]), 2),
+                    "soil_type": max(set(vals["soils"]), key=vals["soils"].count)
+                }
+
+            logger.info(f"Loaded {len(self._district_data)} districts across {len(self._state_data)} Southern Indian states from {CSV_PATH}.")
+        except Exception as e:
+            logger.error(f"Error parsing southern_indian_soil_nutrients.csv: {e}")
+
     def analyze_regional_soil(
         self,
         state: str = "Andhra Pradesh",
         district: str = "Kakinada",
-        report_n: float | None = None,
-        report_p: float | None = None,
-        report_k: float | None = None,
-        report_ph: float | None = None
+        report_n: Optional[float] = None,
+        report_p: Optional[float] = None,
+        report_k: Optional[float] = None,
+        report_ph: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Analyzes farmer's soil test parameters against regional soil nutrient baselines
         from the Soil Nutrient Dataset of Southern Indian States.
         Directly distinguishes district-level record vs. state-level baseline.
         """
-        state_clean = state.lower().strip()
-        district_clean = district.lower().strip()
+        if not self._district_data:
+            self._load_dataset()
+
+        state_clean = state.lower().strip() if state else "andhra pradesh"
+        district_clean = district.lower().strip() if district else "kakinada"
 
         is_district_level = False
-        dataset_covered = True
+        regional_info = None
 
-        if state_clean in SOUTHERN_STATES_SOIL_DATA:
-            state_data = SOUTHERN_STATES_SOIL_DATA[state_clean]
-            if district_clean in state_data:
-                regional_info = state_data[district_clean]
-                is_district_level = True
-            else:
-                regional_info = state_data.get("default")
+        if (state_clean, district_clean) in self._district_data:
+            regional_info = self._district_data[(state_clean, district_clean)]
+            is_district_level = True
+        elif state_clean in self._state_data:
+            regional_info = self._state_data[state_clean]
         else:
-            dataset_covered = False
+            # Check if district matches any state
+            for (st, dist), info in self._district_data.items():
+                if dist == district_clean:
+                    regional_info = info
+                    is_district_level = True
+                    break
+
+        if not regional_info:
             return {
                 "state": state,
                 "district": district,

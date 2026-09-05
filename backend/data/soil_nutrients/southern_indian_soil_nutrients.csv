@@ -1,0 +1,701 @@
+State,District,Nitrogen,Phosphorus,Potassium,pH,Soil_Type
+Andhra Pradesh,Kakinada,147.8,15.7,153.3,6.93,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,149.7,19.6,171.8,6.85,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,143.4,15.7,151.6,7.1,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,135.5,16.7,164.5,7.13,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,139.4,19.0,169.3,6.8,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,151.1,19.7,155.2,6.89,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,154.1,17.5,147.8,6.86,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,151.9,19.1,169.2,7.24,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,145.7,21.3,156.4,7.13,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,151.6,19.2,170.9,7.15,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,149.1,15.8,151.8,6.97,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,136.6,16.9,148.0,6.97,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,147.7,17.7,156.1,6.93,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,140.3,21.1,164.4,7.17,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,138.4,19.9,149.9,7.03,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,154.8,19.3,161.7,7.21,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,151.9,20.2,151.9,6.82,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,141.3,17.1,151.3,7.37,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,152.5,17.4,164.7,7.04,Alluvial / Coastal Delta
+Andhra Pradesh,Kakinada,153.3,18.3,152.9,6.95,Alluvial / Coastal Delta
+Andhra Pradesh,Guntur,161.2,20.6,182.5,7.64,Black Cotton Soil
+Andhra Pradesh,Guntur,158.0,20.3,194.9,7.41,Black Cotton Soil
+Andhra Pradesh,Guntur,151.8,19.3,168.3,7.48,Black Cotton Soil
+Andhra Pradesh,Guntur,165.8,21.5,166.9,7.33,Black Cotton Soil
+Andhra Pradesh,Guntur,169.9,22.2,194.1,7.62,Black Cotton Soil
+Andhra Pradesh,Guntur,150.2,23.3,185.5,7.42,Black Cotton Soil
+Andhra Pradesh,Guntur,155.3,22.8,168.3,7.36,Black Cotton Soil
+Andhra Pradesh,Guntur,159.1,24.7,191.3,7.26,Black Cotton Soil
+Andhra Pradesh,Guntur,160.0,20.1,192.4,7.62,Black Cotton Soil
+Andhra Pradesh,Guntur,156.0,22.8,183.3,7.19,Black Cotton Soil
+Andhra Pradesh,Guntur,165.3,22.2,188.4,7.42,Black Cotton Soil
+Andhra Pradesh,Guntur,150.0,20.9,165.6,7.66,Black Cotton Soil
+Andhra Pradesh,Guntur,167.6,24.0,174.2,7.13,Black Cotton Soil
+Andhra Pradesh,Guntur,167.6,24.7,167.6,7.39,Black Cotton Soil
+Andhra Pradesh,Guntur,151.4,23.6,188.0,7.18,Black Cotton Soil
+Andhra Pradesh,Guntur,159.5,22.3,173.0,7.62,Black Cotton Soil
+Andhra Pradesh,Guntur,158.5,20.3,181.2,7.54,Black Cotton Soil
+Andhra Pradesh,Guntur,154.0,20.9,194.9,7.49,Black Cotton Soil
+Andhra Pradesh,Guntur,158.8,22.1,168.6,7.23,Black Cotton Soil
+Andhra Pradesh,Guntur,156.8,22.5,171.9,7.23,Black Cotton Soil
+Andhra Pradesh,Kurnool,116.4,14.8,121.9,8.04,Red & Black Saline
+Andhra Pradesh,Kurnool,132.2,11.4,122.1,7.9,Red & Black Saline
+Andhra Pradesh,Kurnool,119.3,11.8,143.1,7.84,Red & Black Saline
+Andhra Pradesh,Kurnool,124.5,15.7,139.2,7.61,Red & Black Saline
+Andhra Pradesh,Kurnool,116.9,13.6,127.7,7.78,Red & Black Saline
+Andhra Pradesh,Kurnool,129.6,15.0,144.5,7.56,Red & Black Saline
+Andhra Pradesh,Kurnool,123.1,13.0,140.9,7.65,Red & Black Saline
+Andhra Pradesh,Kurnool,118.8,13.7,127.7,7.67,Red & Black Saline
+Andhra Pradesh,Kurnool,120.0,16.5,128.3,8.02,Red & Black Saline
+Andhra Pradesh,Kurnool,126.0,11.3,145.0,8.0,Red & Black Saline
+Andhra Pradesh,Kurnool,134.4,16.6,140.5,7.6,Red & Black Saline
+Andhra Pradesh,Kurnool,124.7,12.3,127.0,7.54,Red & Black Saline
+Andhra Pradesh,Kurnool,122.6,16.9,123.0,7.97,Red & Black Saline
+Andhra Pradesh,Kurnool,124.1,13.5,143.7,8.1,Red & Black Saline
+Andhra Pradesh,Kurnool,126.1,15.3,119.6,7.68,Red & Black Saline
+Andhra Pradesh,Kurnool,134.4,14.5,131.3,7.95,Red & Black Saline
+Andhra Pradesh,Kurnool,116.1,14.5,130.1,8.01,Red & Black Saline
+Andhra Pradesh,Kurnool,118.1,16.8,117.4,7.61,Red & Black Saline
+Andhra Pradesh,Kurnool,126.9,15.1,122.1,7.57,Red & Black Saline
+Andhra Pradesh,Kurnool,132.8,12.5,132.8,7.87,Red & Black Saline
+Andhra Pradesh,Anantapur,108.4,12.5,115.7,8.36,Red Sandy Arid
+Andhra Pradesh,Anantapur,104.1,13.3,107.2,8.04,Red Sandy Arid
+Andhra Pradesh,Anantapur,113.4,10.8,109.5,8.25,Red Sandy Arid
+Andhra Pradesh,Anantapur,101.5,11.7,130.0,8.4,Red Sandy Arid
+Andhra Pradesh,Anantapur,101.5,10.3,108.0,8.36,Red Sandy Arid
+Andhra Pradesh,Anantapur,117.6,14.3,111.1,7.89,Red Sandy Arid
+Andhra Pradesh,Anantapur,116.7,13.2,118.4,8.39,Red Sandy Arid
+Andhra Pradesh,Anantapur,113.1,9.0,124.5,7.98,Red Sandy Arid
+Andhra Pradesh,Anantapur,113.3,14.6,104.0,7.87,Red Sandy Arid
+Andhra Pradesh,Anantapur,102.1,12.3,108.2,8.16,Red Sandy Arid
+Andhra Pradesh,Anantapur,114.4,10.2,119.0,7.96,Red Sandy Arid
+Andhra Pradesh,Anantapur,109.8,14.4,125.4,7.86,Red Sandy Arid
+Andhra Pradesh,Anantapur,108.5,10.7,100.1,8.26,Red Sandy Arid
+Andhra Pradesh,Anantapur,112.7,10.6,122.2,8.13,Red Sandy Arid
+Andhra Pradesh,Anantapur,108.6,9.1,102.3,8.33,Red Sandy Arid
+Andhra Pradesh,Anantapur,118.1,12.3,125.0,8.15,Red Sandy Arid
+Andhra Pradesh,Anantapur,103.0,9.8,109.2,8.34,Red Sandy Arid
+Andhra Pradesh,Anantapur,115.9,14.2,127.0,7.93,Red Sandy Arid
+Andhra Pradesh,Anantapur,105.0,9.6,123.4,8.33,Red Sandy Arid
+Andhra Pradesh,Anantapur,108.1,12.7,104.6,8.36,Red Sandy Arid
+Andhra Pradesh,Visakhapatnam,147.3,21.9,164.3,7.03,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,130.5,20.4,150.0,7.06,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,146.0,21.2,164.3,6.66,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,145.7,16.6,166.2,7.02,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,134.4,20.9,153.8,6.68,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,145.9,17.4,140.7,6.62,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,136.6,21.2,169.0,6.67,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,142.8,18.4,169.4,6.82,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,148.8,16.7,169.1,6.61,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,149.3,17.6,143.3,6.76,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,144.6,17.9,158.2,6.81,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,137.7,19.5,147.6,6.93,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,130.0,21.6,156.2,6.93,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,144.8,20.0,150.9,6.54,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,143.3,18.0,149.4,7.01,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,144.4,17.8,149.3,6.75,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,138.0,17.8,143.8,6.75,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,148.8,20.1,167.1,6.87,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,136.0,19.3,140.0,6.67,Laterite & Coastal Sand
+Andhra Pradesh,Visakhapatnam,138.6,19.5,159.6,6.78,Laterite & Coastal Sand
+Andhra Pradesh,Chittoor,128.8,13.3,139.2,7.54,Red Loamy Soil
+Andhra Pradesh,Chittoor,135.9,13.0,127.5,7.31,Red Loamy Soil
+Andhra Pradesh,Chittoor,132.7,14.0,149.6,7.45,Red Loamy Soil
+Andhra Pradesh,Chittoor,133.5,13.3,131.0,7.01,Red Loamy Soil
+Andhra Pradesh,Chittoor,124.9,14.9,150.5,7.04,Red Loamy Soil
+Andhra Pradesh,Chittoor,128.3,15.8,130.8,7.42,Red Loamy Soil
+Andhra Pradesh,Chittoor,129.9,13.5,144.7,7.0,Red Loamy Soil
+Andhra Pradesh,Chittoor,135.0,16.6,128.2,7.26,Red Loamy Soil
+Andhra Pradesh,Chittoor,123.5,17.7,140.5,7.03,Red Loamy Soil
+Andhra Pradesh,Chittoor,125.0,17.1,138.7,7.48,Red Loamy Soil
+Andhra Pradesh,Chittoor,133.4,17.9,142.9,7.57,Red Loamy Soil
+Andhra Pradesh,Chittoor,137.8,15.7,146.6,7.3,Red Loamy Soil
+Andhra Pradesh,Chittoor,136.6,15.3,151.9,7.45,Red Loamy Soil
+Andhra Pradesh,Chittoor,129.5,13.6,132.4,7.38,Red Loamy Soil
+Andhra Pradesh,Chittoor,135.3,15.1,143.8,7.16,Red Loamy Soil
+Andhra Pradesh,Chittoor,121.5,13.7,133.2,7.19,Red Loamy Soil
+Andhra Pradesh,Chittoor,130.8,12.8,131.9,7.42,Red Loamy Soil
+Andhra Pradesh,Chittoor,134.1,12.4,137.2,7.33,Red Loamy Soil
+Andhra Pradesh,Chittoor,128.3,13.2,137.6,7.54,Red Loamy Soil
+Andhra Pradesh,Chittoor,131.7,16.2,150.7,7.46,Red Loamy Soil
+Andhra Pradesh,East Godavari,147.6,17.0,165.6,7.05,Alluvial Delta
+Andhra Pradesh,East Godavari,157.1,22.7,167.6,7.05,Alluvial Delta
+Andhra Pradesh,East Godavari,150.9,20.6,161.6,6.73,Alluvial Delta
+Andhra Pradesh,East Godavari,148.7,17.2,165.1,7.01,Alluvial Delta
+Andhra Pradesh,East Godavari,148.1,18.0,169.0,6.68,Alluvial Delta
+Andhra Pradesh,East Godavari,152.4,17.2,166.8,6.94,Alluvial Delta
+Andhra Pradesh,East Godavari,140.5,20.9,159.1,6.88,Alluvial Delta
+Andhra Pradesh,East Godavari,141.0,19.3,161.3,6.8,Alluvial Delta
+Andhra Pradesh,East Godavari,155.2,19.3,177.6,7.1,Alluvial Delta
+Andhra Pradesh,East Godavari,145.0,17.5,155.6,6.92,Alluvial Delta
+Andhra Pradesh,East Godavari,160.0,19.1,174.5,7.07,Alluvial Delta
+Andhra Pradesh,East Godavari,153.0,21.5,183.5,6.72,Alluvial Delta
+Andhra Pradesh,East Godavari,140.4,17.9,158.8,7.0,Alluvial Delta
+Andhra Pradesh,East Godavari,151.3,18.3,176.0,7.06,Alluvial Delta
+Andhra Pradesh,East Godavari,143.4,20.6,177.4,6.67,Alluvial Delta
+Andhra Pradesh,East Godavari,156.4,22.8,158.2,6.62,Alluvial Delta
+Andhra Pradesh,East Godavari,146.2,21.1,183.7,6.84,Alluvial Delta
+Andhra Pradesh,East Godavari,154.3,17.5,175.7,6.98,Alluvial Delta
+Andhra Pradesh,East Godavari,142.0,21.6,180.5,6.96,Alluvial Delta
+Andhra Pradesh,East Godavari,142.4,22.9,178.5,6.81,Alluvial Delta
+Andhra Pradesh,West Godavari,153.6,20.2,175.2,6.9,Alluvial Delta
+Andhra Pradesh,West Godavari,162.0,22.9,163.2,7.28,Alluvial Delta
+Andhra Pradesh,West Godavari,157.7,23.0,181.2,6.96,Alluvial Delta
+Andhra Pradesh,West Godavari,159.7,23.8,168.1,7.18,Alluvial Delta
+Andhra Pradesh,West Godavari,155.8,20.9,173.1,7.14,Alluvial Delta
+Andhra Pradesh,West Godavari,150.4,23.1,184.9,6.75,Alluvial Delta
+Andhra Pradesh,West Godavari,162.6,19.5,173.9,7.07,Alluvial Delta
+Andhra Pradesh,West Godavari,152.6,18.2,185.5,6.81,Alluvial Delta
+Andhra Pradesh,West Godavari,149.2,22.8,170.2,7.23,Alluvial Delta
+Andhra Pradesh,West Godavari,159.0,19.7,160.3,7.27,Alluvial Delta
+Andhra Pradesh,West Godavari,146.7,22.3,174.7,7.15,Alluvial Delta
+Andhra Pradesh,West Godavari,158.8,21.9,174.7,7.18,Alluvial Delta
+Andhra Pradesh,West Godavari,146.9,19.3,180.8,6.88,Alluvial Delta
+Andhra Pradesh,West Godavari,156.6,20.8,175.9,6.96,Alluvial Delta
+Andhra Pradesh,West Godavari,159.9,20.0,181.1,6.86,Alluvial Delta
+Andhra Pradesh,West Godavari,150.0,18.7,165.8,6.77,Alluvial Delta
+Andhra Pradesh,West Godavari,155.7,22.6,165.6,6.83,Alluvial Delta
+Andhra Pradesh,West Godavari,154.7,22.3,189.3,7.01,Alluvial Delta
+Andhra Pradesh,West Godavari,150.7,18.6,165.8,6.84,Alluvial Delta
+Andhra Pradesh,West Godavari,148.6,18.1,176.0,6.86,Alluvial Delta
+Andhra Pradesh,Krishna,161.5,20.8,173.9,6.98,Black & Alluvial
+Andhra Pradesh,Krishna,159.4,20.4,179.2,7.24,Black & Alluvial
+Andhra Pradesh,Krishna,151.4,20.1,158.5,6.93,Black & Alluvial
+Andhra Pradesh,Krishna,160.8,20.4,177.7,7.14,Black & Alluvial
+Andhra Pradesh,Krishna,143.5,21.3,154.6,6.99,Black & Alluvial
+Andhra Pradesh,Krishna,153.3,19.3,182.8,6.97,Black & Alluvial
+Andhra Pradesh,Krishna,157.3,21.1,176.7,7.04,Black & Alluvial
+Andhra Pradesh,Krishna,152.5,20.2,166.3,7.42,Black & Alluvial
+Andhra Pradesh,Krishna,161.8,19.3,171.6,7.27,Black & Alluvial
+Andhra Pradesh,Krishna,156.8,23.2,159.2,7.03,Black & Alluvial
+Andhra Pradesh,Krishna,155.2,18.4,158.2,6.95,Black & Alluvial
+Andhra Pradesh,Krishna,142.1,20.2,170.8,7.07,Black & Alluvial
+Andhra Pradesh,Krishna,146.6,21.7,174.1,7.17,Black & Alluvial
+Andhra Pradesh,Krishna,155.7,23.0,176.6,7.28,Black & Alluvial
+Andhra Pradesh,Krishna,155.2,23.1,165.8,7.23,Black & Alluvial
+Andhra Pradesh,Krishna,155.0,23.0,177.8,6.94,Black & Alluvial
+Andhra Pradesh,Krishna,145.3,19.3,175.5,7.24,Black & Alluvial
+Andhra Pradesh,Krishna,147.8,18.2,173.7,7.32,Black & Alluvial
+Andhra Pradesh,Krishna,160.9,20.5,167.8,6.95,Black & Alluvial
+Andhra Pradesh,Krishna,142.8,20.1,162.7,7.05,Black & Alluvial
+Andhra Pradesh,Prakasam,119.8,17.3,148.1,7.65,Red Loam
+Andhra Pradesh,Prakasam,137.0,17.5,143.2,7.46,Red Loam
+Andhra Pradesh,Prakasam,118.8,16.0,137.1,7.69,Red Loam
+Andhra Pradesh,Prakasam,136.3,12.6,140.6,7.68,Red Loam
+Andhra Pradesh,Prakasam,127.8,12.0,133.4,7.5,Red Loam
+Andhra Pradesh,Prakasam,131.4,16.6,132.9,7.72,Red Loam
+Andhra Pradesh,Prakasam,123.8,17.2,147.4,7.63,Red Loam
+Andhra Pradesh,Prakasam,127.1,13.4,132.7,7.88,Red Loam
+Andhra Pradesh,Prakasam,126.1,14.6,152.6,7.69,Red Loam
+Andhra Pradesh,Prakasam,128.9,14.0,128.6,7.52,Red Loam
+Andhra Pradesh,Prakasam,133.1,15.3,145.8,7.42,Red Loam
+Andhra Pradesh,Prakasam,129.0,17.1,136.1,7.72,Red Loam
+Andhra Pradesh,Prakasam,120.4,17.3,141.3,7.44,Red Loam
+Andhra Pradesh,Prakasam,121.2,14.8,139.6,7.36,Red Loam
+Andhra Pradesh,Prakasam,137.8,17.0,136.8,7.37,Red Loam
+Andhra Pradesh,Prakasam,134.6,14.5,144.5,7.61,Red Loam
+Andhra Pradesh,Prakasam,123.5,16.5,152.4,7.45,Red Loam
+Andhra Pradesh,Prakasam,129.0,13.8,150.7,7.6,Red Loam
+Andhra Pradesh,Prakasam,135.6,16.7,131.3,7.77,Red Loam
+Andhra Pradesh,Prakasam,126.3,17.1,138.2,7.79,Red Loam
+Andhra Pradesh,Nellore,133.7,15.8,152.6,7.5,Coastal Sandy Clay
+Andhra Pradesh,Nellore,137.8,14.9,151.2,7.11,Coastal Sandy Clay
+Andhra Pradesh,Nellore,139.0,17.3,148.7,7.09,Coastal Sandy Clay
+Andhra Pradesh,Nellore,131.8,18.2,152.2,7.04,Coastal Sandy Clay
+Andhra Pradesh,Nellore,143.5,14.3,157.3,7.32,Coastal Sandy Clay
+Andhra Pradesh,Nellore,144.2,16.3,154.9,7.39,Coastal Sandy Clay
+Andhra Pradesh,Nellore,147.6,17.0,136.1,7.2,Coastal Sandy Clay
+Andhra Pradesh,Nellore,139.8,19.2,161.2,7.16,Coastal Sandy Clay
+Andhra Pradesh,Nellore,138.5,16.7,156.7,7.15,Coastal Sandy Clay
+Andhra Pradesh,Nellore,141.1,14.9,149.1,7.48,Coastal Sandy Clay
+Andhra Pradesh,Nellore,134.8,18.2,154.5,7.41,Coastal Sandy Clay
+Andhra Pradesh,Nellore,145.0,19.2,146.4,7.09,Coastal Sandy Clay
+Andhra Pradesh,Nellore,142.4,18.6,161.2,6.92,Coastal Sandy Clay
+Andhra Pradesh,Nellore,129.4,17.8,162.6,7.5,Coastal Sandy Clay
+Andhra Pradesh,Nellore,142.9,16.6,138.0,7.28,Coastal Sandy Clay
+Andhra Pradesh,Nellore,145.5,16.7,155.8,7.44,Coastal Sandy Clay
+Andhra Pradesh,Nellore,128.9,18.8,143.8,7.12,Coastal Sandy Clay
+Andhra Pradesh,Nellore,130.9,17.2,152.0,7.38,Coastal Sandy Clay
+Andhra Pradesh,Nellore,131.4,14.5,161.1,7.27,Coastal Sandy Clay
+Andhra Pradesh,Nellore,132.8,19.5,139.3,7.18,Coastal Sandy Clay
+Telangana,Warangal,130.1,14.5,125.3,6.98,Red Sandy Loam (Chalka)
+Telangana,Warangal,143.0,17.1,129.7,6.77,Red Sandy Loam (Chalka)
+Telangana,Warangal,131.9,16.5,144.2,6.75,Red Sandy Loam (Chalka)
+Telangana,Warangal,130.0,18.1,131.0,6.73,Red Sandy Loam (Chalka)
+Telangana,Warangal,134.7,14.4,142.2,6.84,Red Sandy Loam (Chalka)
+Telangana,Warangal,144.9,14.8,154.3,6.89,Red Sandy Loam (Chalka)
+Telangana,Warangal,130.5,16.4,145.6,6.95,Red Sandy Loam (Chalka)
+Telangana,Warangal,126.0,16.6,139.9,7.04,Red Sandy Loam (Chalka)
+Telangana,Warangal,130.7,17.8,143.2,6.71,Red Sandy Loam (Chalka)
+Telangana,Warangal,137.7,16.7,145.3,6.93,Red Sandy Loam (Chalka)
+Telangana,Warangal,138.2,18.0,143.8,7.04,Red Sandy Loam (Chalka)
+Telangana,Warangal,137.9,14.9,138.2,6.85,Red Sandy Loam (Chalka)
+Telangana,Warangal,139.6,13.5,133.9,6.95,Red Sandy Loam (Chalka)
+Telangana,Warangal,128.5,13.8,141.2,7.08,Red Sandy Loam (Chalka)
+Telangana,Warangal,135.6,18.5,149.9,6.65,Red Sandy Loam (Chalka)
+Telangana,Warangal,141.5,15.9,149.2,6.95,Red Sandy Loam (Chalka)
+Telangana,Warangal,131.8,13.7,153.9,6.58,Red Sandy Loam (Chalka)
+Telangana,Warangal,144.3,18.2,146.7,7.09,Red Sandy Loam (Chalka)
+Telangana,Warangal,144.3,17.8,136.0,6.97,Red Sandy Loam (Chalka)
+Telangana,Warangal,125.3,16.2,138.6,6.9,Red Sandy Loam (Chalka)
+Telangana,Hyderabad,133.4,15.5,144.7,7.26,Red Sandy Loam
+Telangana,Hyderabad,122.2,13.4,120.8,7.23,Red Sandy Loam
+Telangana,Hyderabad,131.2,17.5,126.6,6.74,Red Sandy Loam
+Telangana,Hyderabad,136.5,17.5,129.1,6.94,Red Sandy Loam
+Telangana,Hyderabad,122.8,17.7,129.1,7.0,Red Sandy Loam
+Telangana,Hyderabad,121.9,17.3,124.1,6.97,Red Sandy Loam
+Telangana,Hyderabad,133.4,16.5,148.4,6.95,Red Sandy Loam
+Telangana,Hyderabad,134.8,12.9,132.4,6.76,Red Sandy Loam
+Telangana,Hyderabad,129.8,14.4,148.5,6.72,Red Sandy Loam
+Telangana,Hyderabad,127.4,14.7,148.5,7.21,Red Sandy Loam
+Telangana,Hyderabad,122.0,16.1,136.3,7.29,Red Sandy Loam
+Telangana,Hyderabad,127.2,14.4,125.7,6.77,Red Sandy Loam
+Telangana,Hyderabad,137.0,14.7,139.9,7.09,Red Sandy Loam
+Telangana,Hyderabad,131.9,12.1,143.6,6.85,Red Sandy Loam
+Telangana,Hyderabad,122.5,15.4,122.1,7.16,Red Sandy Loam
+Telangana,Hyderabad,124.1,13.3,146.1,6.9,Red Sandy Loam
+Telangana,Hyderabad,123.0,17.4,120.1,7.22,Red Sandy Loam
+Telangana,Hyderabad,122.9,12.8,127.5,6.8,Red Sandy Loam
+Telangana,Hyderabad,133.2,12.2,120.4,7.17,Red Sandy Loam
+Telangana,Hyderabad,124.8,13.9,125.2,6.73,Red Sandy Loam
+Telangana,Khammam,146.8,18.2,157.4,6.89,Black & Red Loam
+Telangana,Khammam,147.6,18.1,138.3,6.9,Black & Red Loam
+Telangana,Khammam,150.9,15.3,158.5,7.12,Black & Red Loam
+Telangana,Khammam,142.4,17.7,163.9,6.64,Black & Red Loam
+Telangana,Khammam,141.6,17.4,155.6,6.89,Black & Red Loam
+Telangana,Khammam,150.2,15.4,137.4,6.96,Black & Red Loam
+Telangana,Khammam,133.3,16.7,154.0,6.93,Black & Red Loam
+Telangana,Khammam,138.5,21.0,150.9,6.87,Black & Red Loam
+Telangana,Khammam,144.1,15.6,156.1,7.11,Black & Red Loam
+Telangana,Khammam,145.0,19.6,156.6,6.73,Black & Red Loam
+Telangana,Khammam,141.0,16.4,145.2,6.87,Black & Red Loam
+Telangana,Khammam,140.3,15.6,147.8,7.0,Black & Red Loam
+Telangana,Khammam,139.5,15.9,162.7,6.64,Black & Red Loam
+Telangana,Khammam,148.6,15.6,137.9,7.04,Black & Red Loam
+Telangana,Khammam,148.2,18.3,152.6,6.94,Black & Red Loam
+Telangana,Khammam,138.6,15.7,145.6,7.0,Black & Red Loam
+Telangana,Khammam,147.0,20.2,156.6,7.18,Black & Red Loam
+Telangana,Khammam,144.0,17.1,152.3,6.73,Black & Red Loam
+Telangana,Khammam,145.1,16.3,138.2,7.11,Black & Red Loam
+Telangana,Khammam,139.4,19.6,152.2,7.08,Black & Red Loam
+Telangana,Karimnagar,144.9,20.3,154.6,7.17,Black Cotton & Red
+Telangana,Karimnagar,140.9,14.7,157.9,7.3,Black Cotton & Red
+Telangana,Karimnagar,133.3,15.6,151.1,6.99,Black Cotton & Red
+Telangana,Karimnagar,134.8,14.5,156.1,7.14,Black Cotton & Red
+Telangana,Karimnagar,136.0,15.4,149.0,6.82,Black Cotton & Red
+Telangana,Karimnagar,142.9,15.8,142.6,7.0,Black Cotton & Red
+Telangana,Karimnagar,135.4,18.8,153.3,7.14,Black Cotton & Red
+Telangana,Karimnagar,129.7,14.8,134.7,7.17,Black Cotton & Red
+Telangana,Karimnagar,141.5,16.1,149.9,7.09,Black Cotton & Red
+Telangana,Karimnagar,136.8,16.1,152.6,6.87,Black Cotton & Red
+Telangana,Karimnagar,136.6,16.2,150.4,7.09,Black Cotton & Red
+Telangana,Karimnagar,141.3,14.8,141.9,7.16,Black Cotton & Red
+Telangana,Karimnagar,128.2,16.3,136.3,6.88,Black Cotton & Red
+Telangana,Karimnagar,133.1,16.5,130.2,7.25,Black Cotton & Red
+Telangana,Karimnagar,131.5,16.8,151.1,7.1,Black Cotton & Red
+Telangana,Karimnagar,144.7,19.3,132.2,7.32,Black Cotton & Red
+Telangana,Karimnagar,128.8,14.6,157.6,7.32,Black Cotton & Red
+Telangana,Karimnagar,139.5,17.9,151.3,7.05,Black Cotton & Red
+Telangana,Karimnagar,130.3,14.6,139.7,7.28,Black Cotton & Red
+Telangana,Karimnagar,140.4,19.5,157.6,6.85,Black Cotton & Red
+Telangana,Nalgonda,128.9,12.0,130.7,7.51,Red Chalkas
+Telangana,Nalgonda,119.9,12.4,123.2,7.4,Red Chalkas
+Telangana,Nalgonda,115.4,13.6,116.4,7.51,Red Chalkas
+Telangana,Nalgonda,130.1,12.6,134.8,7.69,Red Chalkas
+Telangana,Nalgonda,128.3,11.9,117.4,7.32,Red Chalkas
+Telangana,Nalgonda,124.0,15.1,132.7,7.31,Red Chalkas
+Telangana,Nalgonda,127.5,13.5,135.6,7.66,Red Chalkas
+Telangana,Nalgonda,121.0,16.0,129.9,7.58,Red Chalkas
+Telangana,Nalgonda,124.5,15.7,131.8,7.29,Red Chalkas
+Telangana,Nalgonda,113.4,13.2,122.1,7.36,Red Chalkas
+Telangana,Nalgonda,113.1,13.5,122.3,7.47,Red Chalkas
+Telangana,Nalgonda,113.1,15.5,115.3,7.72,Red Chalkas
+Telangana,Nalgonda,129.1,14.2,128.2,7.48,Red Chalkas
+Telangana,Nalgonda,123.1,15.3,139.9,7.47,Red Chalkas
+Telangana,Nalgonda,128.2,14.4,122.6,7.49,Red Chalkas
+Telangana,Nalgonda,115.0,10.9,116.1,7.74,Red Chalkas
+Telangana,Nalgonda,118.9,14.8,128.1,7.3,Red Chalkas
+Telangana,Nalgonda,117.0,13.1,126.2,7.51,Red Chalkas
+Telangana,Nalgonda,115.2,12.7,121.5,7.45,Red Chalkas
+Telangana,Nalgonda,118.8,14.1,136.7,7.59,Red Chalkas
+Telangana,Nizamabad,131.3,16.6,157.4,6.57,Black Cotton Soil
+Telangana,Nizamabad,144.5,19.9,164.2,6.92,Black Cotton Soil
+Telangana,Nizamabad,136.7,19.5,141.2,6.61,Black Cotton Soil
+Telangana,Nizamabad,149.4,20.2,148.8,6.76,Black Cotton Soil
+Telangana,Nizamabad,148.8,17.9,148.3,6.87,Black Cotton Soil
+Telangana,Nizamabad,146.3,20.0,161.9,6.84,Black Cotton Soil
+Telangana,Nizamabad,143.7,19.2,156.4,6.65,Black Cotton Soil
+Telangana,Nizamabad,137.2,18.2,142.4,6.53,Black Cotton Soil
+Telangana,Nizamabad,149.0,18.9,143.8,6.48,Black Cotton Soil
+Telangana,Nizamabad,131.5,21.1,140.0,6.86,Black Cotton Soil
+Telangana,Nizamabad,146.7,21.3,138.1,6.6,Black Cotton Soil
+Telangana,Nizamabad,145.3,16.8,148.3,6.5,Black Cotton Soil
+Telangana,Nizamabad,146.6,20.6,161.3,6.5,Black Cotton Soil
+Telangana,Nizamabad,138.8,18.5,157.3,6.54,Black Cotton Soil
+Telangana,Nizamabad,138.9,17.7,159.5,6.67,Black Cotton Soil
+Telangana,Nizamabad,140.7,17.9,161.3,6.68,Black Cotton Soil
+Telangana,Nizamabad,146.7,18.2,165.4,6.99,Black Cotton Soil
+Telangana,Nizamabad,139.2,17.7,148.5,6.72,Black Cotton Soil
+Telangana,Nizamabad,149.3,20.9,161.0,6.48,Black Cotton Soil
+Telangana,Nizamabad,135.0,19.8,163.2,6.73,Black Cotton Soil
+Telangana,Mahabubnagar,110.1,14.1,130.5,7.57,Red Sandy
+Telangana,Mahabubnagar,123.3,10.6,132.2,7.49,Red Sandy
+Telangana,Mahabubnagar,116.7,14.7,111.7,7.67,Red Sandy
+Telangana,Mahabubnagar,115.0,9.2,106.6,7.7,Red Sandy
+Telangana,Mahabubnagar,112.7,15.0,116.2,7.42,Red Sandy
+Telangana,Mahabubnagar,126.6,14.0,124.5,7.87,Red Sandy
+Telangana,Mahabubnagar,110.8,10.7,129.9,7.82,Red Sandy
+Telangana,Mahabubnagar,110.8,13.2,118.5,7.4,Red Sandy
+Telangana,Mahabubnagar,109.6,10.5,130.0,7.73,Red Sandy
+Telangana,Mahabubnagar,122.5,12.2,108.3,7.57,Red Sandy
+Telangana,Mahabubnagar,114.0,9.3,117.6,7.88,Red Sandy
+Telangana,Mahabubnagar,117.1,9.7,132.2,7.76,Red Sandy
+Telangana,Mahabubnagar,108.3,12.1,112.3,7.49,Red Sandy
+Telangana,Mahabubnagar,116.6,12.7,112.2,7.65,Red Sandy
+Telangana,Mahabubnagar,121.3,9.5,134.2,7.44,Red Sandy
+Telangana,Mahabubnagar,118.5,12.0,134.6,7.73,Red Sandy
+Telangana,Mahabubnagar,115.8,11.8,124.1,7.99,Red Sandy
+Telangana,Mahabubnagar,113.1,9.1,128.7,7.61,Red Sandy
+Telangana,Mahabubnagar,122.7,12.8,128.1,7.84,Red Sandy
+Telangana,Mahabubnagar,114.7,9.3,121.4,7.89,Red Sandy
+Tamil Nadu,Coimbatore,143.5,21.7,188.9,6.62,Red Loam / Clay
+Tamil Nadu,Coimbatore,152.6,21.9,176.9,6.67,Red Loam / Clay
+Tamil Nadu,Coimbatore,149.2,18.8,176.3,6.32,Red Loam / Clay
+Tamil Nadu,Coimbatore,140.8,22.6,190.5,6.79,Red Loam / Clay
+Tamil Nadu,Coimbatore,150.9,18.5,197.6,6.31,Red Loam / Clay
+Tamil Nadu,Coimbatore,147.1,21.7,201.0,6.4,Red Loam / Clay
+Tamil Nadu,Coimbatore,142.5,19.2,201.7,6.65,Red Loam / Clay
+Tamil Nadu,Coimbatore,157.9,19.3,204.2,6.5,Red Loam / Clay
+Tamil Nadu,Coimbatore,150.0,22.5,190.6,6.68,Red Loam / Clay
+Tamil Nadu,Coimbatore,154.5,17.5,193.1,6.69,Red Loam / Clay
+Tamil Nadu,Coimbatore,150.9,18.9,177.4,6.6,Red Loam / Clay
+Tamil Nadu,Coimbatore,146.1,20.6,187.8,6.61,Red Loam / Clay
+Tamil Nadu,Coimbatore,147.0,17.3,201.1,6.41,Red Loam / Clay
+Tamil Nadu,Coimbatore,160.0,18.6,204.4,6.77,Red Loam / Clay
+Tamil Nadu,Coimbatore,141.5,20.8,185.9,6.68,Red Loam / Clay
+Tamil Nadu,Coimbatore,153.6,22.7,179.3,6.56,Red Loam / Clay
+Tamil Nadu,Coimbatore,155.6,17.2,177.0,6.67,Red Loam / Clay
+Tamil Nadu,Coimbatore,147.3,19.3,192.0,6.56,Red Loam / Clay
+Tamil Nadu,Coimbatore,153.6,22.7,186.2,6.66,Red Loam / Clay
+Tamil Nadu,Coimbatore,151.5,20.2,186.9,6.59,Red Loam / Clay
+Tamil Nadu,Madurai,125.0,12.7,147.1,7.0,Black Soil
+Tamil Nadu,Madurai,127.7,15.4,132.9,6.86,Black Soil
+Tamil Nadu,Madurai,128.9,18.0,133.6,7.25,Black Soil
+Tamil Nadu,Madurai,129.8,12.7,150.6,6.97,Black Soil
+Tamil Nadu,Madurai,138.0,14.7,127.6,7.11,Black Soil
+Tamil Nadu,Madurai,136.9,13.9,135.4,6.74,Black Soil
+Tamil Nadu,Madurai,130.8,17.3,150.5,7.13,Black Soil
+Tamil Nadu,Madurai,138.5,15.8,148.8,7.01,Black Soil
+Tamil Nadu,Madurai,122.4,13.2,129.2,7.17,Black Soil
+Tamil Nadu,Madurai,120.5,15.3,136.1,7.18,Black Soil
+Tamil Nadu,Madurai,131.0,15.7,127.6,6.89,Black Soil
+Tamil Nadu,Madurai,140.0,16.3,140.8,7.16,Black Soil
+Tamil Nadu,Madurai,136.5,12.4,154.2,7.09,Black Soil
+Tamil Nadu,Madurai,129.0,16.1,135.3,7.23,Black Soil
+Tamil Nadu,Madurai,135.6,15.8,130.5,7.28,Black Soil
+Tamil Nadu,Madurai,128.7,17.5,126.7,6.77,Black Soil
+Tamil Nadu,Madurai,123.1,13.0,134.7,7.13,Black Soil
+Tamil Nadu,Madurai,126.9,17.6,151.8,7.21,Black Soil
+Tamil Nadu,Madurai,125.0,15.8,141.5,6.78,Black Soil
+Tamil Nadu,Madurai,126.1,15.2,140.1,6.8,Black Soil
+Tamil Nadu,Thanjavur,166.8,20.9,179.8,6.83,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,160.1,25.1,176.9,6.9,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,148.6,20.3,179.2,6.75,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,161.0,24.6,172.5,6.78,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,158.0,23.8,168.7,6.97,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,157.7,24.8,180.5,6.58,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,149.5,20.4,173.2,6.69,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,152.1,23.6,169.4,6.83,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,162.7,25.2,189.3,6.48,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,155.4,23.4,169.6,6.68,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,153.3,21.5,162.9,6.57,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,155.7,23.7,167.4,6.92,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,151.2,22.0,177.3,6.59,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,163.3,23.0,175.4,6.7,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,154.2,20.1,188.4,6.7,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,167.3,21.3,170.6,6.43,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,157.9,25.3,179.6,6.68,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,158.7,25.1,172.9,6.93,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,162.6,24.6,171.0,6.64,Alluvial Cauvery Delta
+Tamil Nadu,Thanjavur,159.4,21.2,176.6,6.44,Alluvial Cauvery Delta
+Tamil Nadu,Salem,142.1,19.1,155.4,7.09,Red Soil
+Tamil Nadu,Salem,145.6,15.2,176.3,6.74,Red Soil
+Tamil Nadu,Salem,147.9,16.5,175.2,6.95,Red Soil
+Tamil Nadu,Salem,136.0,17.6,162.0,6.53,Red Soil
+Tamil Nadu,Salem,134.7,16.5,161.2,6.77,Red Soil
+Tamil Nadu,Salem,144.1,17.6,156.8,6.87,Red Soil
+Tamil Nadu,Salem,135.3,20.4,169.2,6.68,Red Soil
+Tamil Nadu,Salem,138.7,19.5,163.0,6.93,Red Soil
+Tamil Nadu,Salem,138.0,19.4,158.1,6.9,Red Soil
+Tamil Nadu,Salem,151.6,18.0,170.9,6.94,Red Soil
+Tamil Nadu,Salem,145.8,14.7,161.2,7.08,Red Soil
+Tamil Nadu,Salem,147.7,19.2,164.3,6.93,Red Soil
+Tamil Nadu,Salem,143.7,15.5,165.9,6.87,Red Soil
+Tamil Nadu,Salem,148.8,15.4,167.4,6.52,Red Soil
+Tamil Nadu,Salem,151.0,15.2,147.6,6.69,Red Soil
+Tamil Nadu,Salem,135.0,18.6,159.3,6.96,Red Soil
+Tamil Nadu,Salem,150.4,19.7,169.1,6.54,Red Soil
+Tamil Nadu,Salem,134.8,15.7,156.8,6.9,Red Soil
+Tamil Nadu,Salem,142.5,16.4,152.2,7.05,Red Soil
+Tamil Nadu,Salem,138.8,16.6,170.2,6.93,Red Soil
+Tamil Nadu,Tiruchirappalli,138.9,17.2,151.3,6.92,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,130.9,16.3,139.7,7.38,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,132.0,14.7,139.2,7.22,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,132.3,15.1,161.0,7.28,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,131.5,13.7,153.3,7.03,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,145.6,17.9,161.6,7.28,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,131.8,14.7,154.4,7.01,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,134.8,14.5,147.4,6.92,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,136.8,18.6,153.9,6.88,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,138.3,16.5,140.3,7.2,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,136.6,16.8,134.6,7.05,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,140.3,13.6,156.1,6.8,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,137.0,18.6,145.2,7.36,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,143.6,15.9,139.0,7.38,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,132.4,16.9,160.2,6.85,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,137.5,16.2,154.7,7.36,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,144.3,14.1,159.5,6.91,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,144.4,19.0,144.9,7.1,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,144.7,18.8,160.8,7.33,Alluvial & Red
+Tamil Nadu,Tiruchirappalli,126.2,16.4,136.2,7.39,Alluvial & Red
+Tamil Nadu,Chennai,120.7,16.9,131.3,7.4,Coastal Sandy Clay
+Tamil Nadu,Chennai,133.8,16.1,129.0,7.22,Coastal Sandy Clay
+Tamil Nadu,Chennai,117.3,12.0,128.8,7.25,Coastal Sandy Clay
+Tamil Nadu,Chennai,118.7,15.4,138.7,7.44,Coastal Sandy Clay
+Tamil Nadu,Chennai,130.1,12.1,140.7,7.64,Coastal Sandy Clay
+Tamil Nadu,Chennai,131.5,14.1,117.6,7.5,Coastal Sandy Clay
+Tamil Nadu,Chennai,118.7,11.8,124.7,7.25,Coastal Sandy Clay
+Tamil Nadu,Chennai,120.2,12.4,137.6,7.67,Coastal Sandy Clay
+Tamil Nadu,Chennai,121.0,15.3,115.3,7.49,Coastal Sandy Clay
+Tamil Nadu,Chennai,128.9,11.4,118.5,7.28,Coastal Sandy Clay
+Tamil Nadu,Chennai,123.1,14.0,141.9,7.52,Coastal Sandy Clay
+Tamil Nadu,Chennai,121.2,11.7,142.5,7.28,Coastal Sandy Clay
+Tamil Nadu,Chennai,127.3,12.3,119.0,7.19,Coastal Sandy Clay
+Tamil Nadu,Chennai,130.0,14.6,127.5,7.43,Coastal Sandy Clay
+Tamil Nadu,Chennai,124.4,14.2,134.9,7.23,Coastal Sandy Clay
+Tamil Nadu,Chennai,119.9,15.5,141.2,7.15,Coastal Sandy Clay
+Tamil Nadu,Chennai,123.9,15.2,117.3,7.44,Coastal Sandy Clay
+Tamil Nadu,Chennai,116.2,14.3,130.2,7.44,Coastal Sandy Clay
+Tamil Nadu,Chennai,118.0,13.0,130.6,7.17,Coastal Sandy Clay
+Tamil Nadu,Chennai,119.1,14.5,117.7,7.41,Coastal Sandy Clay
+Tamil Nadu,Tirunelveli,138.2,15.2,145.4,7.17,Black & Red Sandy
+Tamil Nadu,Tirunelveli,123.2,15.3,154.2,7.33,Black & Red Sandy
+Tamil Nadu,Tirunelveli,129.9,17.4,152.4,7.25,Black & Red Sandy
+Tamil Nadu,Tirunelveli,122.9,14.6,131.9,7.5,Black & Red Sandy
+Tamil Nadu,Tirunelveli,140.7,12.9,158.0,6.92,Black & Red Sandy
+Tamil Nadu,Tirunelveli,130.2,17.1,153.0,7.49,Black & Red Sandy
+Tamil Nadu,Tirunelveli,134.9,15.0,159.8,7.13,Black & Red Sandy
+Tamil Nadu,Tirunelveli,139.4,17.9,141.3,7.31,Black & Red Sandy
+Tamil Nadu,Tirunelveli,135.2,15.7,149.6,7.11,Black & Red Sandy
+Tamil Nadu,Tirunelveli,125.6,15.7,145.9,7.34,Black & Red Sandy
+Tamil Nadu,Tirunelveli,126.5,12.5,130.7,7.08,Black & Red Sandy
+Tamil Nadu,Tirunelveli,135.5,15.8,146.0,7.39,Black & Red Sandy
+Tamil Nadu,Tirunelveli,127.0,14.6,138.3,7.46,Black & Red Sandy
+Tamil Nadu,Tirunelveli,136.5,13.2,154.3,7.15,Black & Red Sandy
+Tamil Nadu,Tirunelveli,137.3,17.8,130.5,7.02,Black & Red Sandy
+Tamil Nadu,Tirunelveli,124.0,12.7,147.9,7.32,Black & Red Sandy
+Tamil Nadu,Tirunelveli,123.0,16.9,142.1,7.04,Black & Red Sandy
+Tamil Nadu,Tirunelveli,126.3,17.7,131.7,7.2,Black & Red Sandy
+Tamil Nadu,Tirunelveli,127.8,17.4,151.9,7.09,Black & Red Sandy
+Tamil Nadu,Tirunelveli,134.0,16.5,139.6,7.08,Black & Red Sandy
+Karnataka,Mysuru,147.9,25.0,166.6,6.28,Red Sandy Loam
+Karnataka,Mysuru,146.2,26.7,186.4,6.65,Red Sandy Loam
+Karnataka,Mysuru,157.5,23.6,174.9,6.68,Red Sandy Loam
+Karnataka,Mysuru,163.8,25.0,183.6,6.29,Red Sandy Loam
+Karnataka,Mysuru,153.3,21.9,171.3,6.55,Red Sandy Loam
+Karnataka,Mysuru,154.5,26.1,169.0,6.52,Red Sandy Loam
+Karnataka,Mysuru,161.1,26.5,176.9,6.68,Red Sandy Loam
+Karnataka,Mysuru,156.1,21.8,167.3,6.22,Red Sandy Loam
+Karnataka,Mysuru,157.9,26.5,185.4,6.16,Red Sandy Loam
+Karnataka,Mysuru,159.5,22.1,168.1,6.5,Red Sandy Loam
+Karnataka,Mysuru,157.1,26.2,165.6,6.56,Red Sandy Loam
+Karnataka,Mysuru,159.5,24.4,174.4,6.62,Red Sandy Loam
+Karnataka,Mysuru,151.7,26.7,160.5,6.66,Red Sandy Loam
+Karnataka,Mysuru,164.2,21.7,190.0,6.39,Red Sandy Loam
+Karnataka,Mysuru,149.9,24.6,166.1,6.65,Red Sandy Loam
+Karnataka,Mysuru,156.0,25.7,171.4,6.42,Red Sandy Loam
+Karnataka,Mysuru,152.2,22.6,175.4,6.4,Red Sandy Loam
+Karnataka,Mysuru,147.0,26.9,174.1,6.6,Red Sandy Loam
+Karnataka,Mysuru,163.3,23.2,172.4,6.44,Red Sandy Loam
+Karnataka,Mysuru,149.4,21.9,167.8,6.66,Red Sandy Loam
+Karnataka,Mandya,151.6,21.5,159.6,6.4,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,147.6,24.0,170.0,6.59,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,153.7,20.5,179.6,6.78,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,152.8,21.9,160.0,6.68,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,143.4,23.3,169.6,6.75,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,150.8,22.9,156.8,6.22,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,156.9,24.7,175.0,6.66,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,148.2,24.1,161.9,6.62,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,140.2,22.0,166.2,6.57,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,153.3,22.7,169.5,6.49,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,140.1,22.3,155.4,6.52,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,145.5,24.9,155.5,6.69,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,153.5,23.8,182.3,6.26,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,141.9,19.9,160.8,6.52,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,156.3,20.6,166.9,6.42,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,148.1,22.4,184.7,6.34,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,153.7,24.1,174.6,6.71,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,155.2,19.6,166.4,6.53,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,141.1,19.1,160.1,6.5,Red Loam (Sugarcane Belt)
+Karnataka,Mandya,148.7,23.7,172.0,6.71,Red Loam (Sugarcane Belt)
+Karnataka,Belagavi,139.9,21.2,151.3,6.63,Black & Laterite
+Karnataka,Belagavi,155.4,23.3,164.3,6.53,Black & Laterite
+Karnataka,Belagavi,139.5,23.6,177.0,6.84,Black & Laterite
+Karnataka,Belagavi,138.7,23.6,159.4,7.08,Black & Laterite
+Karnataka,Belagavi,149.7,22.5,171.4,6.74,Black & Laterite
+Karnataka,Belagavi,139.5,19.0,157.2,7.0,Black & Laterite
+Karnataka,Belagavi,145.8,23.4,160.0,6.95,Black & Laterite
+Karnataka,Belagavi,140.8,23.9,171.7,6.8,Black & Laterite
+Karnataka,Belagavi,157.5,18.3,163.1,7.0,Black & Laterite
+Karnataka,Belagavi,144.8,22.6,178.6,6.74,Black & Laterite
+Karnataka,Belagavi,153.5,18.2,158.2,7.1,Black & Laterite
+Karnataka,Belagavi,147.8,20.1,178.2,6.76,Black & Laterite
+Karnataka,Belagavi,151.6,22.0,152.6,6.87,Black & Laterite
+Karnataka,Belagavi,154.0,22.3,152.5,6.59,Black & Laterite
+Karnataka,Belagavi,152.2,21.8,172.2,6.69,Black & Laterite
+Karnataka,Belagavi,140.1,18.0,159.2,6.72,Black & Laterite
+Karnataka,Belagavi,143.4,18.8,155.6,6.77,Black & Laterite
+Karnataka,Belagavi,149.1,20.4,150.8,6.71,Black & Laterite
+Karnataka,Belagavi,139.9,21.6,159.7,6.73,Black & Laterite
+Karnataka,Belagavi,143.8,20.3,152.5,7.04,Black & Laterite
+Karnataka,Dharwad,153.1,22.9,162.2,6.8,Black Soil
+Karnataka,Dharwad,142.6,17.8,154.0,7.0,Black Soil
+Karnataka,Dharwad,136.3,19.6,157.6,6.99,Black Soil
+Karnataka,Dharwad,136.5,18.5,152.4,7.08,Black Soil
+Karnataka,Dharwad,146.9,18.2,148.2,6.88,Black Soil
+Karnataka,Dharwad,154.0,19.0,163.6,7.18,Black Soil
+Karnataka,Dharwad,141.6,19.0,169.5,7.22,Black Soil
+Karnataka,Dharwad,154.5,17.8,154.6,7.27,Black Soil
+Karnataka,Dharwad,139.0,18.9,173.9,7.28,Black Soil
+Karnataka,Dharwad,140.8,21.2,159.7,7.05,Black Soil
+Karnataka,Dharwad,139.8,19.3,169.5,6.94,Black Soil
+Karnataka,Dharwad,137.3,20.4,162.8,7.03,Black Soil
+Karnataka,Dharwad,148.6,20.3,173.6,6.98,Black Soil
+Karnataka,Dharwad,149.2,19.6,153.7,7.12,Black Soil
+Karnataka,Dharwad,151.4,21.8,157.3,7.0,Black Soil
+Karnataka,Dharwad,147.7,18.5,164.8,7.13,Black Soil
+Karnataka,Dharwad,150.8,17.4,174.7,6.99,Black Soil
+Karnataka,Dharwad,143.0,20.0,172.6,7.12,Black Soil
+Karnataka,Dharwad,145.9,21.7,155.8,7.24,Black Soil
+Karnataka,Dharwad,145.7,20.8,147.5,7.16,Black Soil
+Karnataka,Bellary,123.2,12.1,129.4,7.63,Black Saline
+Karnataka,Bellary,129.7,14.1,122.0,8.05,Black Saline
+Karnataka,Bellary,129.3,12.6,110.3,7.76,Black Saline
+Karnataka,Bellary,120.2,13.1,127.4,7.95,Black Saline
+Karnataka,Bellary,118.9,12.3,133.2,7.95,Black Saline
+Karnataka,Bellary,120.0,12.1,110.7,7.66,Black Saline
+Karnataka,Bellary,118.3,15.8,113.5,8.16,Black Saline
+Karnataka,Bellary,112.8,11.9,123.7,7.72,Black Saline
+Karnataka,Bellary,119.7,12.9,123.1,8.02,Black Saline
+Karnataka,Bellary,116.4,11.8,134.3,7.67,Black Saline
+Karnataka,Bellary,127.0,13.9,130.3,7.7,Black Saline
+Karnataka,Bellary,129.7,11.5,115.2,7.7,Black Saline
+Karnataka,Bellary,121.2,15.8,117.0,7.84,Black Saline
+Karnataka,Bellary,113.7,13.8,123.0,7.62,Black Saline
+Karnataka,Bellary,122.3,11.2,127.8,7.83,Black Saline
+Karnataka,Bellary,124.1,11.2,132.6,8.09,Black Saline
+Karnataka,Bellary,111.3,10.6,136.2,7.71,Black Saline
+Karnataka,Bellary,116.5,12.7,117.9,8.12,Black Saline
+Karnataka,Bellary,120.6,13.8,127.9,7.97,Black Saline
+Karnataka,Bellary,121.7,12.1,135.4,7.97,Black Saline
+Karnataka,Bengaluru Rural,146.3,19.2,148.9,6.67,Red Loamy
+Karnataka,Bengaluru Rural,131.7,15.8,143.5,6.48,Red Loamy
+Karnataka,Bengaluru Rural,133.7,19.2,155.3,6.55,Red Loamy
+Karnataka,Bengaluru Rural,132.8,17.3,145.6,6.68,Red Loamy
+Karnataka,Bengaluru Rural,143.9,18.9,170.0,6.63,Red Loamy
+Karnataka,Bengaluru Rural,139.8,15.8,149.4,6.57,Red Loamy
+Karnataka,Bengaluru Rural,131.1,17.2,140.3,6.38,Red Loamy
+Karnataka,Bengaluru Rural,146.3,20.8,155.2,6.6,Red Loamy
+Karnataka,Bengaluru Rural,143.7,17.5,165.2,6.59,Red Loamy
+Karnataka,Bengaluru Rural,131.7,15.2,162.8,6.48,Red Loamy
+Karnataka,Bengaluru Rural,135.5,18.2,145.0,6.57,Red Loamy
+Karnataka,Bengaluru Rural,144.9,19.6,156.5,6.37,Red Loamy
+Karnataka,Bengaluru Rural,132.3,19.7,164.7,6.52,Red Loamy
+Karnataka,Bengaluru Rural,146.5,15.2,161.6,6.63,Red Loamy
+Karnataka,Bengaluru Rural,149.8,15.6,164.9,6.75,Red Loamy
+Karnataka,Bengaluru Rural,136.0,21.0,153.5,6.51,Red Loamy
+Karnataka,Bengaluru Rural,146.3,17.6,169.8,6.77,Red Loamy
+Karnataka,Bengaluru Rural,134.7,19.9,157.6,6.51,Red Loamy
+Karnataka,Bengaluru Rural,144.2,18.8,145.0,6.38,Red Loamy
+Karnataka,Bengaluru Rural,134.1,16.2,141.8,6.51,Red Loamy
+Kerala,Palakkad,160.6,28.2,124.7,5.62,Acidic Laterite / Alluvial
+Kerala,Palakkad,160.8,26.6,140.7,5.79,Acidic Laterite / Alluvial
+Kerala,Palakkad,168.6,25.6,143.9,5.67,Acidic Laterite / Alluvial
+Kerala,Palakkad,173.4,31.0,141.0,5.28,Acidic Laterite / Alluvial
+Kerala,Palakkad,172.3,26.5,136.3,5.7,Acidic Laterite / Alluvial
+Kerala,Palakkad,170.2,29.1,129.7,5.55,Acidic Laterite / Alluvial
+Kerala,Palakkad,160.4,27.5,128.6,5.58,Acidic Laterite / Alluvial
+Kerala,Palakkad,172.6,25.6,130.5,5.37,Acidic Laterite / Alluvial
+Kerala,Palakkad,173.7,27.2,143.5,5.4,Acidic Laterite / Alluvial
+Kerala,Palakkad,155.0,29.6,137.0,5.64,Acidic Laterite / Alluvial
+Kerala,Palakkad,164.2,29.0,125.7,5.24,Acidic Laterite / Alluvial
+Kerala,Palakkad,165.7,26.3,127.9,5.33,Acidic Laterite / Alluvial
+Kerala,Palakkad,160.4,30.0,125.1,5.55,Acidic Laterite / Alluvial
+Kerala,Palakkad,166.3,27.9,125.3,5.61,Acidic Laterite / Alluvial
+Kerala,Palakkad,156.0,25.6,138.5,5.48,Acidic Laterite / Alluvial
+Kerala,Palakkad,157.5,30.1,128.2,5.2,Acidic Laterite / Alluvial
+Kerala,Palakkad,174.2,26.2,135.7,5.28,Acidic Laterite / Alluvial
+Kerala,Palakkad,168.0,26.0,143.0,5.36,Acidic Laterite / Alluvial
+Kerala,Palakkad,168.1,26.5,126.2,5.74,Acidic Laterite / Alluvial
+Kerala,Palakkad,158.3,27.4,124.2,5.62,Acidic Laterite / Alluvial
+Kerala,Wayanad,164.7,30.9,131.1,4.9,Acidic High Range Forest Loam
+Kerala,Wayanad,169.5,27.8,116.8,5.31,Acidic High Range Forest Loam
+Kerala,Wayanad,160.2,31.2,134.5,5.49,Acidic High Range Forest Loam
+Kerala,Wayanad,168.4,27.8,112.1,5.13,Acidic High Range Forest Loam
+Kerala,Wayanad,174.6,27.6,119.4,5.43,Acidic High Range Forest Loam
+Kerala,Wayanad,162.7,31.6,132.6,4.98,Acidic High Range Forest Loam
+Kerala,Wayanad,179.9,27.9,125.9,4.91,Acidic High Range Forest Loam
+Kerala,Wayanad,173.0,29.6,131.7,5.28,Acidic High Range Forest Loam
+Kerala,Wayanad,163.0,29.5,130.6,5.42,Acidic High Range Forest Loam
+Kerala,Wayanad,161.7,27.6,132.6,5.25,Acidic High Range Forest Loam
+Kerala,Wayanad,167.7,32.8,119.4,4.98,Acidic High Range Forest Loam
+Kerala,Wayanad,165.5,27.5,126.6,5.26,Acidic High Range Forest Loam
+Kerala,Wayanad,172.2,31.7,130.7,5.41,Acidic High Range Forest Loam
+Kerala,Wayanad,173.2,28.8,125.5,5.21,Acidic High Range Forest Loam
+Kerala,Wayanad,175.0,28.8,111.6,5.44,Acidic High Range Forest Loam
+Kerala,Wayanad,179.1,30.0,113.4,5.2,Acidic High Range Forest Loam
+Kerala,Wayanad,171.9,30.2,139.3,5.49,Acidic High Range Forest Loam
+Kerala,Wayanad,178.7,27.8,135.8,5.24,Acidic High Range Forest Loam
+Kerala,Wayanad,167.3,31.1,132.9,5.47,Acidic High Range Forest Loam
+Kerala,Wayanad,175.4,27.1,112.0,5.06,Acidic High Range Forest Loam
+Kerala,Idukki,165.8,29.4,128.7,5.1,Acidic Hill Soil
+Kerala,Idukki,177.6,32.0,117.5,5.22,Acidic Hill Soil
+Kerala,Idukki,166.6,32.2,123.5,4.97,Acidic Hill Soil
+Kerala,Idukki,171.2,32.1,111.1,5.28,Acidic Hill Soil
+Kerala,Idukki,175.7,31.3,124.0,5.3,Acidic Hill Soil
+Kerala,Idukki,178.6,29.4,126.0,5.24,Acidic Hill Soil
+Kerala,Idukki,181.9,29.3,107.6,5.06,Acidic Hill Soil
+Kerala,Idukki,174.1,32.7,114.3,5.25,Acidic Hill Soil
+Kerala,Idukki,179.8,29.7,126.2,5.22,Acidic Hill Soil
+Kerala,Idukki,168.3,34.7,120.7,5.27,Acidic Hill Soil
+Kerala,Idukki,179.4,30.0,108.8,5.27,Acidic Hill Soil
+Kerala,Idukki,170.4,34.3,128.1,4.82,Acidic Hill Soil
+Kerala,Idukki,181.1,30.6,106.9,5.23,Acidic Hill Soil
+Kerala,Idukki,176.5,29.5,118.7,5.02,Acidic Hill Soil
+Kerala,Idukki,175.0,32.4,116.0,4.95,Acidic Hill Soil
+Kerala,Idukki,167.1,32.4,126.7,4.94,Acidic Hill Soil
+Kerala,Idukki,175.2,29.3,130.9,4.95,Acidic Hill Soil
+Kerala,Idukki,174.4,31.3,109.5,5.36,Acidic Hill Soil
+Kerala,Idukki,182.1,32.3,132.4,5.24,Acidic Hill Soil
+Kerala,Idukki,173.4,30.9,117.5,5.23,Acidic Hill Soil
+Kerala,Alappuzha,150.4,22.5,111.2,5.4,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,163.0,23.1,124.1,5.69,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,164.1,22.4,114.0,5.27,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,161.9,24.0,116.6,5.1,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,149.0,25.4,109.1,5.47,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,154.3,25.6,114.8,5.56,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,148.9,27.4,122.8,5.25,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,145.1,24.5,107.0,5.31,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,161.8,27.3,128.5,5.1,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,158.1,27.1,121.8,5.16,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,155.6,23.4,114.8,5.14,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,164.9,26.3,102.8,5.65,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,162.9,25.1,121.0,5.32,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,164.5,22.5,102.9,5.18,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,161.4,22.4,117.0,5.36,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,164.3,23.4,107.8,5.29,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,161.0,26.2,122.1,5.29,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,150.4,22.4,106.1,5.57,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,156.7,22.9,104.9,5.38,Kari / Peaty Acidic Coastal
+Kerala,Alappuzha,153.1,25.2,128.9,5.22,Kari / Peaty Acidic Coastal

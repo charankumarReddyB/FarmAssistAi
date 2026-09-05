@@ -12,7 +12,9 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-DATASET_DIR = os.path.join(os.path.dirname(__file__), "..", "knowledge_base", "dataset4_images")
+DATASET_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "crop_diseases", "dataset4_images")
+if not os.path.exists(DATASET_DIR):
+    DATASET_DIR = os.path.join(os.path.dirname(__file__), "..", "knowledge_base", "dataset4_images")
 WEIGHTS_DIR = os.path.join(os.path.dirname(__file__), "weights")
 MODEL_PATH = os.path.join(WEIGHTS_DIR, "crop_disease_mobilenet.pth")
 
