@@ -1,29 +1,39 @@
-# FARMAssist AI – Agricultural Report Interpretation and Farmer Advisory System
+# FarmAssist AI
 
-FARMAssist AI is a production-grade, AI-driven agricultural decision-support web platform. It bridges the gap between complex agricultural science and everyday farming by interpreting soil lab reports (PDF/scans), diagnosing crop leaf diseases via computer vision, factoring in live hyper-local weather conditions, and generating actionable, localized agronomic advisories validated through a human-in-the-loop expert review workflow.
+Agricultural Report Interpretation and Farmer Advisory System
 
----
-
-## 🌾 1. Project Overview & Key Features
-
-FARMAssist AI provides an end-to-end advisory pipeline with distinct portals for **Farmers**, **Agricultural Experts**, and **System Administrators**.
-
-### Working Core Features
-- **Intelligent Soil Report Interpretation**: Ingests soil test laboratory reports (PDF or images) via dual-engine OCR (PyMuPDF vector extraction + Tesseract OCR fallback) and extracts primary soil chemical metrics (pH, Nitrogen, Phosphorus, Potassium, Organic Carbon, Electrical Conductivity).
-- **Computer Vision Crop Disease Diagnosis**: Detects foliar plant pathogens using a fine-tuned **PyTorch MobileNetV2** deep learning model trained on curated leaf disease datasets with high empirical accuracy.
-- **Dataset-Grounded Recommendation Engines**:
-  - Recommends the top-5 suitable crops based on multi-parameter distance scoring across 2,200 real records.
-  - Generates specific fertilizer formulations and dosage instructions based on 480 verified agronomic records.
-  - Compares test parameters against regional soil baselines derived from 700 Southern Indian district-level records.
-- **Semantic Agronomic Knowledge Matching**: Matches extracted report text and deficiency symptoms against an Agronomic Knowledge Base using dense vector embeddings (**Sentence-BERT `all-MiniLM-L6-v2`**) and Cosine Similarity scoring.
-- **Live Hyper-Local Weather Integration**: Fetches real-time temperature, humidity, wind speed, and rain probability from the Open-Meteo API using browser geolocation coordinates or district-level lookups, dynamically alerting farmers about weather impacts (e.g. delaying irrigation before anticipated rain).
-- **Human-in-the-Loop Expert Verification Portal**: Extension specialists can inspect pending AI advisories, review extracted parameters, and choose to **Approve**, **Modify** (with custom notes and adjusted dosages), or **Reject** with reasons before final farmer delivery.
-- **System Governance & Admin Console**: Live metrics monitoring, user management, and secure role provisioning (Farmers, Agricultural Experts, Admins).
-- **Multi-Language Accessibility (i18n)**: Full localization across 6 languages: English, Telugu (తెలుగు), Hindi (हिंदी), Tamil (தமிழ்), Kannada (ಕನ್ನಡ), and Malayalam (മലയാളം).
+FarmAssist AI is an end-to-end, production-stabilized, AI-driven agricultural decision-support web platform. It bridges the gap between complex laboratory soil data and everyday farming decisions by interpreting soil test reports (PDF/scanned images), diagnosing foliar crop diseases via computer vision, factoring in live hyper-local weather conditions, and generating actionable, localized agronomic advisories validated through a human-in-the-loop expert review workflow.
 
 ---
 
-## 🏛️ 2. System Architecture
+## Project Overview
+
+Smallholder farmers frequently receive chemical soil test certificates from agricultural testing laboratories filled with complex units ($kg/ha$, $ppm$, $dS/m$, $pH$) without clear operational instructions on what fertilizers to apply, what crops to sow, or how upcoming weather will impact their fields. Simultaneously, foliar crop diseases cause catastrophic yield loss when left undiagnosed.
+
+FarmAssist AI solves this problem by providing:
+1. **Automated Soil Report Ingestion**: Dual-engine extraction (PyMuPDF vector parser + Tesseract OCR fallback) that parses unstructured soil cards into structured agronomic parameters ($pH, N, P, K, OC, EC$).
+2. **Grounded Crop & Fertilizer Prescriptions**: Top-5 crop recommendations and precise fertilizer dosages calculated against real verified agricultural datasets.
+3. **Deep Learning Crop Disease Diagnosis**: An ImageNet-pretrained **MobileNetV2** PyTorch neural network classifying leaf disease images with 92.1% empirical accuracy.
+4. **Sentence-BERT Semantic Matching**: Qualitative report text matched against an Agronomic Knowledge Base using dense vector embeddings (`sentence-transformers/all-MiniLM-L6-v2`).
+5. **Hyper-Local Live Weather & Voice Assistant**: Open-Meteo live current and 7-day forecast feeds tied to browser geolocation, integrated with an interactive multilingual voice and text agricultural assistant.
+6. **Human-in-the-Loop Expert Validation**: Agricultural extension specialists can review, approve, modify, or reject AI advisories before final farmer delivery.
+
+---
+
+## Features
+
+- **Multi-Role Portals**: Dedicated, role-secured portals for **Farmers**, **Agricultural Experts**, and **System Administrators**.
+- **Interactive Farmer Dashboard**: Displays live weather conditions, 7-day forecasts, crop alerts, soil health cards, active advisories, and quick actions.
+- **Multilingual Voice & Text Assistant**: Answers questions regarding current weather, crop health, fertilizer requirements, and general agronomic practices in real time using browser speech synthesis and recognition.
+- **Soil Health Card Analysis**: Upload digital PDFs or scanned images to extract $pH$, Nitrogen, Phosphorus, Potassium, Organic Carbon, and Electrical Conductivity, comparing them against regional Southern Indian baselines.
+- **Computer Vision Leaf Disease Diagnosis**: Upload crop photos for real-time MobileNetV2 inference, disease classification, confidence score calculation, and organic/chemical remedies.
+- **Expert Review Workflow**: Extension officers can inspect pending advisories, adjust fertilizer dosages, add localized agronomic notes, and approve or reject submissions.
+- **Admin Governance Console**: Live system metrics, user role provisioning (Farmers, Experts, Admins), and account lifecycle management.
+- **Localization (i18n)**: Multilingual user interface with native support for English, Telugu (తెలుగు), Tamil (தமிழ்), and Hindi (हिंदी).
+
+---
+
+## System Architecture
 
 ```
                                   ┌────────────────────────────────────────┐
@@ -65,152 +75,202 @@ FARMAssist AI provides an end-to-end advisory pipeline with distinct portals for
 
 ---
 
-## 📊 3. Four Integrated Datasets
+## Frontend
 
-The system's recommendation and diagnosis components are coupled directly to 4 official, verified datasets located in `backend/data/`:
-
-| # | Dataset Name | Location | Records | Primary Features / Attributes | System Usage |
-|---|---|---|---|---|---|
-| **1** | **Crop Recommendation Dataset** | `backend/data/crop_recommendation/crop_recommendation.csv` | 2,200 | N, P, K, Temperature, Humidity, pH, Rainfall, Label (22 crops) | Evaluates soil test metrics against optimal crop growing conditions to recommend the top-5 best suited crops. |
-| **2** | **Fertilizer Prediction Dataset** | `backend/data/fertilizer_prediction/fertilizer_prediction.csv` | 480 | Soil Type, Crop Type, Nitrogen, Potassium, Phosphorous, Fertilizer Name (7 formulations: Urea, DAP, 14-35-14, 28-28, 17-17-17, 20-20, 10-26-26) | Determines precise chemical/organic fertilizer requirements based on nutrient deficits. |
-| **3** | **Soil Nutrient Dataset of Southern Indian States** | `backend/data/soil_nutrients/southern_indian_soil_nutrients.csv` | 700 | State, District, Nitrogen, Phosphorus, Potassium, pH, Soil Type (Andhra Pradesh, Telangana, Karnataka, Tamil Nadu; 14 districts) | Benchmarks farmer's test parameters against district and state baseline averages to provide regional context. |
-| **4** | **Plant Disease Leaf Image Dataset** | `backend/data/crop_diseases/dataset4_images/` | 250 | 50 images per class across 5 disease categories: Bacterial Leaf Blight, Brown Spot, Leaf Smut / Rust, Powdery Mildew, Healthy Crop | Trains and validates the PyTorch MobileNetV2 image classification model for foliar disease diagnosis. |
+- **Framework**: React 18 with Vite build tooling
+- **Language**: TypeScript (strict type checking)
+- **Styling**: Tailwind CSS with custom agricultural color tokens (`leaf`, `sprout`, `earth`, `harvest`, `meadow`, `sage`)
+- **Icons**: Lucide React
+- **Internationalization (i18n)**: Context-based translation engine supporting English, Telugu, Tamil, and Hindi
+- **Audio & Speech**: Web Speech API (`SpeechRecognition` & `SpeechSynthesis`) with keyboard/text fallback
 
 ---
 
-## 🔍 4. OCR & NLP Extraction Pipeline
+## Backend
 
-When a farmer uploads a soil health card or lab report (PDF or scanned image):
+- **Framework**: FastAPI (Python 3.11+)
+- **ORM & Database**: SQLAlchemy with SQLite (`farmassist.db`) and Supabase PostgreSQL integration
+- **Deep Learning**: PyTorch (`torch`, `torchvision`) for MobileNetV2 leaf disease classification
+- **Document Processing**: PyMuPDF (`pymupdf`) and Tesseract OCR (`pytesseract`)
+- **Semantic Embeddings**: Sentence-Transformers (`all-MiniLM-L6-v2`) with cosine similarity
+- **External APIs**: Open-Meteo Free Weather API, OpenStreetMap Nominatim Geocoding
 
-1. **Digital Vector PDF Processing (`PyMuPDF / fitz`)**: Direct text stream extraction parses digital PDFs with 100% character fidelity and near-zero latency.
-2. **Optical Character Recognition Fallback (`pytesseract` / Tesseract OCR)**: Scanned paper certificates, mobile camera captures, and image formats (JPEG/PNG) are preprocessed and parsed using Tesseract OCR.
-3. **Structured Parameter Regex Extraction**: Robust regular expressions identify and normalize agronomic parameters regardless of laboratory report layout variations:
-   - **pH Level** (e.g. `pH: 6.5`, `Soil Reaction: 7.2`)
-   - **Available Nitrogen (N)** in kg/ha or lbs/acre
-   - **Available Phosphorus (P₂O₅)** in kg/ha
-   - **Available Potassium (K₂O)** in kg/ha
+---
+
+## NLP Pipeline
+
+The NLP pipeline extracts, sanitizes, and analyzes agronomic narrative text:
+1. **Sanitization & Normalization**: Strips OCR artifacts, unifies whitespace, and normalizes number formatting.
+2. **Technical Agricultural Vocabulary Preservation**: Tokenization and stop-word filtering explicitly preserve critical agronomic symbols and terms (e.g. `pH`, `NPK`, `N`, `P`, `K`, `EC`, `kg/ha`, `ppm`, soil classifications, crop and disease names).
+3. **Context Extraction**: Identifies qualitative observations (e.g., leaf chlorosis, stunted growth, waterlogging) to cross-reference against remedy patterns.
+
+---
+
+## OCR and Report Processing
+
+When a farmer uploads a soil laboratory report (PDF, JPG, JPEG, PNG, BMP, TIFF, WEBP):
+1. **PyMuPDF Extraction**: Direct digital stream extraction extracts all text with 100% character accuracy from digital PDFs.
+2. **Tesseract OCR Fallback**: If the document is a scanned image or digital extraction produces insufficient characters, Tesseract OCR processes the rasterized image with contrast enhancement.
+3. **Structured Entity Extraction**: Targeted regular expressions parse essential soil parameters:
+   - **Soil Reaction (pH)** (e.g., `pH 6.8`, `pH: 7.2`)
+   - **Available Nitrogen (N)** in $kg/ha$
+   - **Available Phosphorus (P)** in $kg/ha$
+   - **Available Potassium (K)** in $kg/ha$
    - **Organic Carbon (OC)** in percentage (%)
-   - **Electrical Conductivity (EC)** in dS/m (salinity measure)
-4. **Data Normalization & Sanitization**: Values are validated against agronomic boundaries, flags are set for high salinity or extreme acidity/alkalinity, and the structured entity is persisted in the database.
+   - **Electrical Conductivity (EC)** in $dS/m$
+4. **Validation & Quality Assurance**: If no meaningful agricultural information can be extracted, the system provides a clear advisory informing the farmer to upload a clearer scan rather than inventing data.
 
 ---
 
-## 🧠 5. Semantic Analysis Pipeline
+## Sentence-BERT Semantic Analysis
 
-In addition to exact parameter parsing, agricultural reports often contain qualitative observations (e.g., *"stunted vegetative growth"*, *"interveinal chlorosis observed"*, *"poor drainage"*).
-
-1. **Dense Vector Embeddings**: Extracted qualitative text is tokenized and transformed into 384-dimensional dense vectors using the **Sentence-BERT (`sentence-transformers/all-MiniLM-L6-v2`)** model.
-2. **Agronomic Knowledge Base**: A curated corpus of deficiency symptoms, pathogen risk profiles, and soil condition remedies is pre-indexed with corresponding embeddings.
-3. **Cosine Similarity Matching**: The system computes Cosine Similarity between user report vectors and knowledge base vectors.
-4. **Context Enrichment**: Matches with similarity $\ge 0.55$ inject domain-specific risk alerts and corrective guidance directly into the generated advisory. If sentence-transformers is offline or loading, an automated keyword/ngram semantic fallback ensures zero downtime.
+To interpret qualitative observations and symptom descriptions:
+- **Model**: `sentence-transformers/all-MiniLM-L6-v2` (384-dimensional dense vectors).
+- **Knowledge Base**: Indexed agronomic knowledge base covering nutrient deficiency symptoms, physiological disorders, and management interventions.
+- **Cosine Similarity**: Vector representations of uploaded report text are scored against knowledge base items. Similarities $\ge 0.55$ inject domain-specific risk alerts and corrective guidance into the advisory.
+- **Zero-Downtime Fallback**: If vector models are offline or loading, an automated keyword/ngram semantic engine ensures uninterrupted operation.
 
 ---
 
-## 🔬 6. Crop Disease Diagnosis Model (PyTorch MobileNetV2)
+## Crop Disease Analysis
 
-- **Architecture**: MobileNetV2 with custom classification head (`Dropout(0.2)` $\rightarrow$ `Linear(1280, 5)`), leveraging transfer learning from ImageNet.
-- **Model Path**: `backend/app/models/weights/crop_disease_mobilenet.pth`
-- **Class Labels**:
+Foliar crop disease classification is performed using a fine-tuned **MobileNetV2** deep convolutional neural network:
+- **Architecture**: MobileNetV2 with transfer learning (`Dropout(0.2)` $\rightarrow$ `Linear(1280, 5)`).
+- **Weights Path**: `backend/app/models/weights/crop_disease_mobilenet.pth`
+- **Classes**:
   1. `bacterial_leaf_blight` (*Xanthomonas oryzae*)
   2. `brown_spot_blast` (*Bipolaris oryzae / Magnaporthe oryzae*)
   3. `leaf_smut_rust` (*Entyloma oryzae / Puccinia*)
   4. `powdery_mildew` (*Erysiphales*)
-  5. `healthy_crop` (Control / Uninfected)
-- **Validation Methodology**: Stratified dataset split (70% Train, 15% Validation, 15% Unseen Test) ensuring equal class distribution.
-- **Performance Metrics (on unseen test images)**:
-  - **Empirical Accuracy**: **92.1%**
+  5. `healthy_crop` (Uninfected / Control)
+- **Empirical Test Metrics**:
+  - **Accuracy**: **92.1%**
   - **Macro Precision**: **0.93**
   - **Macro Recall**: **0.92**
   - **Macro F1-Score**: **0.92**
-- **Inference Pipeline**: Accepts uploaded leaf photos, applies standard ImageNet normalization (`Resize(224, 224)`, `ToTensor()`, `Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])`), computes Softmax class probabilities, identifies the disease condition, and supplies organic and chemical control treatments.
+- **Low-Confidence Guard**: If model confidence is below $0.35$, the application informs the user: *"Low-confidence prediction. Please upload a clearer image of the affected leaf."* rather than inventing certainty.
 
 ---
 
-## ⚙️ 7. Recommendation Engine Mechanics
+## Datasets Used
 
-1. **Crop Suitability Scoring**:
-   - Compares the farmer's soil NPK, pH, and local weather conditions against optimal crop centroids in `crop_recommendation.csv`.
-   - Computes weighted Euclidean feature distances:
-     $$Score(c) = \sum_{f} w_f \cdot \left(\frac{val_f - \mu_{c,f}}{\sigma_{c,f}}\right)^2$$
-   - Returns the top-5 ranking crops with confidence scores and environmental suitability notes.
-2. **Fertilizer Formulation Selection**:
-   - Analyzes nutrient deficits ($N_{deficit}, P_{deficit}, K_{deficit}$) relative to target crop requirements.
-   - Queries `fertilizer_prediction.csv` to match closest candidate fertilizers (e.g. Urea for primary N deficits, DAP for phosphorus needs, MOP for potassium, or balanced NPK 20-20-0).
-   - Generates dosage guidelines in kg/acre with application timing (basal vs. split vegetative stages).
-3. **Regional Soil Baselines**:
-   - Cross-references the farmer's district/state against `southern_indian_soil_nutrients.csv`.
-   - Informs the farmer whether their field is higher or lower than the regional baseline average.
+Four verified agricultural datasets participate directly in the application's analysis pipelines:
+
+| # | Dataset Name | Path | Records | Role in Application |
+|---|---|---|---|---|
+| **1** | **Crop Recommendation Dataset** | `backend/data/crop_recommendation/crop_recommendation.csv` | 2,200 | Evaluates soil N, P, K, pH, and local temperature/humidity/rainfall against 22 crops to rank top-5 suitable crops. |
+| **2** | **Fertilizer Prediction Dataset** | `backend/data/fertilizer_prediction/fertilizer_prediction.csv` | 480 | Recommends specific chemical and organic fertilizers (Urea, DAP, 14-35-14, 28-28, 17-17-17, 20-20, 10-26-26) based on nutrient deficits. |
+| **3** | **Southern Indian Soil Nutrients** | `backend/data/soil_nutrients/southern_indian_soil_nutrients.csv` | 700 | Benchmarks test parameters against district and state baselines across Andhra Pradesh, Telangana, Karnataka, and Tamil Nadu. |
+| **4** | **Crop Disease Image Dataset** | `backend/data/crop_diseases/dataset4_images/` | 250 | Curated images across 5 classes used to train and validate the MobileNetV2 model. |
 
 ---
 
-## 🌦️ 8. Location & Live Weather Integration
+## Weather Integration
 
-- **Automatic GPS Detection**: Farmer's browser requests HTML5 Geolocation API permission; latitude and longitude are captured and reverse geocoded to district and state.
-- **Manual Fallback**: If GPS permission is denied, farmers can select their district and state via searchable dropdowns.
-- **Open-Meteo Live Forecast**: The backend queries `https://api.open-meteo.com/v1/forecast` with the farmer's coordinates to retrieve:
-  - Current ambient temperature (°C)
-  - Relative humidity (%)
-  - Wind speed (km/h)
-  - Precipitation probability (%)
-- **Actionable Farming Alerts**:
-  - If precipitation probability $> 50\%$, an advisory alert suggests: *"Delay irrigation and foliar fertilizer application — rain expected tomorrow."*
-  - If temperature $> 36^\circ\text{C}$ and humidity $< 40\%$, drought/heat stress warnings recommend mulching and moisture conservation.
+- **API**: Open-Meteo Free Weather REST API (`https://api.open-meteo.com/v1/forecast`).
+- **Dynamic Data**: Real-time current temperature, weather conditions, relative humidity, wind speed, precipitation probability, and full 7-day daily forecasts.
+- **Smart Farming Alerts**:
+  - Precipitation probability $> 50\% \rightarrow$ *"Delay irrigation and foliar fertilizer spray — rain expected."*
+  - High temperature ($> 36^\circ\text{C}$) and low humidity ($< 40\%$) $\rightarrow$ Heat stress and moisture conservation alerts.
+- **No Mock Data**: Weather values in both the Dashboard widget and the 7-day forecast cards are parsed directly from live Open-Meteo responses.
 
 ---
 
-## 🔒 9. Authentication & Role-Based Workflows
+## Location Personalization
 
-### Authentication Architecture
-- **Dual Support**: Email/Password authentication and Supabase Google OAuth.
-- **Role Determination**: Strict database persistence. The login and registration screens **never** display role selection dropdowns.
-- **Default Assignment**: All public registrations default strictly to the `farmer` role.
-- **Privileged Roles**: `expert` and `admin` roles can only be provisioned by existing administrators.
-
-### Role-Based Workflows
-1. **Farmer Persona**:
-   - Registers/logs in, completes one-time onboarding (language + farm details + location).
-   - Uploads soil test reports or crop leaf photos.
-   - Views AI-generated advisory marked as *"Under Review by Agricultural Specialist"*.
-   - Receives updated advisory once verified by an expert.
-2. **Agricultural Expert Persona**:
-   - Logs in with expert credentials; bypasses farmer onboarding directly into the **Expert Portal**.
-   - Filters pending advisories across soil reports and crop disease analyses.
-   - Inspects farmer telemetry, extracted parameters, AI recommendations, and risk levels.
-   - **Approves**, **Modifies** (adjusts advisory content, adds regional warnings), or **Rejects** (with reason).
-   - Timestamp, expert ID, and notes are logged to the database.
-3. **System Administrator Persona**:
-   - Logs into the **Admin Console**.
-   - Inspects real-time system metrics (total farmers, active experts, pending/approved advisories).
-   - Creates new Expert and Admin accounts.
-   - Toggles user account status (active/inactive) or adjusts role permissions.
+- **GPS Geolocation**: Detects browser latitude and longitude via HTML5 Geolocation API.
+- **Reverse Geocoding**: Resolves coordinates to district and state.
+- **Profile Persistence**: Coordinates are saved to the user profile in the database.
+- **Manual Fallback**: If geolocation permission is denied, farmers can select their district/state from settings.
+- **Context Updates**: Changing location immediately refreshes the weather forecast and regional soil baseline comparison.
 
 ---
 
-## 💻 10. Technology Stack
+## Multilingual Support
 
-### Frontend
-- **Framework**: React 18 with Vite build tooling
-- **Language**: TypeScript (strict type checking)
-- **Styling**: Tailwind CSS with custom agro-color tokens (`leaf`, `sprout`, `earth`, `harvest`, `meadow`, `sage`)
-- **Icons**: Lucide React
-- **Internationalization (i18n)**: Native React translation provider covering English, Telugu, Hindi, Tamil, Kannada, Malayalam
-- **Client Deployment**: Vercel Single-Page Application (SPA)
+FarmAssist AI supports 4 primary agricultural languages:
+- **English** (Font: Inter)
+- **Telugu / తెలుగు** (Font: Noto Sans Telugu)
+- **Tamil / தமிழ்** (Font: Noto Sans Tamil)
+- **Hindi / हिंदी** (Font: Noto Sans Devanagari)
 
-### Backend
-- **Framework**: FastAPI (Python 3.11+)
-- **ORM & Storage**: SQLAlchemy with SQLite (`farmassist.db`) and Supabase PostgreSQL synchronization
-- **Machine Learning**: PyTorch (`torch`, `torchvision`) for MobileNetV2 disease classification
-- **NLP & Embeddings**: PyMuPDF (`fitz`), Tesseract OCR (`pytesseract`), Sentence-Transformers (`sentence-transformers/all-MiniLM-L6-v2`), NumPy, Scikit-learn
-- **External APIs**: Open-Meteo Free Weather API, OpenStreetMap Nominatim Geocoding
-- **Testing**: Python `unittest` suite
+All dashboard cards, navigation headers, metric titles, status badges, and action buttons dynamically re-render based on the selected language.
 
 ---
 
-## 🛠️ 11. Complete Installation & Setup
+## Authentication
+
+- **Architecture**: Email and password authentication with bcrypt hashing and JWT Bearer tokens; optional Supabase Google OAuth integration.
+- **Role Enforcement**: User role (`farmer`, `expert`, `admin`) is strictly retrieved from the authenticated user's database record. There is **no role selector** on the login or registration forms.
+- **Protected Access**: Admin and expert endpoints require authenticated accounts with appropriate role permissions.
+
+---
+
+## Database
+
+Relational persistence using SQLAlchemy ORM (SQLite `farmassist.db` / Supabase PostgreSQL):
+
+- **`User`**: Account credentials, role, language, district, state, coordinates.
+- **`FarmProfile`**: Farm size, current crop, soil type, irrigation method, water source.
+- **`Report`**: Uploaded soil test files, raw text, extracted NPK/pH parameters, status, associated farmer ID.
+- **`CropImageAnalysis`**: Uploaded leaf images, predicted disease, confidence score, severity, treatments, associated farmer ID.
+- **`Advisory`**: Soil health summary, crop recommendations, fertilizer plan, risk level, expert review status, notes, timestamps.
+
+Every report and crop analysis is saved and associated with the authenticated user ID and remains accessible across page refreshes.
+
+---
+
+## Expert Review
+
+- **Human-in-the-Loop Safeguard**: AI-generated advisories are created with `pending_review` status.
+- **Extension Specialist Review**: Agricultural experts inspect raw uploaded files, extracted parameters, AI recommendations, and farmer field details.
+- **Actions**:
+  - **Approve**: Confirms AI advisory as scientifically accurate.
+  - **Modify**: Adjusts fertilizer dosage, adds regional warnings, or custom notes.
+  - **Reject**: Marks advisory as invalid with mandatory feedback explanation.
+- **Audit Trail**: Expert identity, review notes, and timestamp are permanently recorded on the advisory.
+
+---
+
+## Project Structure
+
+The repository root strictly contains:
+
+```
+FarmAssist AI/
+├── backend/
+│   ├── app/
+│   │   ├── api/routes/          # FastAPI route controllers (auth, reports, crop_analysis, assistant, etc.)
+│   │   ├── core/                # Config, security, database engine
+│   │   ├── models/              # SQLAlchemy database models & MobileNetV2 architecture
+│   │   │   └── weights/         # crop_disease_mobilenet.pth trained weights
+│   │   └── services/            # OCR, NLP, MobileNetV2, datasets, weather, assistant services
+│   ├── data/                    # Datasets (Crop Rec, Fertilizer, Soil Nutrients, Crop Diseases, Test Samples)
+│   │   └── test_samples/        # Real soil PDFs/images & leaf disease test images
+│   ├── tests/                   # Automated unittest suite
+│   ├── requirements.txt
+│   └── run.py
+├── frontend/
+│   ├── src/
+│   │   ├── components/          # Reusable UI widgets, navigation, voice assistant modal
+│   │   ├── context/             # AuthContext, LanguageContext
+│   │   ├── lib/                 # API client (apiRequest, auth tokens, error handling)
+│   │   └── views/               # Dashboard, SoilAnalysis, CropAnalysis, Alerts, ExpertPortal, AdminPortal
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── tailwind.config.js
+├── .gitignore
+├── vercel.json
+└── README.md
+```
+
+---
+
+## Installation
 
 ### Prerequisites
-- Python 3.10 or higher
-- Node.js 18 or higher with `npm`
+- Python 3.10+
+- Node.js 18+ with `npm`
 - Git
 
 ### 1. Clone the Repository
@@ -219,51 +279,9 @@ git clone https://github.com/charankumarReddyB/FarmAssistAi.git
 cd FarmAssistAi
 ```
 
-### 2. Backend Setup
-```bash
-cd backend
-
-# Create and activate virtual environment
-python -m venv venv
-
-# Windows:
-.\venv\Scripts\activate
-# Linux/macOS:
-source venv/bin/activate
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Populate official datasets (if not already present)
-python scripts/populate_datasets.py
-
-# Verify / Run unit tests
-python -m unittest discover -s tests -p "test_*.py"
-
-# Start FastAPI development server
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-Backend API interactive docs: `http://127.0.0.1:8000/docs`
-
-### 3. Frontend Setup
-Open a new terminal:
-```bash
-cd frontend
-
-# Install Node dependencies
-npm install
-
-# Run frontend build verification
-npm run build
-
-# Start frontend development server
-npm run dev
-```
-Frontend Web UI: `http://localhost:8443` or `http://localhost:5173`
-
 ---
 
-## ⚙️ 12. Environment Variables Reference
+## Environment Variables
 
 ### Backend (`backend/.env`)
 ```ini
@@ -275,106 +293,115 @@ CORS_ORIGINS=http://localhost:8443,http://localhost:5173,http://127.0.0.1:8443,h
 PORT=8000
 HOST=127.0.0.1
 ENVIRONMENT=development
-
-# Supabase Cloud Integration (Optional/Hybrid)
-SUPABASE_URL=https://vdadfdqqqtofnhfhdkvh.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ### Frontend (`frontend/.env`)
 ```ini
 VITE_API_BASE_URL=http://127.0.0.1:8000/api
-VITE_SUPABASE_URL=https://vdadfdqqqtofnhfhdkvh.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ---
 
-## 📋 13. REST API Endpoint Directory
-
-### Authentication & Profiles
-- `POST /api/auth/register` – Register new farmer account (defaults role to `farmer`)
-- `POST /api/auth/login` – Login with email & password, returns JWT token & role
-- `GET  /api/user/profile` – Retrieve authenticated user's profile and farm location
-- `PUT  /api/user/profile` – Update farmer profile, coordinates, and farm parameters
-- `POST /api/user/complete-onboarding` – Mark onboarding as finished
-
-### Soil Reports & NLP Analysis
-- `POST /api/reports/upload` – Upload PDF or scanned image report for OCR extraction
-- `GET  /api/reports` – List farmer's past uploaded reports
-- `GET  /api/reports/{id}` – View report details and extracted NPK/pH metrics
-
-### Crop Disease Diagnosis
-- `POST /api/crop-analysis/analyze` – Upload leaf photo for PyTorch MobileNetV2 inference
-- `GET  /api/crop-analysis/history` – Retrieve past crop disease analyses
-
-### Farmer Advisories & Weather
-- `GET  /api/advisories` – List generated advisories
-- `GET  /api/advisories/{id}` – Get comprehensive structured advisory by ID
-- `GET  /api/weather/current` – Get live weather & farming alerts for coordinates/district
-- `GET  /api/farm/location-analysis` – Regional soil and climate intelligence
-
-### Expert Portal (RBAC: `expert`, `admin`)
-- `GET  /api/expert/advisories` – List advisories waiting for human validation
-- `GET  /api/expert/advisories/{id}` – Get advisory details for expert inspection
-- `POST /api/expert/advisories/{id}/approve` – Approve AI advisory without changes
-- `POST /api/expert/advisories/{id}/modify` – Modify recommendations and add expert notes
-- `POST /api/expert/advisories/{id}/reject` – Reject advisory with specific rationale
-
-### Admin Governance (RBAC: `admin`)
-- `GET   /api/admin/stats` – System-wide counts of users, advisories, and status breakdown
-- `GET   /api/admin/users` – List all system users with role/search filtering
-- `POST  /api/admin/users` – Provision new Expert or Admin account
-- `PATCH /api/admin/users/{id}/status` – Activate or deactivate user account
-- `PATCH /api/admin/users/{id}/role` – Update user permission role
-
----
-
-## 🧪 14. Testing & Verification Results
-
-The test suite runs using standard Python `unittest`:
+## How to Run Backend
 
 ```bash
 cd backend
-.\venv\Scripts\python -m unittest discover -s tests -p "test_*.py"
+
+# Create and activate virtual environment
+python -m venv venv
+
+# Windows:
+.\venv\Scripts\activate
+# Linux / macOS:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run automated tests
+python -m unittest discover -s tests -p "test_*.py"
+
+# Start FastAPI backend server
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### Test Suite Execution Summary:
-- **Total Automated Tests**: 20 integration tests across all workflows.
-- **Pass Rate**: **100% (20/20 passed)**.
-- **Coverage Areas**:
-  - `test_integrated_system.py`: User registration, JWT authentication, farm profile updating, weather integration, crop analysis, location analysis, and admin role security.
-  - `test_expert_review_lifecycle.py`: Complete lifecycle from soil report creation $\rightarrow$ initial AI advisory (`pending_review`) $\rightarrow$ expert modification $\rightarrow$ farmer advisory consumption with updated status and notes.
-- **Frontend Production Build**: Vite build executed cleanly with 0 TypeScript or packaging errors (`dist/assets/index-*.js`, `dist/assets/index-*.css`).
+Backend API Swagger UI: `http://127.0.0.1:8000/docs`
 
 ---
 
-## 🗄️ 15. Database Schema Summary
+## How to Run Frontend
 
-The relational database (`farmassist.db`) defines 5 core models:
+```bash
+cd frontend
 
-1. **`User`**: `id`, `email`, `hashed_password`, `full_name`, `role` (`farmer`/`expert`/`admin`), `country`, `state`, `district`, `village_or_city`, `latitude`, `longitude`, `preferred_language`, `onboarding_completed`, `is_active`, `created_at`.
-2. **`FarmProfile`**: `id`, `user_id` (foreign key $\rightarrow$ `User`), `farm_name`, `farm_size`, `current_crop`, `soil_type`, `irrigation_method`, `sowing_date`, `crop_stage`, `experience_years`, `water_source`, `survey_number`.
-3. **`Report`**: `id`, `farmer_id`, `filename`, `file_type`, `file_path`, `raw_text`, `extracted_data` (JSON: N, P, K, pH, EC, OC), `status`, `created_at`.
-4. **`CropImageAnalysis`**: `id`, `farmer_id`, `image_url`, `disease_name`, `confidence`, `severity`, `symptoms`, `treatment`, `preventive_measures`, `created_at`.
-5. **`Advisory`**: `id`, `report_id`, `crop_analysis_id`, `farmer_id`, `farmer_name`, `farmer_location`, `source_type`, `report_summary`, `soil_health_analysis`, `crop_recommendations` (JSON), `fertilizer_recommendations` (JSON), `irrigation_suggestions` (JSON), `risk_level`, `weather_impact`, `original_ai_advisory`, `final_advisory`, `status` (`pending_review`/`under_review`/`approved`/`modified`/`rejected`), `reviewed_by`, `expert_id`, `expert_notes`, `created_at`, `reviewed_at`.
+# Install dependencies
+npm install
 
----
+# Verify production build
+npm run build
 
-## 🎯 16. Presentation Talking Points (For Tomorrow's Defense)
+# Start development server
+npm run dev
+```
 
-When demonstrating FARMAssist AI to examiners and evaluators:
-
-1. **Highlight the Core Problem**: Smallholder farmers receive scientific soil test certificates that are filled with technical chemical units (kg/ha, ppm, dS/m) they cannot interpret, while access to human agronomists is scarce.
-2. **Demonstrate the Dual-Engine OCR**: Show how uploading a sample PDF (e.g. `test-samples/soil_report_kurnool.pdf`) immediately extracts primary metrics (pH 7.4, Nitrogen 145 kg/ha, Phosphorus 22 kg/ha, Potassium 190 kg/ha) with zero manual entry.
-3. **Demonstrate Grounded Dataset Intelligence**: Point out that crop recommendations are not hallucinated by an LLM; they are mathematically computed from 2,200 Kaggle crop records and 700 Southern Indian soil baseline records.
-4. **Walk Through Crop Disease Diagnosis**: Upload a leaf photo (e.g. `test-samples/crop_bacterial_leaf_blight.jpg`) and show the PyTorch MobileNetV2 model identifying the disease at 92.1% accuracy with immediate organic and chemical remedy recommendations.
-5. **Emphasize the Human-in-the-Loop Safeguard**: Show the advisory status as *"Under Review by Agricultural Specialist"*, switch accounts to the Expert Portal, demonstrate the expert modifying the fertilizer dosage, and show how the farmer's dashboard updates in real time with the expert's name and notes.
-6. **Showcase Location & Weather Adaptability**: Point out how the live Open-Meteo weather integration alerts farmers against over-irrigating before rainfall.
+Frontend application: `http://localhost:8443` or `http://localhost:5173`
 
 ---
 
-## 📄 License
+## API Overview
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Register farmer account | No |
+| `POST` | `/api/auth/login` | Email/password login, returns JWT & role | No |
+| `GET` | `/api/user/profile` | Get current user's profile and farm details | Yes |
+| `PUT` | `/api/user/profile` | Update profile, location coordinates, and farm info | Yes |
+| `POST` | `/api/reports/upload` | Upload PDF/image soil report for OCR & analysis | Optional/Yes |
+| `GET` | `/api/reports` | List uploaded reports | Optional/Yes |
+| `POST` | `/api/crop-analysis/upload` | Upload crop leaf photo for MobileNetV2 diagnosis | Optional/Yes |
+| `GET` | `/api/crop-analysis/history` | List crop disease analyses | Optional/Yes |
+| `POST` | `/api/assistant/chat` | Multilingual agricultural voice/text assistant | Optional/Yes |
+| `GET` | `/api/weather/current` | Real-time weather & 7-day forecast from Open-Meteo | No |
+| `GET` | `/api/farm/location-analysis` | Regional baseline comparison for coordinates | No |
+| `GET` | `/api/expert/advisories` | List advisories pending expert review | Yes (Expert/Admin) |
+| `POST` | `/api/expert/advisories/{id}/approve` | Approve AI advisory | Yes (Expert/Admin) |
+| `POST` | `/api/expert/advisories/{id}/modify` | Modify advisory recommendations and notes | Yes (Expert/Admin) |
+| `POST` | `/api/expert/advisories/{id}/reject` | Reject advisory with explanation | Yes (Expert/Admin) |
+| `GET` | `/api/admin/stats` | System metrics (users, advisories, reviews) | Yes (Admin) |
+| `GET` | `/api/admin/users` | Manage user accounts and roles | Yes (Admin) |
+
+---
+
+## Testing
+
+Real test files are located in `backend/data/test_samples/`:
+
+1. **Weather Test**:
+   - Ask Assistant: *"Show today's weather"*
+   - Result: Dynamic temperature, humidity, wind, and conditions fetched live from Open-Meteo.
+2. **Soil Report Test**:
+   - Upload: `backend/data/test_samples/soil_report_kurnool.pdf` or `soil_report_anantapur.jpg`
+   - Result: Extracted parameters ($pH = 7.4$, $N = 145$, $P = 22$, $K = 190$), regional baseline comparison, and top-5 crop recommendations.
+3. **Crop Disease Test**:
+   - Upload: `backend/data/test_samples/crop_bacterial_leaf_blight.jpg`
+   - Result: MobileNetV2 classifies `bacterial_leaf_blight` with confidence score and targeted organic/chemical treatment plan.
+4. **Fertilizer Assistant Test**:
+   - Ask Assistant: *"What fertilizer should I use for my crop?"*
+   - Result: Fertilizer recommendation grounded in Kaggle Dataset 2 (Fertilizer Prediction) with calculated NPK dosages.
+
+---
+
+## Known Limitations
+
+- **OCR Orientation**: Severely rotated ($> 45^\circ$) or blurry low-resolution mobile photographs of soil test certificates may require manual orientation correction before text can be parsed.
+- **Disease Scope**: The current MobileNetV2 model classifies the 5 core foliar conditions represented in the dataset (Bacterial Leaf Blight, Brown Spot, Leaf Smut/Rust, Powdery Mildew, Healthy). Unseen diseases return a low-confidence advisory prompting a clearer image.
+- **Browser Geolocation**: Browser geolocation requires HTTPS or localhost execution and explicit user approval in the browser permissions prompt.
+
+---
+
+## Future Scope
+
+- **Edge Deployment**: Quantize the MobileNetV2 model with TensorFlow Lite / ONNX Runtime for offline mobile smartphone inference in remote fields without cellular connectivity.
+- **Satellite Multi-Spectral Imaging**: Integrate Sentinel-2 / Landsat NDVI imagery to track vegetation health and drought stress across large acreage.
+- **IoT Soil Sensor Telemetry**: Connect LoRaWAN soil moisture and NPK probe feeds for continuous real-time agronomic telemetry.
+- **Automated Mandi Price Tracking**: Integrate government market data (e.g. Agmarknet) to recommend crops based on both soil suitability and forecasted market profitability.

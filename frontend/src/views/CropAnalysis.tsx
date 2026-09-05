@@ -73,39 +73,27 @@ export function CropAnalysis() {
       const formData = new FormData()
       formData.append('file', selectedFile)
 
-      const baseUrl = getApiBaseUrl()
-      const authHeaders = getAuthHeaders()
-
-      const uploadResp = await fetch(`${baseUrl}/crop-analysis/upload`, {
+      const uploadData = await apiRequest('/crop-analysis/upload', {
         method: 'POST',
-        headers: {
-          ...authHeaders,
-        },
         body: formData,
       })
 
-      if (!uploadResp.ok) {
-        const errJson = await uploadResp.json().catch(() => ({}))
-        throw new Error(errJson.detail || 'Crop image upload failed.')
-      }
-
-      const uploadData = await uploadResp.json()
       const imageId = uploadData.image_id
+      if (!imageId) {
+        throw new Error('Upload succeeded but no image ID was returned by server.')
+      }
 
       // Step 2: Trigger PyTorch MobileNetV2 Analysis
-      const analyzeResp = await fetch(`${baseUrl}/crop-analysis/analyze/${imageId}?language=${lang}`, {
+      const result = await apiRequest(`/crop-analysis/analyze/${imageId}?language=${lang}`, {
         method: 'POST',
-        headers: {
-          ...authHeaders,
-        },
       })
 
-      if (!analyzeResp.ok) {
-        const errJson = await analyzeResp.json().catch(() => ({}))
-        throw new Error(errJson.detail || 'Crop image analysis failed.')
+      // Section 7 Requirement: Low confidence threshold check
+      if (result.confidence_score !== undefined && result.confidence_score < 0.35) {
+        result.final_advisory = 'Low-confidence prediction. Please upload a clearer image of the affected leaf.'
+        result.risk_level = 'UNCERTAIN'
       }
 
-      const result = await analyzeResp.json()
       setAnalysisResult(result)
 
       setTimeout(() => {
@@ -113,8 +101,8 @@ export function CropAnalysis() {
       }, 1000)
 
     } catch (err: any) {
-      console.error(err)
-      setErrorMsg(err.message || 'Error executing MobileNetV2 image analysis.')
+      console.error('[CROP ANALYSIS] Execution error:', err)
+      setErrorMsg(err.message || 'Error executing MobileNetV2 image analysis. Ensure backend is active.')
       setState('upload')
     }
   }

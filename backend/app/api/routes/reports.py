@@ -12,6 +12,9 @@ from app.services.pdf_service import pdf_service
 from app.services.ocr_service import ocr_service
 from app.services.extraction_service import extraction_service
 
+from app.models.user import User
+from app.core.security import get_current_user_optional
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/reports", tags=["Agricultural Reports"])
@@ -23,12 +26,13 @@ ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
 @router.post("/upload", response_model=ReportResponse, status_code=status.HTTP_201_CREATED, summary="Upload an agricultural report (PDF or Image)")
 async def upload_report(
     file: UploadFile = File(...),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
     Uploads a soil test, lab, or agricultural report (PDF or Image format).
     Validates file format and size, extracts text using PyMuPDF or Tesseract/EasyOCR,
-    runs NLP parameter extraction, and stores metadata.
+    runs NLP parameter extraction, and stores metadata associated with the farmer.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file filename provided.")
@@ -85,8 +89,12 @@ async def upload_report(
     # Run parameter extraction
     extracted_data = extraction_service.extract_all(raw_text)
 
+    # Associate with authenticated farmer
+    farmer_id = current_user.id if current_user else None
+
     # Save report to database
     new_report = Report(
+        farmer_id=farmer_id,
         filename=file.filename,
         file_type=file_type,
         file_path=storage_path or file_path,

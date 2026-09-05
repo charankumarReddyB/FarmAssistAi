@@ -91,39 +91,21 @@ export function SoilAnalysis() {
       const formData = new FormData()
       formData.append('file', selectedFileObj)
 
-      const baseUrl = getApiBaseUrl()
-      const authHeaders = getAuthHeaders()
-
-      const uploadResp = await fetch(`${baseUrl}/reports/upload`, {
+      const reportData = await apiRequest('/reports/upload', {
         method: 'POST',
-        headers: {
-          ...authHeaders,
-        },
         body: formData,
       })
 
-      if (!uploadResp.ok) {
-        const errJson = await uploadResp.json().catch(() => ({}))
-        throw new Error(errJson.detail || 'Report upload failed.')
-      }
-
-      const reportData = await uploadResp.json()
       const reportId = reportData.id
+      if (!reportId) {
+        throw new Error('Report upload succeeded but no report ID was returned.')
+      }
 
       // Step 2: Trigger NLP & Semantic Analysis POST /api/analysis/{report_id}?language={lang}
-      const analyzeResp = await fetch(`${baseUrl}/analysis/${reportId}?language=${lang}`, {
+      const advisoryData = await apiRequest(`/analysis/${reportId}?language=${lang}`, {
         method: 'POST',
-        headers: {
-          ...authHeaders,
-        },
       })
 
-      if (!analyzeResp.ok) {
-        const errJson = await analyzeResp.json().catch(() => ({}))
-        throw new Error(errJson.detail || 'Report analysis failed.')
-      }
-
-      const advisoryData = await analyzeResp.json()
       setAnalysisResult(advisoryData)
 
       setTimeout(() => {
@@ -131,8 +113,8 @@ export function SoilAnalysis() {
       }, 1000)
 
     } catch (err: any) {
-      logger_error(err)
-      setErrorMsg(err.message || 'An error occurred during report processing.')
+      console.error('[SOIL ANALYSIS] Processing error:', err)
+      setErrorMsg(err.message || 'An error occurred during report processing. Ensure backend is active.')
       setState('upload')
     }
   }

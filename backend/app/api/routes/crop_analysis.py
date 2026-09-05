@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.models.crop_image import CropImageAnalysis
 from app.models.advisory import Advisory
 from app.models.user import User
+from app.core.security import get_current_user_optional
 from app.schemas.crop_image import CropImageUploadResponse, CropDiseaseAnalysisResponse
 from app.services.dataset_crop_disease_service import dataset_disease_service
 from app.services.image_preprocessing_service import image_preprocessing_service
@@ -27,12 +28,13 @@ os.makedirs(CROP_UPLOAD_DIR, exist_ok=True)
 @router.post("/upload", response_model=CropImageUploadResponse, status_code=status.HTTP_201_CREATED, summary="Upload a crop leaf image for disease diagnosis")
 async def upload_crop_image(
     file: UploadFile = File(...),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
     Uploads a crop leaf image (JPG, JPEG, PNG, WEBP).
     Validates file format, file size, non-empty condition, and image integrity via PIL.
-    Stores image safely and returns image_id.
+    Stores image safely, associates with authenticated farmer, and returns image_id.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided.")
@@ -77,7 +79,10 @@ async def upload_crop_image(
     from app.core.supabase_client import upload_file_to_supabase_storage
     storage_path = upload_file_to_supabase_storage("crop-images", file_path, unique_filename)
 
+    farmer_id = current_user.id if current_user else None
+
     new_record = CropImageAnalysis(
+        farmer_id=farmer_id,
         filename=file.filename,
         file_path=storage_path or file_path,
         upload_status="success",
@@ -101,6 +106,7 @@ async def upload_crop_image(
 def analyze_crop_image(
     image_id: str,
     language: Optional[str] = None,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
@@ -112,10 +118,11 @@ def analyze_crop_image(
     if not record:
         raise HTTPException(status_code=404, detail=f"Crop image with ID '{image_id}' not found.")
 
-    user = None
-    farmer_id = getattr(record, "farmer_id", None)
-    if farmer_id:
-        user = db.query(User).filter(User.id == farmer_id).first()
+    user = current_user
+    if not user:
+        farmer_id = getattr(record, "farmer_id", None)
+        if farmer_id:
+            user = db.query(User).filter(User.id == farmer_id).first()
     if not user:
         user = db.query(User).filter(User.role == "farmer").first()
 

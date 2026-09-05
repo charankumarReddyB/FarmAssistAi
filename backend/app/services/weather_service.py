@@ -63,8 +63,8 @@ class WeatherService:
 
 
         try:
-            # Open-Meteo free live weather forecast endpoint
-            url = f"https://api.open-meteo.com/v1/forecast?latitude={target_lat}&longitude={target_lon}&current_weather=true&hourly=relative_humidity_2m,precipitation_probability"
+            # Open-Meteo free live weather forecast endpoint with current weather, hourly humidity, and real daily forecast
+            url = f"https://api.open-meteo.com/v1/forecast?latitude={target_lat}&longitude={target_lon}&current_weather=true&hourly=relative_humidity_2m,precipitation_probability&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto"
             req = urllib.request.Request(url, headers={"User-Agent": "FarmAssist-AI/1.0"})
             
             with urllib.request.urlopen(req, timeout=4) as resp:
@@ -90,12 +90,54 @@ class WeatherService:
                     condition = "Foggy"
                 elif weathercode in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
                     condition = "Rain Expected"
+                elif weathercode in [95, 96, 99]:
+                    condition = "Thunderstorms"
 
                 impact = "Weather is favorable for standard farming activities."
                 if rain_probability > 50 or "Rain" in condition:
-                    impact = "Rain expected tomorrow morning. Consider delaying crop irrigation to prevent over-watering."
+                    impact = "Rain expected in your region. Consider delaying crop irrigation to prevent over-watering."
                 elif temp > 36:
                     impact = "High temperature warning. Ensure adequate soil moisture to protect young seedlings."
+
+                # Parse real Open-Meteo daily forecast
+                forecast = []
+                daily = data.get("daily", {})
+                times = daily.get("time", [])
+                max_temps = daily.get("temperature_2m_max", [])
+                rain_probs = daily.get("precipitation_probability_max", [])
+                wcodes = daily.get("weathercode", [])
+
+                for i in range(min(5, len(times))):
+                    dt_str = times[i]
+                    try:
+                        from datetime import datetime
+                        dt = datetime.strptime(dt_str, "%Y-%m-%d")
+                        day_label = "Today" if i == 0 else dt.strftime("%a")
+                    except Exception:
+                        day_label = "Today" if i == 0 else f"Day {i+1}"
+
+                    wc = wcodes[i] if i < len(wcodes) else 0
+                    if wc == 0:
+                        ico = "☀"
+                    elif wc in [1, 2, 3]:
+                        ico = "⛅"
+                    elif wc in [45, 48]:
+                        ico = "🌫"
+                    elif wc in [95, 96, 99]:
+                        ico = "⛈"
+                    else:
+                        ico = "🌧"
+
+                    t_val = round(max_temps[i]) if i < len(max_temps) else round(temp)
+                    r_val = rain_probs[i] if i < len(rain_probs) else rain_probability
+
+                    forecast.append({
+                        "day": day_label,
+                        "icon": ico,
+                        "temp": f"{t_val}°",
+                        "rain": f"{r_val}%",
+                        "active": i == 0
+                    })
 
                 return {
                     "location": location,
@@ -107,6 +149,7 @@ class WeatherService:
                     "rain_probability": rain_probability,
                     "condition": condition,
                     "farm_impact": impact,
+                    "forecast": forecast,
                     "source": "live_open_meteo"
                 }
 
@@ -131,6 +174,23 @@ class WeatherService:
             fallback_humidity = 68
             fallback_rain = 20
 
+        # Construct dynamic fallback forecast days
+        from datetime import datetime, timedelta
+        fallback_forecast = []
+        today = datetime.utcnow()
+        for i in range(5):
+            d = today + timedelta(days=i)
+            day_name = "Today" if i == 0 else d.strftime("%a")
+            d_temp = round(fallback_temp + (1.0 if i % 2 == 0 else -1.0) * i * 0.5)
+            d_rain = min(100, max(5, fallback_rain + (i * 4)))
+            fallback_forecast.append({
+                "day": day_name,
+                "icon": "⛅" if d_rain < 40 else "🌧",
+                "temp": f"{d_temp}°",
+                "rain": f"{d_rain}%",
+                "active": i == 0
+            })
+
         return {
             "location": location,
             "latitude": target_lat,
@@ -141,6 +201,7 @@ class WeatherService:
             "rain_probability": fallback_rain,
             "condition": "Partly Cloudy",
             "farm_impact": "Rain expected tomorrow morning. Irrigation may not be necessary today.",
+            "forecast": fallback_forecast,
             "source": "location_baseline"
         }
 

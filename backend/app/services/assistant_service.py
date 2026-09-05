@@ -180,12 +180,74 @@ class AssistantService:
                 "weather_data": w
             }
 
-        # 4. Crop Health queries
+        # 4. Fertilizer Recommendations (DATASET 2: Kaggle Fertilizer Prediction)
+        fertilizer_keywords = ["fertilizer", "fertiliser", "urea", "dap", "mop", "manure", "npk dosage", "nutrient", "ఎరువు", "ఎరువులు", "உரம்", "उर्वरक", "खाद"]
+        if any(kw in q_lower for kw in fertilizer_keywords):
+            from app.services.dataset_fertilizer_service import dataset_fertilizer_service
+            crop_name = getattr(user, "current_crop", None) or "Paddy (Rice)"
+            soil_type = getattr(user, "soil_type", None) or "Loamy"
+
+            latest_adv = db.query(Advisory).filter(Advisory.farmer_id == user.id).order_by(Advisory.created_at.desc()).first()
+            ed = latest_adv.extracted_data if latest_adv and latest_adv.extracted_data else None
+            if not ed:
+                latest_report = db.query(Report).order_by(Report.created_at.desc()).first()
+                ed = latest_report.extracted_data if latest_report and latest_report.extracted_data else {}
+
+            try:
+                n_raw = (ed or {}).get("nitrogen", {})
+                n_val = float(n_raw.get("value") if isinstance(n_raw, dict) else (n_raw or 120.0))
+            except Exception:
+                n_val = 120.0
+
+            try:
+                p_raw = (ed or {}).get("phosphorus", {})
+                p_val = float(p_raw.get("value") if isinstance(p_raw, dict) else (p_raw or 18.0))
+            except Exception:
+                p_val = 18.0
+
+            try:
+                k_raw = (ed or {}).get("potassium", {})
+                k_val = float(k_raw.get("value") if isinstance(k_raw, dict) else (k_raw or 140.0))
+            except Exception:
+                k_val = 140.0
+
+            recs = dataset_fertilizer_service.recommend_fertilizer(
+                n=n_val, p=p_val, k=k_val,
+                soil_type=soil_type,
+                crop_name=crop_name
+            )
+
+            if recs:
+                top = recs[0]
+                secondary = recs[1] if len(recs) > 1 else None
+                if lang == "te":
+                    resp_text = f"మీ {crop_name} పంటకు ({soil_type} నేల): సిఫార్సు చేసిన ఎరువు {top['fertilizer']} ({top['dosage']}). {top['description']}"
+                    if secondary:
+                        resp_text += f" ప్రత్యామ్నాయంగా {secondary['fertilizer']} ({secondary['dosage']}) వాడవచ్చు."
+                elif lang == "ta":
+                    resp_text = f"உங்கள் {crop_name} பயிருக்கு ({soil_type} மண்): பரிந்துரைக்கப்பட்ட உரம் {top['fertilizer']} ({top['dosage']}). {top['description']}"
+                elif lang == "hi":
+                    resp_text = f"आपकी {crop_name} फसल के लिए ({soil_type} मिट्टी): अनुशंसित उर्वरक {top['fertilizer']} ({top['dosage']}) है। {top['description']}"
+                else:
+                    resp_text = f"Based on your soil nutrients (N:{int(n_val)}, P:{int(p_val)}, K:{int(k_val)}) for {crop_name} in {soil_type} soil: Recommended fertilizer is {top['fertilizer']} ({top['dosage']}). {top['description']}"
+                    if secondary:
+                        resp_text += f" Secondary option: {secondary['fertilizer']} ({secondary['dosage']})."
+            else:
+                resp_text = f"For your {crop_name}, apply balanced NPK fertilizers (such as Urea and DAP) according to local soil conditions."
+
+            return {
+                "response": resp_text,
+                "action": "navigate",
+                "action_payload": {"target": "advisory"},
+                "intent": "fertilizer_recommendation"
+            }
+
+        # 5. Crop Health queries
         crop_keywords = [
-            "crop health", "crop status", "crop", "disease", "leaf", "blight", "fungus",
-            "పంట ఆరోగ్యం", "పంట", "తెగులు", "రోగం",
-            "பயிர் ஆரோக்கியம்", "பயிர்", "நோய்",
-            "फसल स्वास्थ्य", "फसल", "बीमारी", "स्वास्थ्य"
+            "crop health", "crop status", "crop disease", "disease", "leaf", "blight", "fungus", "pest",
+            "పంట ఆరోగ్యం", "పంట తెగులు", "తెగులు", "రోగం",
+            "பயிர் ஆரோக்கியம்", "பயிர் நோய்", "நோய்",
+            "फसल स्वास्थ्य", "फसल बीमारी", "बीमारी", "स्वास्थ्य"
         ]
         if any(kw in q_lower for kw in crop_keywords):
 
@@ -222,7 +284,7 @@ class AssistantService:
             }
 
         # 5. Soil Health queries
-        soil_keywords = ["soil", "npk", "nitrogen", "phosphorus", "potassium", "ph", "fertilizer", "మట్టి", "ఎరువు", "నత్రజని", "భాస్వరం", "மண்", "உரம்", "நைட்ரஜன்", "मिट्टी", "उर्वरक", "नाइट्रोजन"]
+        soil_keywords = ["soil", "npk", "nitrogen", "phosphorus", "potassium", "ph", "మట్టి", "నత్రజని", "భాస్వరం", "மண்", "நைட்ரஜன்", "मिट्टी", "नाइट्रोजन"]
         if any(kw in q_lower for kw in soil_keywords):
             latest_adv = db.query(Advisory).filter(Advisory.farmer_id == user.id).order_by(Advisory.created_at.desc()).first()
             ed = latest_adv.extracted_data if latest_adv and latest_adv.extracted_data else None
