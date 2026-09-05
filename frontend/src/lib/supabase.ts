@@ -137,8 +137,10 @@ export async function syncSupabaseProfile(user: User): Promise<any> {
       if (avatarUrl && !existing.avatar_url) updatesToApply.avatar_url = avatarUrl
       if (displayName && !existing.display_name) updatesToApply.display_name = displayName
       if (provider === 'google' && existing.auth_provider !== 'google') updatesToApply.auth_provider = 'google'
-      if (user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com' && existing.role !== 'admin') {
-        updatesToApply.role = 'admin'
+      if (user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com') {
+        if (existing.role !== 'admin') updatesToApply.role = 'admin'
+      } else if (existing.role === 'admin') {
+        updatesToApply.role = 'farmer'
       }
 
       if (Object.keys(updatesToApply).length > 0) {
@@ -154,8 +156,8 @@ export async function syncSupabaseProfile(user: User): Promise<any> {
       return existing
     }
 
-    // Profile doesn't exist yet -> Insert new farmer profile
-    const defaultRole = user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com' || user.email?.toLowerCase() === 'admin@farmassist.ai'
+    // Profile doesn't exist yet -> Insert new profile (Admin strictly reserved for charankumarreddybantrothula@gmail.com)
+    const defaultRole = user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com'
       ? 'admin'
       : user.email?.toLowerCase() === 'expert@farmassist.ai'
       ? 'expert'

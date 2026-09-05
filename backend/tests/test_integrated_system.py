@@ -18,9 +18,9 @@ and Profile -> My Farm synchronization test points:
 13. Farmer cannot access admin routes (403 Forbidden).
 14. Expert cannot access admin routes (403 Forbidden).
 15. Admin can create an expert account (POST /api/admin/users).
-16. Admin can create another admin account (POST /api/admin/users).
+16. Admin access is strictly restricted to charankumarreddybantrothula@gmail.com (creating or assigning admin to others is rejected with 400).
 17. Newly created expert can sign in with password and reaches expert role.
-18. Newly created admin can sign in with password and reaches admin role.
+18. Primary admin account cannot be demoted or deactivated.
 19. Updating name in /api/user/profile updates database and My Farm context.
 20. Updating location in /api/user/profile updates My Farm location and coordinates.
 21. Updating location refreshes weather & regional agricultural analysis context.
@@ -280,27 +280,38 @@ class TestFarmAssistIntegratedSystem(unittest.TestCase):
         self.assertEqual(res_login.status_code, 200)
         self.assertEqual(res_login.json()["user"]["role"], "expert")
 
-    def test_16_18_admin_can_create_admin_account_and_admin_can_login(self):
-        """Test Point 16 & 18: Admin creates another Administrator account, and new admin logs in."""
-        new_admin_email = f"admin_created_{os.urandom(4).hex()}@farmassist.ai"
+    def test_16_18_admin_access_strictly_restricted_to_primary_admin(self):
+        """Test Point 16 & 18: Admin access is exclusively restricted to charankumarreddybantrothula@gmail.com."""
+        new_admin_email = f"unauthorized_admin_{os.urandom(4).hex()}@farmassist.ai"
         new_admin_pass = "AdminPass@123"
 
+        # 1. Attempting to create another user with role='admin' must be rejected with 400 Bad Request
         res_create = client.post("/api/admin/users", headers={"Authorization": f"Bearer {self.admin_token}"}, json={
             "email": new_admin_email,
             "password": new_admin_pass,
             "full_name": "Secondary Admin",
             "role": "admin"
         })
-        self.assertEqual(res_create.status_code, 200)
-        self.assertEqual(res_create.json()["role"], "admin")
+        self.assertEqual(res_create.status_code, 400)
+        self.assertIn("strictly restricted", res_create.text)
 
-        # Verify new admin can sign in
-        res_login = client.post("/api/auth/login", json={
-            "email": new_admin_email,
-            "password": new_admin_pass
+        # 2. Attempting to elevate an existing farmer to admin role must be rejected with 400 Bad Request
+        res_role = client.patch(f"/api/admin/users/{self.farmer_id}/role", headers={"Authorization": f"Bearer {self.admin_token}"}, json={
+            "role": "admin"
         })
-        self.assertEqual(res_login.status_code, 200)
-        self.assertEqual(res_login.json()["user"]["role"], "admin")
+        self.assertEqual(res_role.status_code, 400)
+        self.assertIn("strictly restricted", res_role.text)
+
+        # 3. Attempting to downgrade primary admin or deactivate must be rejected
+        res_demote = client.patch(f"/api/admin/users/{self.admin_id}/role", headers={"Authorization": f"Bearer {self.admin_token}"}, json={
+            "role": "farmer"
+        })
+        self.assertEqual(res_demote.status_code, 400)
+
+        res_deact = client.patch(f"/api/admin/users/{self.admin_id}/status", headers={"Authorization": f"Bearer {self.admin_token}"}, json={
+            "is_active": False
+        })
+        self.assertEqual(res_deact.status_code, 400)
 
     def test_19_updating_name_updates_profile_and_farm(self):
         """Test Point 19: Updating user name updates database profile and farm representation."""

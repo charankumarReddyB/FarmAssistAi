@@ -97,6 +97,17 @@ def login_user(payload: UserLoginRequest, db: Session = Depends(get_db)):
             detail="Your account has been deactivated. Please contact an Administrator."
         )
 
+    # Strictly enforce admin privilege exclusively for charankumarreddybantrothula@gmail.com
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
+    if user.email.lower() == primary_admin_email and user.role != "admin":
+        user.role = "admin"
+        db.commit()
+        db.refresh(user)
+    elif user.email.lower() != primary_admin_email and user.role == "admin":
+        user.role = "farmer"
+        db.commit()
+        db.refresh(user)
+
     token = create_access_token({"sub": user.id, "email": user.email, "role": user.role})
 
     return TokenResponse(

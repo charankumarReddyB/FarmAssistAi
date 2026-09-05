@@ -68,7 +68,7 @@ export function AdminDashboard() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [newName, setNewName] = useState('')
-  const [newRole, setNewRole] = useState<'expert' | 'admin'>('expert')
+  const [newRole, setNewRole] = useState<'expert' | 'farmer'>('expert')
   const [createLoading, setCreateLoading] = useState(false)
 
   const fetchStats = async () => {
@@ -396,28 +396,35 @@ export function AdminDashboard() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {/* Role Dropdown */}
-                            <select
-                              value={u.role}
-                              onChange={(e) => handleChangeUserRole(u, e.target.value)}
-                              className="text-xs border border-pebble rounded-lg px-2 py-1 bg-white text-charcoal font-medium focus:outline-none cursor-pointer"
-                            >
-                              <option value="farmer">Farmer</option>
-                              <option value="expert">Expert</option>
-                              <option value="admin">Administrator</option>
-                            </select>
+                            {u.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-mono text-rain bg-rain/10 border border-rain/30 px-2.5 py-1 rounded-lg font-semibold">
+                                👑 Sole Administrator
+                              </span>
+                            ) : (
+                              <>
+                                {/* Role Dropdown (Only Farmer or Expert allowed) */}
+                                <select
+                                  value={u.role}
+                                  onChange={(e) => handleChangeUserRole(u, e.target.value)}
+                                  className="text-xs border border-pebble rounded-lg px-2 py-1 bg-white text-charcoal font-medium focus:outline-none cursor-pointer"
+                                >
+                                  <option value="farmer">Farmer</option>
+                                  <option value="expert">Expert</option>
+                                </select>
 
-                            {/* Status Toggle Button */}
-                            <button
-                              onClick={() => handleToggleUserStatus(u)}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
-                                u.is_active
-                                  ? 'border-risk/30 text-risk hover:bg-risk/10'
-                                  : 'border-forest/30 text-forest hover:bg-forest/10'
-                              }`}
-                            >
-                              {u.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
+                                {/* Status Toggle Button */}
+                                <button
+                                  onClick={() => handleToggleUserStatus(u)}
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
+                                    u.is_active
+                                      ? 'border-risk/30 text-risk hover:bg-risk/10'
+                                      : 'border-forest/30 text-forest hover:bg-forest/10'
+                                  }`}
+                                >
+                                  {u.is_active ? 'Deactivate' : 'Activate'}
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -496,10 +503,10 @@ export function AdminDashboard() {
                   className="w-full px-3 py-2 rounded-xl border border-pebble bg-white text-charcoal text-xs font-semibold focus:outline-none cursor-pointer"
                 >
                   <option value="expert">Agricultural Expert (Review & approve advisories)</option>
-                  <option value="admin">Administrator (Full system & user governance)</option>
+                  <option value="farmer">Verified Farmer (Crop & advisory access)</option>
                 </select>
                 <p className="text-sage text-[11px] mt-1">
-                  Public registrations only receive Farmer role. Only Admins can create Expert/Admin accounts.
+                  Administrator privileges are strictly and exclusively reserved for charankumarreddybantrothula@gmail.com.
                 </p>
               </div>
 

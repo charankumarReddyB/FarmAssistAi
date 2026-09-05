@@ -91,12 +91,19 @@ def create_user_by_admin(payload: UserCreate, db: Session = Depends(get_db)):
             detail="An account with this email already exists."
         )
 
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
     valid_roles = ["farmer", "expert", "admin"]
     role = payload.role.lower().strip()
     if role not in valid_roles:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid role '{role}'. Allowed roles: {valid_roles}"
+        )
+
+    if role == "admin" and payload.email.lower() != primary_admin_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Administrator access is strictly restricted to {primary_admin_email}."
         )
 
     user = User(
@@ -144,6 +151,13 @@ def update_user_status(user_id: str, payload: UserStatusUpdate, db: Session = De
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
 
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
+    if user.email.lower() == primary_admin_email and not payload.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The primary administrator account cannot be deactivated."
+        )
+
     user.is_active = payload.is_active
     db.commit()
     db.refresh(user)
@@ -168,12 +182,25 @@ def update_user_role(user_id: str, payload: UserRoleUpdate, db: Session = Depend
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
 
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
     valid_roles = ["farmer", "expert", "admin"]
     role = payload.role.lower().strip()
     if role not in valid_roles:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid role '{role}'. Allowed roles: {valid_roles}"
+        )
+
+    if role == "admin" and user.email.lower() != primary_admin_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Administrator access is strictly restricted to {primary_admin_email}."
+        )
+
+    if user.email.lower() == primary_admin_email and role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The primary administrator role cannot be altered."
         )
 
     user.role = role

@@ -118,9 +118,9 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
     email = payload.get("email") or payload.get("user_metadata", {}).get("email") or f"{user_id}@supabase.user"
     user_metadata = payload.get("user_metadata", {})
 
-    # Determine default role: admin accounts recognized
+    # Determine default role: admin access is strictly restricted to charankumarreddybantrothula@gmail.com
     primary_admin_email = "charankumarreddybantrothula@gmail.com"
-    if email.lower() in [primary_admin_email, "admin@farmassist.ai"]:
+    if email.lower() == primary_admin_email:
         token_role = "admin"
     elif email.lower() == "expert@farmassist.ai":
         token_role = "expert"
@@ -181,8 +181,12 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
         if meta_name and not user.display_name:
             user.display_name = meta_name
             changed = True
-        if email.lower() == primary_admin_email and user.role != "admin":
-            user.role = "admin"
+        if email.lower() == primary_admin_email:
+            if user.role != "admin":
+                user.role = "admin"
+                changed = True
+        elif user.role == "admin":
+            user.role = "farmer"
             changed = True
         if changed:
             db.commit()
@@ -200,6 +204,13 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
 def require_roles(allowed_roles: List[str]):
     """FastAPI Dependency Factory: Enforces strict Role-Based Access Control (RBAC)."""
     def role_checker(current_user: User = Depends(get_current_user)):
+        primary_admin_email = "charankumarreddybantrothula@gmail.com"
+        # Absolute rule: only primary_admin_email can exercise admin role
+        if current_user.role == "admin" and current_user.email.lower() != primary_admin_email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Administrator privileges are strictly reserved for charankumarreddybantrothula@gmail.com.",
+            )
         if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

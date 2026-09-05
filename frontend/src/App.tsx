@@ -252,7 +252,7 @@ export default function App() {
 
       const effectiveRole = (
         session.user.email?.toLowerCase() === 'charankumarreddybantrothula@gmail.com'
-      ) ? 'admin' : (backendUser?.role || supabaseProfile?.role || 'farmer')
+      ) ? 'admin' : (backendUser?.role === 'admin' ? 'farmer' : (backendUser?.role || supabaseProfile?.role || 'farmer'))
 
       const isOnboarded = backendUser?.onboarding_completed ?? supabaseProfile?.onboarding_completed ?? false
       const hasLocation = Boolean(

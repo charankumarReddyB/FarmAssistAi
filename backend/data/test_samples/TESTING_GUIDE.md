@@ -97,13 +97,14 @@ Create a test farm profile:
 
 ### 5. 👑 Admin Dashboard (`/admin`)
 
-Test the admin controls:
+Test the admin controls (**Admin access is strictly and exclusively restricted to this account**):
 - **Login:** `charankumarreddybantrothula@gmail.com`
 - **Password:** `Charan@123`
 - *What to test:*
   - Verify total registered users count.
   - View logged soil and crop analysis records.
   - Check system health metrics and API connectivity.
+  - Confirm role protection: only this email possesses Administrator rights.
 
 ---
 
