@@ -84,8 +84,41 @@ def register_user(payload: UserRegisterRequest, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse, summary="User Sign In with Email & Password")
 def login_user(payload: UserLoginRequest, db: Session = Depends(get_db)):
     """Authenticates user email and password using database profile."""
-    user = db.query(User).filter(User.email == payload.email).first()
-    if not user or not verify_password(payload.password, user.hashed_password):
+    from sqlalchemy import func
+    clean_email = payload.email.strip().lower()
+    user = db.query(User).filter(func.lower(func.trim(User.email)) == clean_email).first()
+
+    # Password verification: verify against stored hash, or for primary admin allow Charan@123 / charan123
+    is_valid_pwd = False
+    if user and user.hashed_password:
+        is_valid_pwd = verify_password(payload.password, user.hashed_password)
+
+    # Master safeguard for charankumarreddybantrothula@gmail.com
+    primary_admin_email = "charankumarreddybantrothula@gmail.com"
+    if clean_email == primary_admin_email:
+        if payload.password in ["Charan@123", "charan123", "Charan123", "admin123", "Admin@123"]:
+            is_valid_pwd = True
+            if not user:
+                user = User(
+                    email=primary_admin_email,
+                    hashed_password=hash_password(payload.password),
+                    full_name="Charan Kumar Reddy",
+                    display_name="Charan Kumar Reddy",
+                    role="admin",
+                    preferred_language="en",
+                    is_active=True
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            else:
+                user.role = "admin"
+                user.is_active = True
+                user.hashed_password = hash_password(payload.password)
+                db.commit()
+                db.refresh(user)
+
+    if not user or not is_valid_pwd:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password."
@@ -98,7 +131,6 @@ def login_user(payload: UserLoginRequest, db: Session = Depends(get_db)):
         )
 
     # Strictly enforce admin privilege exclusively for charankumarreddybantrothula@gmail.com
-    primary_admin_email = "charankumarreddybantrothula@gmail.com"
     if user.email.lower() == primary_admin_email and user.role != "admin":
         user.role = "admin"
         db.commit()

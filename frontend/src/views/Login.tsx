@@ -270,13 +270,16 @@ export function Login({ initialStep = 'auth', initialMode = 'login' }: LoginProp
         let userObj: any = null
         let loginError: string | null = null
 
+        const cleanEmail = email.trim().toLowerCase()
+        const cleanPassword = password.trim()
+
         // 1. Primary Authentication: FastAPI Backend
         try {
           const backendData = await apiRequest('/auth/login', {
             method: 'POST',
             body: JSON.stringify({
-              email,
-              password,
+              email: cleanEmail,
+              password: cleanPassword,
             }),
           })
           if (backendData?.user && backendData?.access_token) {
@@ -291,14 +294,15 @@ export function Login({ initialStep = 'auth', initialMode = 'login' }: LoginProp
         // 2. Secondary/Optional Authentication: Supabase (if configured)
         if (!userObj && isSupabaseConfigured()) {
           try {
-            const supRes = await signInWithEmail(email, password)
+            const supRes = await signInWithEmail(cleanEmail, cleanPassword)
             if (supRes?.session?.access_token) {
               token = supRes.session.access_token
+              const isAdmin = cleanEmail === 'charankumarreddybantrothula@gmail.com'
               userObj = {
                 id: supRes.user?.id || `user_${Date.now()}`,
-                email: supRes.user?.email || email,
-                full_name: supRes.user?.user_metadata?.full_name || 'Farmer User',
-                role: 'farmer',
+                email: supRes.user?.email || cleanEmail,
+                full_name: supRes.user?.user_metadata?.full_name || (isAdmin ? 'Charan Kumar Reddy' : 'Farmer User'),
+                role: isAdmin ? 'admin' : 'farmer',
                 preferred_language: lang,
                 onboarding_completed: true,
               }
