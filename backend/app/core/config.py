@@ -70,6 +70,8 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     def assemble_db_connection(cls, v: Union[str, None], info) -> str:
         if isinstance(v, str) and v.strip():
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql://", 1)
             return v
         values = info.data if hasattr(info, 'data') else {}
         user = values.get("POSTGRES_USER", "postgres")

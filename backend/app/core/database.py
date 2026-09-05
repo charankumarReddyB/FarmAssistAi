@@ -11,8 +11,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 SQLITE_DB_PATH = os.path.join(BASE_DIR, "farmassist.db").replace("\\", "/")
 
 db_url = settings.DATABASE_URL
-if not db_url or "farmassist.db" in db_url:
-    db_url = f"sqlite:///{SQLITE_DB_PATH}"
+if not db_url:
+    fallback_path = "/tmp/farmassist.db" if os.getenv("VERCEL") else SQLITE_DB_PATH
+    db_url = f"sqlite:///{fallback_path}"
 
 # Test connection and fallback to SQLite if remote connection fails
 connect_args = {}
@@ -29,7 +30,8 @@ try:
         conn.execute(text("SELECT 1"))
 except Exception as e:
     logger.warning(f"[DATABASE] Connection to {db_url} failed ({e}). Falling back to SQLite local database.")
-    db_url = f"sqlite:///{SQLITE_DB_PATH}"
+    fallback_path = "/tmp/farmassist.db" if os.getenv("VERCEL") else SQLITE_DB_PATH
+    db_url = f"sqlite:///{fallback_path}"
     connect_args = {"check_same_thread": False}
     engine = create_engine(
         db_url,
