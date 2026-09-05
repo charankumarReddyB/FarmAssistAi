@@ -7,11 +7,10 @@ export function getApiBaseUrl(): string {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL.replace(/\/$/, '')
   }
-  // If running in browser on HTTPS (like Vercel production) or non-localhost domain
+  // In browser, relative /api automatically leverages Vite proxy locally
+  // and reverse proxy / cloud deployment without CORS or host mismatches.
   if (typeof window !== 'undefined') {
-    if (window.location.protocol === 'https:' || (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')) {
-      return '/api'
-    }
+    return '/api'
   }
   return 'http://127.0.0.1:8000/api'
 }
@@ -92,7 +91,7 @@ export async function apiRequest<T = any>(
     } else if (response.status === 404) {
       userMessage = errorDetail || 'The requested resource was not found.'
     } else if (response.status >= 500) {
-      userMessage = 'A server error occurred. Please try again later.'
+      userMessage = errorDetail || 'A server error occurred. Please try again later.'
     }
 
     throw new ApiError(userMessage, response.status, errorDetail)

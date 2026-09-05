@@ -1,7 +1,7 @@
 import os
 import uuid
 import logging
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
